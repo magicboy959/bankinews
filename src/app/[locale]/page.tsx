@@ -10,8 +10,21 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const t = dictionary[safeLocale];
   const data = await getHomepageData(safeLocale);
 
+  const marketNotes =
+    safeLocale === "ar"
+      ? [
+          "تعكس هذه النشرة اتجاهات السوق بناء على مواد منشورة ومصادر موثقة.",
+          "لا تمثل أي مادة نصيحة استثمارية أو توصية مصرفية مباشرة.",
+          "يرجى الرجوع إلى الجهة الرسمية قبل اتخاذ قرارات مالية.",
+        ]
+      : [
+          "This briefing summarizes verified market and banking updates.",
+          "Published material is informational and not investment advice.",
+          "Always confirm details from the official institution before acting.",
+        ];
+
   return (
-    <div className="space-y-10">
+    <div className="space-y-8 md:space-y-10">
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <p className="mb-2 text-xs font-bold uppercase text-red-700">{t.labels.breaking}</p>
         <div className="text-sm text-slate-700">
@@ -20,10 +33,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {data.featured && (
-        <section className="rounded-2xl bg-[#0A2342] p-8 text-white">
+        <section className="rounded-2xl bg-[#0A2342] p-5 text-white md:p-8">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">{t.labels.latest}</p>
-          <h1 className="mt-3 text-3xl font-black leading-tight md:text-4xl">{data.featured.title}</h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-200">{data.featured.summary}</p>
+          <h1 className="mt-3 text-2xl font-black leading-tight md:text-4xl">{data.featured.title}</h1>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200 md:mt-4 md:text-base">{data.featured.summary}</p>
         </section>
       )}
 
@@ -32,6 +45,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {data.latest.map((article) => (
             <ArticleCardView key={article.id} locale={safeLocale} article={article} />
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <SectionHeading title={safeLocale === "ar" ? "التحول الرقمي والخدمات الحديثة" : "Digital Banking & Fintech"} />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {data.fintech.map((article) => (
+            <ArticleCardView key={`fin-${article.id}`} locale={safeLocale} article={article} />
           ))}
         </div>
       </section>
@@ -65,6 +87,34 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         ) : (
           <p className="text-sm text-slate-600">{safeLocale === "ar" ? "لا يوجد بنك مميز حالياً" : "No featured bank yet"}</p>
         )}
+      </section>
+
+      <section className="grid gap-5 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-2 md:p-6">
+        <div>
+          <SectionHeading title={safeLocale === "ar" ? "ملاحظات السوق" : "Market Notes"} />
+          <ul className="space-y-2 text-sm text-slate-700">
+            {marketNotes.map((note) => (
+              <li key={note} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                {note}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <SectionHeading title={safeLocale === "ar" ? "تحديثات تحريرية" : "Editorial Updates"} />
+          <div className="space-y-3 text-sm text-slate-700">
+            <p>
+              {safeLocale === "ar"
+                ? "نعمل يوميا على مراجعة الأخبار المصرفية ومقارنتها مع البيانات الرسمية قبل النشر، مع توضيح تاريخ التحديث والمصدر." 
+                : "Our editorial team verifies banking updates against official statements before publication, with clear source and update timestamps."}
+            </p>
+            <p>
+              {safeLocale === "ar"
+                ? "يتم تمييز المواد المدفوعة والرأي والبيانات الصحفية بشكل واضح لضمان الشفافية التحريرية."
+                : "Sponsored content, opinion pieces, and press releases are clearly labeled to preserve editorial transparency."}
+            </p>
+          </div>
+        </div>
       </section>
     </div>
   );
