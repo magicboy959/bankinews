@@ -31,10 +31,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
   return (
     <html lang="ar" className={`${cairo.variable} ${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
-        <Script id="mcjs" strategy="afterInteractive">
+      <head>
+        <Script id="mcjs" strategy="beforeInteractive">
           {`!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/259a9ab84fc2af74b8183a97e/9ce7c291afe92b121829c05ee.js");`}
         </Script>
+      </head>
+      <body className="min-h-full flex flex-col">
         {children}
         {ga4Id && (
           <>
