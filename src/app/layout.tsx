@@ -18,6 +18,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "BankiNews Sudan",
   description: "Bilingual Sudan banking, fintech, and economy news portal",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

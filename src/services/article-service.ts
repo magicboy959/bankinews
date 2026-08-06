@@ -2,6 +2,14 @@ import type { Locale } from "@/lib/i18n/config";
 import { dbQuery } from "@/lib/db/query";
 import type { ArticleCard } from "@/types";
 
+type ArticleCorrectionHistoryItem = {
+  action: string;
+  previousStatus: string | null;
+  newStatus: string | null;
+  createdAt: string;
+  metadata: Record<string, unknown> | null;
+};
+
 export async function getPublishedArticles(locale: Locale, limit = 20): Promise<ArticleCard[]> {
   try {
     const rows = await dbQuery<any[]>(
@@ -33,6 +41,7 @@ export async function getArticleBySlug(locale: Locale, slug: string) {
       `
         SELECT a.id, a.slug, a.article_type AS articleType, a.featured_image_url AS featuredImageUrl,
                a.published_at AS publishedAt, a.updated_at AS updatedAt,
+           a.source_url AS sourceUrl, a.source_attribution AS sourceAttribution,
                a.reading_time_minutes AS readingTimeMinutes,
                a.is_breaking AS isBreaking, a.is_sponsored AS isSponsored,
                a.is_opinion AS isOpinion, a.is_press_release AS isPressRelease,
@@ -53,5 +62,34 @@ export async function getArticleBySlug(locale: Locale, slug: string) {
     return rows[0] ?? null;
   } catch {
     return null;
+  }
+}
+
+export async function getArticleCorrectionHistory(articleId: number): Promise<ArticleCorrectionHistoryItem[]> {
+  try {
+    const rows = await dbQuery<any[]>(
+      `SELECT action, previous_status AS previousStatus, new_status AS newStatus,
+              metadata, created_at AS createdAt
+       FROM audit_logs
+       WHERE entity_type = 'article' AND entity_id = ?
+         AND action IN ('article_created', 'article_updated', 'article_deleted')
+       ORDER BY created_at DESC
+       LIMIT 10`,
+      [articleId]
+    );
+
+    return rows.map((row) => ({
+      action: String(row.action),
+      previousStatus: row.previousStatus ?? null,
+      newStatus: row.newStatus ?? null,
+      createdAt: String(row.createdAt),
+      metadata: row.metadata
+        ? typeof row.metadata === "string"
+          ? (JSON.parse(row.metadata) as Record<string, unknown>)
+          : (row.metadata as Record<string, unknown>)
+        : null,
+    }));
+  } catch {
+    return [];
   }
 }

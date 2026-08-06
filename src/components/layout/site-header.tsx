@@ -4,13 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 import { dictionary } from "@/lib/i18n/dictionary";
 import type { Locale } from "@/lib/i18n/config";
+import { BrandMark } from "@/components/layout/brand-mark";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { useEffect } from "react";
 
 type NavKey = keyof (typeof dictionary)["ar"]["nav"];
 type NavItem = readonly [NavKey, string];
 
-export function SiteHeader({ locale }: { locale: Locale }) {
+type SocialLink = {
+  label: string;
+  href: string;
+};
+
+export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLinks: SocialLink[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const t = dictionary[locale];
 
@@ -26,49 +32,40 @@ export function SiteHeader({ locale }: { locale: Locale }) {
     };
   }, [menuOpen]);
 
-  const navGroups: Array<{ title: string; items: NavItem[] }> = [
+  const websiteItems: NavItem[] = [
+    ["home", ""],
+    ["latest", "news"],
+    ["about", "about"],
+    ["contact", "contact"],
+  ];
+
+  const serviceItems: NavItem[] = [
+    ["banks", "banks"],
+    ["digitalBanking", "digital-banking"],
+    ["fintech", "fintech"],
+    ["products", "products"],
+    ["transfers", "money-transfers"],
+    ["cards", "cards-atms"],
+    ["rates", "exchange-rates"],
+    ["guides", "guides"],
+    ["jobs", "jobs"],
+  ];
+
+  const navGroups: Array<{ title: string; tone: "website" | "services"; items: NavItem[] }> = [
     {
-      title: locale === "ar" ? "الأخبار" : "News",
-      items: [
-        ["home", ""],
-        ["latest", "news"],
-        ["centralBank", "central-bank"],
-        ["economy", "economy"],
-        ["reports", "reports"],
-        ["interviews", "interviews"],
-        ["opinion", "opinion"],
-      ],
+      title: locale === "ar" ? "روابط الموقع" : "Website",
+      tone: "website",
+      items: websiteItems,
     },
     {
-      title: locale === "ar" ? "الخدمات" : "Services",
-      items: [
-        ["banks", "banks"],
-        ["digitalBanking", "digital-banking"],
-        ["fintech", "fintech"],
-        ["products", "products"],
-        ["transfers", "money-transfers"],
-        ["cards", "cards-atms"],
-        ["rates", "exchange-rates"],
-        ["guides", "guides"],
-        ["jobs", "jobs"],
-      ],
-    },
-    {
-      title: locale === "ar" ? "الموقع" : "Site",
-      items: [
-        ["about", "about"],
-        ["contact", "contact"],
-      ],
+      title: locale === "ar" ? "الخدمات المالية" : "Financial Services",
+      tone: "services",
+      items: serviceItems,
     },
   ];
 
-  const desktopItems = navGroups.reduce<NavItem[]>((acc, group) => {
-    acc.push(...group.items);
-    return acc;
-  }, []);
-
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-40 bg-white/96 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6 md:py-4">
         <div className="flex items-center gap-3">
           <button
@@ -79,12 +76,28 @@ export function SiteHeader({ locale }: { locale: Locale }) {
           >
             <span className="text-xl leading-none">{menuOpen ? "×" : "☰"}</span>
           </button>
-          <Link href={`/${locale}`} className="text-lg font-black tracking-tight text-[#0A2342] md:text-xl">
-            {t.siteName}
-          </Link>
+          <BrandMark href={`/${locale}`} locale={locale} className="hidden md:flex" />
+          <BrandMark href={`/${locale}`} locale={locale} compact className="md:hidden" />
         </div>
 
         <div className="flex items-center gap-2">
+          {socialLinks.length ? (
+            <div className="hidden items-center gap-1 md:flex">
+              {socialLinks.map((link) => (
+                <a
+                  key={`${link.label}-${link.href}`}
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-8 min-w-8 items-center justify-center rounded-full border border-slate-300 px-2 text-xs font-black text-slate-700 transition hover:border-[#0A2342] hover:text-[#0A2342]"
+                  aria-label={link.label}
+                  title={link.label}
+                >
+                  {link.label.slice(0, 2).toUpperCase()}
+                </a>
+              ))}
+            </div>
+          ) : null}
           <Link
             href={`/${locale}/search`}
             className="hidden rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 md:inline-flex"
@@ -95,17 +108,35 @@ export function SiteHeader({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      <nav className="mx-auto hidden max-w-7xl overflow-x-auto px-4 pb-3 md:block md:px-6" aria-label="Desktop navigation">
-        <ul className="flex min-w-max items-center gap-4 text-sm font-semibold text-slate-700">
-          {desktopItems.map(([key, href]) => (
-            <li key={key}>
-              <Link href={`/${locale}/${href}`.replace(/\/$/, "")} className="hover:text-[#0A2342]">
-                {t.nav[key]}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <div className="hidden md:block">
+        <div className="border-t border-slate-200 bg-[#223253] text-white">
+          <nav className="mx-auto flex max-w-7xl items-center overflow-x-auto px-4 py-3 md:px-6" aria-label="Website navigation">
+            <ul className="flex min-w-max items-center gap-4 text-sm font-semibold text-slate-100">
+              {websiteItems.map(([key, href]) => (
+                <li key={key}>
+                  <Link href={`/${locale}/${href}`.replace(/\/$/, "")} className="transition hover:text-[#78d7d3]">
+                    {t.nav[key]}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+
+        <div className="border-t border-emerald-800 bg-[#0E6B57] text-white">
+          <nav className="mx-auto flex max-w-7xl items-center overflow-x-auto px-4 py-3 md:px-6" aria-label="Financial services navigation">
+            <ul className="flex min-w-max items-center gap-4 text-sm font-semibold text-white">
+              {serviceItems.map(([key, href]) => (
+                <li key={key}>
+                  <Link href={`/${locale}/${href}`.replace(/\/$/, "")} className="transition hover:text-[#d8fff3]">
+                    {t.nav[key]}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </div>
 
       {menuOpen && (
         <button
@@ -117,31 +148,45 @@ export function SiteHeader({ locale }: { locale: Locale }) {
       )}
 
       <div
-        className={`relative z-40 border-t border-slate-200 bg-white px-4 py-4 transition-all duration-300 md:hidden ${
+        className={`relative z-40 border-t border-slate-700 bg-[#172544] px-4 py-4 text-white transition-all duration-300 md:hidden ${
           menuOpen ? "max-h-[75vh] opacity-100" : "max-h-0 overflow-hidden border-t-0 py-0 opacity-0"
         }`}
         aria-label="Mobile navigation"
       >
         <div className="overflow-y-auto">
-          <div className="mb-3">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
             <Link
               href={`/${locale}/search`}
-              className="inline-flex rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700"
+              className="inline-flex rounded-md border border-slate-500 px-3 py-1.5 text-sm font-semibold text-slate-100"
               onClick={() => setMenuOpen(false)}
             >
               {locale === "ar" ? "بحث" : "Search"}
             </Link>
+            {socialLinks.map((link) => (
+              <a
+                key={`${link.label}-${link.href}-mobile`}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-md border border-slate-500 px-3 py-1.5 text-sm font-semibold text-slate-100"
+              >
+                {link.label}
+              </a>
+            ))}
           </div>
           <div className="space-y-5">
             {navGroups.map((group) => (
-              <section key={group.title}>
-                <h3 className="mb-2 text-xs font-black uppercase tracking-[0.12em] text-slate-500">{group.title}</h3>
+              <section
+                key={group.title}
+                className={group.tone === "website" ? "rounded-xl border border-slate-700 bg-[#223253] p-3" : "rounded-xl border border-emerald-800 bg-[#0E6B57] p-3"}
+              >
+                <h3 className="mb-2 text-xs font-black uppercase tracking-[0.12em] text-slate-100">{group.title}</h3>
                 <ul className="grid grid-cols-2 gap-2">
                   {group.items.map(([key, href]) => (
                     <li key={key}>
                       <Link
                         href={`/${locale}/${href}`.replace(/\/$/, "")}
-                        className="block rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700"
+                        className="block rounded-md border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-slate-100"
                         onClick={() => setMenuOpen(false)}
                       >
                         {t.nav[key]}

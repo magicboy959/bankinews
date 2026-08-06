@@ -1,8 +1,28 @@
-import { dbExecute, dbQuery } from "@/lib/db/query";
+import { dbQuery, dbTransaction } from "@/lib/db/query";
+import type { DbRow } from "@/lib/db/pool";
 import { created, ok, badRequest, forbidden, serverError } from "@/lib/http";
 import { articleCreateSchema } from "@/lib/validation/schemas";
 import { requireRole } from "@/lib/auth/guard";
 import { estimateReadingTime, slugify } from "@/lib/utils";
+
+type CountRow = DbRow & {
+  count: number;
+};
+
+type ArticleListRow = DbRow & {
+  id: number;
+  slug: string;
+  status: string;
+  articleType: string;
+  featuredImageUrl: string | null;
+  publishedAt: string | null;
+  updatedAt: string;
+  readingTimeMinutes: number;
+  isBreaking: number | boolean;
+  isSponsored: number | boolean;
+  title: string;
+  summary: string;
+};
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -10,7 +30,7 @@ export async function GET(request: Request) {
   const status = searchParams.get("status") ?? "published";
 
   try {
-    const rows = await dbQuery<any[]>(
+    const rows = await dbQuery<ArticleListRow[]>(
       `
       SELECT a.id, a.slug, a.status, a.article_type AS articleType,
              a.featured_image_url AS featuredImageUrl, a.published_at AS publishedAt,
@@ -48,55 +68,84 @@ export async function POST(request: Request) {
 
     const payload = parsed.data;
     const baseSlug = slugify(payload.title);
+    const promotedFlag = payload.isFeatured || payload.isSponsored;
 
-    const existing = await dbQuery<any[]>(
+    const existing = await dbQuery<CountRow[]>(
       `SELECT COUNT(*) AS count FROM articles WHERE slug = ?`,
       [baseSlug]
     );
 
     const slug = Number(existing[0]?.count ?? 0) > 0 ? `${baseSlug}-${Date.now()}` : baseSlug;
+    const createMetadata = {
+      locale: payload.locale,
+      title: payload.title,
+      sourceUrl: payload.sourceUrl ?? null,
+      sourceAttribution: payload.sourceAttribution ?? null,
+      categoryId: payload.categoryId ?? null,
+      status: payload.status,
+    };
 
-    await dbExecute(
-      `
-      INSERT INTO articles
-      (slug, status, article_type, featured_image_url, author_id, reading_time_minutes,
-       is_breaking, is_sponsored, is_opinion, is_press_release, published_at, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, IF(? = 'published', NOW(), NULL), NOW(), NOW())
-      `,
-      [
-        slug,
-        payload.status,
-        payload.articleType,
-        payload.featuredImageUrl ?? null,
-        user.id,
-        estimateReadingTime(payload.contentHtml),
-        payload.isBreaking ? 1 : 0,
-        payload.isSponsored ? 1 : 0,
-        payload.isOpinion ? 1 : 0,
-        payload.isPressRelease ? 1 : 0,
-        payload.status,
-      ]
-    );
+    const articleId = await dbTransaction(async ({ execute }) => {
+      const articleResult = await execute(
+        `
+        INSERT INTO articles
+        (slug, status, article_type, featured_image_url, source_url, source_attribution,
+         related_bank_id, author_id, reading_time_minutes,
+         is_breaking, is_sponsored, is_opinion, is_press_release,
+         publish_at, expires_at, published_at, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, IF(? = 'published', NOW(), NULL), NOW(), NOW())
+        `,
+        [
+          slug,
+          payload.status,
+          payload.articleType,
+          payload.featuredImageUrl ?? null,
+          payload.sourceUrl ?? null,
+          payload.sourceAttribution ?? null,
+          payload.relatedBankId ?? null,
+          user.id,
+          estimateReadingTime(payload.contentHtml),
+          payload.isBreaking ? 1 : 0,
+          promotedFlag ? 1 : 0,
+          payload.isOpinion ? 1 : 0,
+          payload.isPressRelease ? 1 : 0,
+          payload.publishAt ?? null,
+          payload.expiresAt ?? null,
+          payload.status,
+        ]
+      );
 
-    const article = await dbQuery<any[]>(`SELECT id FROM articles WHERE slug = ? LIMIT 1`, [slug]);
-    const articleId = article[0]?.id;
+      const nextArticleId = articleResult.insertId;
 
-    await dbExecute(
-      `
-      INSERT INTO article_translations
-      (article_id, locale, title, summary, content_html, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, NOW(), NOW())
-      `,
-      [articleId, payload.locale, payload.title, payload.summary, payload.contentHtml]
-    );
+      await execute(
+        `
+        INSERT INTO article_translations
+        (article_id, locale, title, summary, content_html, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+        `,
+        [nextArticleId, payload.locale, payload.title, payload.summary, payload.contentHtml]
+      );
 
-    await dbExecute(
-      `
-      INSERT INTO audit_logs (user_id, action, entity_type, entity_id, previous_status, new_status, created_at)
-      VALUES (?, 'article_created', 'article', ?, NULL, ?, NOW())
-      `,
-      [user.id, articleId, payload.status]
-    );
+      if (payload.categoryId) {
+        await execute(
+          `
+          INSERT INTO article_categories (article_id, category_id)
+          VALUES (?, ?)
+          `,
+          [nextArticleId, payload.categoryId]
+        );
+      }
+
+      await execute(
+        `
+        INSERT INTO audit_logs (user_id, action, entity_type, entity_id, previous_status, new_status, metadata, created_at)
+        VALUES (?, 'article_created', 'article', ?, NULL, ?, ?, NOW())
+        `,
+        [user.id, nextArticleId, payload.status, JSON.stringify(createMetadata)]
+      );
+
+      return nextArticleId;
+    });
 
     return created({ articleId, slug });
   } catch {

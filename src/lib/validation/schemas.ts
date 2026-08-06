@@ -13,7 +13,14 @@ export const articleCreateSchema = z.object({
   articleType: z.string().min(2),
   status: z.enum(["draft", "review", "scheduled", "published", "archived"]).default("draft"),
   featuredImageUrl: z.url().optional().nullable(),
+  sourceUrl: z.url().optional().nullable(),
+  sourceAttribution: z.string().max(255).optional().nullable(),
+  relatedBankId: z.number().int().positive().optional().nullable(),
+  categoryId: z.number().int().positive().optional().nullable(),
+  publishAt: z.iso.datetime().optional().nullable(),
+  expiresAt: z.iso.datetime().optional().nullable(),
   isBreaking: z.boolean().default(false),
+  isFeatured: z.boolean().default(false),
   isSponsored: z.boolean().default(false),
   isOpinion: z.boolean().default(false),
   isPressRelease: z.boolean().default(false),
@@ -39,6 +46,7 @@ export const bankSchema = z.object({
   officialWebsite: z.url().optional().nullable(),
   headquarters: z.string().max(255).optional().nullable(),
   swiftCode: z.string().max(40).optional().nullable(),
+  showOnWebsite: z.boolean().default(true),
 });
 
 export const productSchema = z.object({
@@ -60,6 +68,13 @@ export const exchangeRateSchema = z.object({
   rateDate: z.iso.date(),
   source: z.string().min(2).max(255),
   notes: z.string().max(1000).optional().nullable(),
+});
+
+export const rateSourceAdminSchema = z.object({
+  trustTier: z.enum(["high", "medium", "low", "unverified"]),
+  trustScore: z.number().int().min(0).max(100),
+  lastVerifiedAt: z.iso.date().optional().nullable(),
+  isActive: z.boolean(),
 });
 
 export const jobSchema = z.object({

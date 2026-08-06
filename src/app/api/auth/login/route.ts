@@ -1,8 +1,19 @@
 import { dbQuery } from "@/lib/db/query";
 import { createSession } from "@/lib/auth/session";
+import { canAccessAdmin } from "@/lib/auth/permissions";
 import { verifyPassword } from "@/lib/auth/password";
-import { badRequest, ok, unauthorized } from "@/lib/http";
+import type { DbRow } from "@/lib/db/pool";
+import { badRequest, forbidden, ok, unauthorized } from "@/lib/http";
 import { loginSchema } from "@/lib/validation/schemas";
+import type { SessionUser } from "@/types";
+
+type AuthUserRow = DbRow & {
+  id: number;
+  email: string;
+  name: string;
+  passwordHash: string;
+  role: SessionUser["role"];
+};
 
 export async function POST(request: Request) {
   try {
@@ -12,7 +23,7 @@ export async function POST(request: Request) {
       return badRequest("Invalid login payload", parsed.error.flatten());
     }
 
-    const users = await dbQuery<any[]>(
+    const users = await dbQuery<AuthUserRow[]>(
       `SELECT id, email, display_name AS name, password_hash AS passwordHash, role
        FROM users
        WHERE email = ? AND is_active = 1 AND deleted_at IS NULL
@@ -28,6 +39,10 @@ export async function POST(request: Request) {
     const validPassword = await verifyPassword(parsed.data.password, user.passwordHash);
     if (!validPassword) {
       return unauthorized("Invalid email or password");
+    }
+
+    if (!canAccessAdmin(user.role)) {
+      return forbidden("This account cannot access the admin area");
     }
 
     await createSession({

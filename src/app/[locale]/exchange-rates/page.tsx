@@ -1,6 +1,7 @@
 import { dictionary } from "@/lib/i18n/dictionary";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { dbQuery } from "@/lib/db/query";
+import Link from "next/link";
 
 export default async function ExchangeRatesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -27,6 +28,14 @@ export default async function ExchangeRatesPage({ params }: { params: Promise<{ 
     <div className="rounded-xl border border-slate-200 bg-white p-6">
       <h1 className="text-2xl font-black text-[#0A2342]">{t.nav.rates}</h1>
       <p className="mt-2 text-sm text-amber-700">{t.labels.informationalRates}</p>
+      <div className="mt-4">
+        <Link
+          href={`/${safeLocale}/exchange-rates/compare`}
+          className="inline-flex items-center rounded-lg bg-[#0A2342] px-4 py-2 text-sm font-semibold text-white hover:bg-[#133463]"
+        >
+          {safeLocale === "ar" ? "مقارنة أسعار الصرف" : "Compare Exchange Rates"}
+        </Link>
+      </div>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[720px] border-collapse text-sm">
           <thead>

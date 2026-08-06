@@ -1,0 +1,40 @@
+<svg width="768" height="768" viewBox="0 0 768 768" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="84" y1="70" x2="686" y2="694" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#12161D"/>
+      <stop offset="1" stop-color="#080A0E"/>
+    </linearGradient>
+    <linearGradient id="greenArc" x1="134" y1="210" x2="388" y2="580" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00C454"/>
+      <stop offset="1" stop-color="#059C41"/>
+    </linearGradient>
+    <linearGradient id="redArc" x1="206" y1="566" x2="582" y2="658" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF1230"/>
+      <stop offset="1" stop-color="#D9041D"/>
+    </linearGradient>
+    <linearGradient id="whiteGloss" x1="230" y1="188" x2="432" y2="490" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EEF2F8"/>
+    </linearGradient>
+    <filter id="softShadow" x="48" y="48" width="672" height="672" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#000000" flood-opacity="0.34"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#softShadow)">
+    <rect x="72" y="72" width="624" height="624" rx="126" fill="url(#bg)"/>
+  </g>
+
+  <path d="M152 324C152 217 233 137 340 120C266 156 213 234 213 319C213 415 277 497 375 533C244 540 152 448 152 324Z" fill="url(#greenArc)"/>
+
+  <path d="M196 554C311 627 472 616 571 523C541 579 485 624 420 647C336 677 245 664 196 554Z" fill="url(#redArc)"/>
+
+  <path d="M229 210H365C449 210 504 261 504 332C504 368 491 400 463 423C435 447 397 458 351 458H229V210ZM339 383C382 383 408 365 408 333C408 300 382 282 339 282H307V383H339Z" fill="url(#whiteGloss)"/>
+
+  <path d="M498 219C543 256 566 310 566 379C566 469 515 534 431 551C483 542 529 515 560 474C587 438 602 390 602 337C602 290 592 249 573 219H498Z" fill="white"/>
+
+  <path d="M450 465C498 427 519 383 519 318C519 275 509 239 491 209C514 220 534 236 549 257C574 291 587 336 587 388C587 504 506 588 391 605C453 587 503 534 503 471C503 469 452 467 450 465Z" fill="white"/>
+
+  <circle cx="529" cy="228" r="40" fill="#F70E28"/>
+  <circle cx="439" cy="552" r="34" fill="white"/>
+</svg>

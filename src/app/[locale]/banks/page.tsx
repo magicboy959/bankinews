@@ -12,7 +12,7 @@ export default async function BanksPage({ params }: { params: Promise<{ locale: 
       `SELECT b.slug, bt.name, bt.short_description AS shortDescription
        FROM banks b
        JOIN bank_translations bt ON bt.bank_id = b.id AND bt.locale = ?
-       WHERE b.deleted_at IS NULL
+       WHERE b.deleted_at IS NULL AND b.show_on_website = 1
        ORDER BY bt.name ASC`,
       [safeLocale]
     );

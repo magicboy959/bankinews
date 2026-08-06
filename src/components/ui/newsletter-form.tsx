@@ -35,27 +35,27 @@ export function NewsletterForm({ locale }: { locale: Locale }) {
       <input
         type="text"
         placeholder={locale === "ar" ? "الاسم (اختياري)" : "Name (optional)"}
-        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+        className="w-full rounded-md border border-slate-600 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
       <input
         type="email"
         placeholder={locale === "ar" ? "البريد الإلكتروني" : "Email address"}
-        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+        className="w-full rounded-md border border-slate-600 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-cyan-400 focus:outline-none"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
       />
-      <label className="flex items-center gap-2 text-xs text-slate-600">
-        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} required />
+      <label className="flex items-center gap-2 text-xs text-slate-300">
+        <input type="checkbox" className="accent-cyan-500" checked={consent} onChange={(e) => setConsent(e.target.checked)} required />
         {locale === "ar" ? "أوافق على سياسة الخصوصية" : "I agree to the privacy policy"}
       </label>
-      <button type="submit" disabled={status === "loading"} className="rounded-md bg-[#0A2342] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+      <button type="submit" disabled={status === "loading"} className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-60">
         {status === "loading" ? (locale === "ar" ? "جاري الإرسال..." : "Submitting...") : locale === "ar" ? "اشترك" : "Subscribe"}
       </button>
-      {status === "success" && <p className="text-xs text-emerald-700">{locale === "ar" ? "تم الإرسال. يرجى تأكيد الاشتراك من البريد." : "Submitted. Please confirm from your inbox."}</p>}
-      {status === "error" && <p className="text-xs text-red-700">{locale === "ar" ? "تعذر الإرسال." : "Submission failed."}</p>}
+      {status === "success" && <p className="text-xs text-emerald-300">{locale === "ar" ? "تم الإرسال. يرجى تأكيد الاشتراك من البريد." : "Submitted. Please confirm from your inbox."}</p>}
+      {status === "error" && <p className="text-xs text-red-300">{locale === "ar" ? "تعذر الإرسال." : "Submission failed."}</p>}
     </form>
   );
 }

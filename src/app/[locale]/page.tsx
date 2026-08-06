@@ -3,6 +3,7 @@ import { isLocale, type Locale } from "@/lib/i18n/config";
 import { getHomepageData } from "@/services/homepage-service";
 import { ArticleCardView } from "@/components/articles/article-card";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { HeroCarousel } from "@/components/home/hero-carousel";
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -32,13 +33,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       </section>
 
-      {data.featured && (
-        <section className="rounded-2xl bg-[#0A2342] p-5 text-white md:p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">{t.labels.latest}</p>
-          <h1 className="mt-3 text-2xl font-black leading-tight md:text-4xl">{data.featured.title}</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200 md:mt-4 md:text-base">{data.featured.summary}</p>
-        </section>
-      )}
+      {data.heroSlides.length ? <HeroCarousel locale={safeLocale} slides={data.heroSlides} /> : null}
 
       <section>
         <SectionHeading title={t.labels.latest} />

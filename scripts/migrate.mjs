@@ -1,7 +1,10 @@
 import fs from "node:fs/promises";
+import path from "node:path";
 import mysql from "mysql2/promise";
 
-const sql = await fs.readFile(new URL("../sql/001_initial_schema.sql", import.meta.url), "utf8");
+const sqlDir = new URL("../sql/", import.meta.url);
+const files = await fs.readdir(sqlDir);
+const migrationFiles = files.filter((file) => file.endsWith(".sql")).sort();
 
 const connection = await mysql.createConnection({
   host: process.env.DB_HOST,
@@ -14,8 +17,11 @@ const connection = await mysql.createConnection({
 });
 
 try {
-  await connection.query(sql);
-  console.log("Migration completed: sql/001_initial_schema.sql");
+  for (const file of migrationFiles) {
+    const sql = await fs.readFile(new URL(`../sql/${file}`, import.meta.url), "utf8");
+    await connection.query(sql);
+    console.log(`Migration completed: sql/${file}`);
+  }
 } finally {
   await connection.end();
 }
