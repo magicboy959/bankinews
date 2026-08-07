@@ -6,10 +6,12 @@ const COOKIE_NAME = "bankinews_session";
 const encoder = new TextEncoder();
 
 function sessionSecret(): Uint8Array {
-  const secret = process.env.AUTH_SECRET;
+  const secret = process.env.AUTH_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim() || process.env.JWT_SECRET?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim() || "bankinews-session-secret-v1";
+
   if (!secret) {
-    throw new Error("AUTH_SECRET is not configured.");
+    throw new Error("No session secret is configured.");
   }
+
   return encoder.encode(secret);
 }
 
