@@ -53,7 +53,8 @@ export async function POST(request: Request) {
     });
 
     return ok({ user: { id: user.id, email: user.email, name: user.name, role: user.role } });
-  } catch {
-    return unauthorized("Unable to login");
+  } catch (error) {
+    console.error("Login failed", error);
+    return unauthorized(error instanceof Error ? error.message : "Unable to login");
   }
 }
