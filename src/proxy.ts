@@ -4,7 +4,7 @@ import { defaultLocale, locales } from "@/lib/i18n/config";
 
 const PUBLIC_FILE = /\.(.*)$/;
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (

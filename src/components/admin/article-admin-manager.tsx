@@ -33,6 +33,15 @@ type ArticleDetailItem = {
   contentHtml: string | null;
 };
 
+type ArticleHistoryItem = {
+  action: "article_created" | "article_updated" | "article_deleted" | string;
+  previousStatus: string | null;
+  newStatus: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  editorName: string | null;
+};
+
 type ApiSuccess<T> = {
   ok: true;
   data: T;
@@ -77,6 +86,28 @@ function truthyFlag(value: number | boolean): boolean {
   return value === true || value === 1;
 }
 
+function historyFieldLabel(key: string, locale: Locale): string {
+  const labels: Record<string, { ar: string; en: string }> = {
+    status: { ar: "الحالة", en: "Status" },
+    articleType: { ar: "نوع المادة", en: "Article type" },
+    title: { ar: "العنوان", en: "Title" },
+    summary: { ar: "الملخص", en: "Summary" },
+    sourceUrl: { ar: "رابط المصدر", en: "Source URL" },
+    sourceAttribution: { ar: "الإسناد", en: "Source attribution" },
+    featuredImageUrl: { ar: "الصورة الرئيسية", en: "Featured image" },
+    publishAt: { ar: "موعد النشر", en: "Publish at" },
+    expiresAt: { ar: "تاريخ الانتهاء", en: "Expires at" },
+    isBreaking: { ar: "عاجل", en: "Breaking" },
+    isSponsored: { ar: "برعاية", en: "Sponsored" },
+    isOpinion: { ar: "رأي", en: "Opinion" },
+    isPressRelease: { ar: "بيان صحفي", en: "Press release" },
+    relatedBankId: { ar: "البنك المرتبط", en: "Related bank" },
+    categoryId: { ar: "التصنيف", en: "Category" },
+  };
+
+  return labels[key]?.[locale] ?? key;
+}
+
 export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListItem[] }) {
   const router = useRouter();
 
@@ -86,6 +117,8 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [editHistory, setEditHistory] = useState<ArticleHistoryItem[]>([]);
 
   const sortedRows = useMemo(
     () => [...initialRows].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
@@ -140,14 +173,27 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
   async function startEdit(id: number) {
     setError(null);
     setLoadingId(id);
+    setHistoryLoading(true);
 
-    const response = await fetch(`/api/articles/${id}`, { method: "GET" });
+    const [response, historyResponse] = await Promise.all([
+      fetch(`/api/articles/${id}`, { method: "GET" }),
+      fetch(`/api/articles/${id}/history`, { method: "GET" }),
+    ]);
+
     const result = await parseResponse<ArticleDetailItem[]>(response);
+    const historyResult = await parseResponse<ArticleHistoryItem[]>(historyResponse);
     setLoadingId(null);
+    setHistoryLoading(false);
 
     if (!response.ok || !result.ok || !Array.isArray(result.data) || result.data.length === 0) {
       setError(result.ok ? "Unable to load article details" : result.error?.message ?? "Unable to load article details");
       return;
+    }
+
+    if (historyResponse.ok && historyResult.ok && Array.isArray(historyResult.data)) {
+      setEditHistory(historyResult.data);
+    } else {
+      setEditHistory([]);
     }
 
     const preferredLocale = editForm.locale;
@@ -207,6 +253,7 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
 
     setEditingId(null);
     setEditForm(emptyForm);
+    setEditHistory([]);
     router.refresh();
   }
 
@@ -230,9 +277,43 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
 
     if (editingId === id) {
       setEditingId(null);
+      setEditHistory([]);
     }
 
     router.refresh();
+  }
+
+  function historyLabel(action: string, locale: Locale): string {
+    const isAr = locale === "ar";
+    if (action === "article_created") {
+      return isAr ? "تم الإنشاء" : "Created";
+    }
+    if (action === "article_updated") {
+      return isAr ? "تم التحديث" : "Updated";
+    }
+    if (action === "article_deleted") {
+      return isAr ? "تم الحذف" : "Deleted";
+    }
+    return isAr ? "تغيير" : "Change";
+  }
+
+  function historySummary(item: ArticleHistoryItem, locale: Locale): string {
+    const isAr = locale === "ar";
+    const changes = (item.metadata?.changes as Record<string, { from: unknown; to: unknown }> | undefined) ?? undefined;
+    if (!changes) {
+      return isAr ? "لا توجد تفاصيل إضافية." : "No additional details.";
+    }
+
+    const changedFields = Object.entries(changes)
+      .filter(([, value]) => String(value.from ?? "") !== String(value.to ?? ""))
+      .slice(0, 4)
+      .map(([key]) => historyFieldLabel(key, locale));
+
+    if (!changedFields.length) {
+      return isAr ? "لا توجد تغييرات جوهرية مسجلة." : "No material field changes recorded.";
+    }
+
+    return isAr ? `الحقول المعدلة: ${changedFields.join("، ")}` : `Changed fields: ${changedFields.join(", ")}`;
   }
 
   return (
@@ -319,8 +400,51 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
         <form onSubmit={handleUpdate} className="mt-6 rounded-lg border border-slate-200 p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-black uppercase tracking-wide text-slate-700">Edit Article #{editingId}</h2>
-            <button type="button" className="text-sm font-semibold text-slate-600" onClick={() => setEditingId(null)}>Cancel</button>
+            <button
+              type="button"
+              className="text-sm font-semibold text-slate-600"
+              onClick={() => {
+                setEditingId(null);
+                setEditHistory([]);
+              }}
+            >
+              Cancel
+            </button>
           </div>
+
+          <section className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+            <h3 className="text-xs font-black uppercase tracking-wide text-slate-700">
+              {editForm.locale === "ar" ? "سجل التصحيحات" : "Correction History"}
+            </h3>
+            {historyLoading && (
+              <p className="mt-2 text-xs text-slate-500">
+                {editForm.locale === "ar" ? "جاري تحميل السجل..." : "Loading history..."}
+              </p>
+            )}
+            {!historyLoading && editHistory.length === 0 && (
+              <p className="mt-2 text-xs text-slate-500">
+                {editForm.locale === "ar" ? "لا يوجد سجل تصحيحات حتى الآن." : "No correction history recorded yet."}
+              </p>
+            )}
+            {!historyLoading && editHistory.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {editHistory.map((item, index) => (
+                  <div key={`${item.action}-${item.createdAt}-${index}`} className="rounded border border-slate-200 bg-white p-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span className="font-semibold text-slate-800">{historyLabel(item.action, editForm.locale)}</span>
+                      <span className="text-slate-500">{new Date(item.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-600">{historySummary(item, editForm.locale)}</p>
+                    {item.editorName && (
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        {editForm.locale === "ar" ? `بواسطة ${item.editorName}` : `By ${item.editorName}`}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <input className="rounded border border-slate-300 px-3 py-2" placeholder="Title" value={editForm.title} onChange={(e) => onChange(setEditForm, "title", e.target.value)} required />
