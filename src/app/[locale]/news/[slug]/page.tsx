@@ -106,6 +106,17 @@ export default async function ArticlePage({
         <h1 className="text-3xl font-black text-slate-900">{article.title}</h1>
         <p className="mt-3 text-lg text-slate-600">{article.summary}</p>
 
+        {article.featuredImageUrl ? (
+          <div className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+            <img
+              src={article.featuredImageUrl}
+              alt={article.title}
+              loading="eager"
+              className="h-auto max-h-[480px] w-full object-cover"
+            />
+          </div>
+        ) : null}
+
         <div className="mt-4 text-sm text-slate-500">
           {article.publishedAt ? formatDate(article.publishedAt, safeLocale) : "-"}
           <span className="mx-2">•</span>
