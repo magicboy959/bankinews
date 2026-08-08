@@ -417,9 +417,10 @@ export function DashboardAdminManager({
   const blockingQaNotes = qaNotes.filter((note) => note.tone === "warning");
   const submitBlockedByQa = requiresStrictQa && blockingQaNotes.length > 0;
 
+  const [localArticleRows, setLocalArticleRows] = useState<ArticleListItem[]>(articleRows);
   const sortedArticles = useMemo(
-    () => [...articleRows].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
-    [articleRows]
+    () => [...localArticleRows].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+    [localArticleRows]
   );
 
   function updateComposer<K extends keyof ComposerState>(key: K, value: ComposerState[K]) {
@@ -724,6 +725,26 @@ export function DashboardAdminManager({
       setAiError("Unable to generate AI draft");
     } finally {
       setAiGenerating(false);
+    }
+  }
+
+  async function deleteArticle(id: number) {
+    if (!window.confirm("Permanently delete this article? This cannot be undone.")) {
+      return;
+    }
+
+    setError(null);
+    const response = await fetch(`/api/articles/${id}`, { method: "DELETE" });
+    const result = await parseResponse<{ id: number; deleted: boolean }>(response);
+
+    if (!response.ok || !result.ok) {
+      setError(result.ok ? "Unable to delete article" : result.error?.message ?? "Unable to delete article");
+      return;
+    }
+
+    setLocalArticleRows((prev) => prev.filter((row) => row.id !== id));
+    if (editingId === id) {
+      resetComposer();
     }
   }
 
@@ -1283,7 +1304,7 @@ export function DashboardAdminManager({
                 <th className="px-3 py-2 font-semibold">Status</th>
                 <th className="px-3 py-2 font-semibold">Flags</th>
                 <th className="px-3 py-2 font-semibold">Updated</th>
-                <th className="px-3 py-2 font-semibold">Action</th>
+                <th className="px-3 py-2 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -1298,9 +1319,14 @@ export function DashboardAdminManager({
                   </td>
                   <td className="px-3 py-2 text-slate-700">{new Date(row.updatedAt).toLocaleString()}</td>
                   <td className="px-3 py-2">
-                    <button type="button" onClick={() => startEdit(row.id)} disabled={loadingArticleId === row.id} className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
-                      {loadingArticleId === row.id ? "Loading..." : "Edit"}
-                    </button>
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => startEdit(row.id)} disabled={loadingArticleId === row.id} className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+                        {loadingArticleId === row.id ? "Loading..." : "Edit"}
+                      </button>
+                      <button type="button" onClick={() => deleteArticle(row.id)} className="rounded border border-red-300 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
