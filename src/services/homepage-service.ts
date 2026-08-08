@@ -57,10 +57,11 @@ async function fetchLatestArticles(locale: Locale, limit = 8): Promise<ArticleCa
       SELECT a.id, a.slug, at.locale, at.title, at.summary, a.featured_image_url AS featuredImageUrl,
              a.published_at AS publishedAt, a.reading_time_minutes AS readingTimeMinutes,
              a.is_breaking AS isBreaking, a.is_sponsored AS isSponsored,
-             ct.title AS categoryName
+             ct.title AS categoryName, c.slug AS categorySlug
       FROM articles a
       JOIN article_translations at ON at.article_id = a.id AND at.locale = ?
       LEFT JOIN article_categories ac ON ac.article_id = a.id
+      LEFT JOIN categories c ON c.id = ac.category_id AND c.deleted_at IS NULL
       LEFT JOIN category_translations ct ON ct.category_id = ac.category_id AND ct.locale = ?
       WHERE a.status = 'published' AND a.deleted_at IS NULL
       ORDER BY a.published_at DESC

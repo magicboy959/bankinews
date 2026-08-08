@@ -8,10 +8,12 @@ export function ArticleCardView({
   locale,
   article,
   compact = false,
+  categorySlug,
 }: {
   locale: Locale;
   article: ArticleCard;
   compact?: boolean;
+  categorySlug?: string;
 }) {
   const t = dictionary[locale];
   const href = `/${locale}/news/${article.slug}`;
@@ -65,7 +67,13 @@ export function ArticleCardView({
             <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-700">{t.labels.sponsored}</span>
           )}
           {article.categoryName && (
-            <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">{article.categoryName}</span>
+            <Link
+              href={`/${locale}/category/${article.categorySlug ?? article.categoryName.toLowerCase().replace(/\s+/g, "-")}`}
+              className="rounded bg-slate-100 px-2 py-0.5 text-slate-600 hover:bg-slate-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {article.categoryName}
+            </Link>
           )}
         </div>
 

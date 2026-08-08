@@ -54,6 +54,7 @@ export interface ArticleCard {
   title: string;
   summary: string;
   categoryName: string | null;
+  categorySlug: string | null;
   featuredImageUrl: string | null;
   publishedAt: string | null;
   readingTimeMinutes: number;
