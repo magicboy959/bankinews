@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { dictionary } from "@/lib/i18n/dictionary";
@@ -7,7 +8,38 @@ import { ArticleContent } from "@/components/articles/article-content";
 import { ArticleCardView } from "@/components/articles/article-card";
 import { ArticleReaderExperience } from "@/components/articles/article-reader-experience";
 import { getYouTubeEmbedUrl } from "@/lib/media";
+import { buildArticleMetadata } from "@/lib/seo/metadata";
 import { formatDate } from "@/lib/utils";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const safeLocale: Locale = isLocale(locale) ? locale : "ar";
+  const article = await getArticleBySlug(safeLocale, slug);
+
+  if (!article) {
+    return buildArticleMetadata({
+      locale: safeLocale,
+      title: safeLocale === "ar" ? "المقال غير موجود" : "Article Not Found",
+      description: safeLocale === "ar" ? "تعذر العثور على هذه المادة." : "The requested article could not be found.",
+      path: `/${safeLocale}/news/${slug}`,
+    });
+  }
+
+  return buildArticleMetadata({
+    locale: safeLocale,
+    title: article.title,
+    description: article.summary,
+    path: `/${safeLocale}/news/${slug}`,
+    publishedAt: article.publishedAt,
+    updatedAt: article.updatedAt,
+    featuredImageUrl: article.featuredImageUrl,
+    videoUrl: (article as { videoUrl?: string | null }).videoUrl,
+  });
+}
 
 export default async function ArticlePage({
   params,

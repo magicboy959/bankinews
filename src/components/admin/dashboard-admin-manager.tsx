@@ -286,6 +286,7 @@ export function DashboardAdminManager({
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mediaWarning, setMediaWarning] = useState<string | null>(null);
   const [subscribers, setSubscribers] = useState<SubscriberItem[]>(initialSubscribers);
   const [savingSubscriberId, setSavingSubscriberId] = useState<number | null>(null);
   const [imagePreviewState, setImagePreviewState] = useState<"idle" | "ok" | "error">("idle");
@@ -442,6 +443,7 @@ export function DashboardAdminManager({
     setActiveLocale("ar");
     setAiPrompt("");
     setAiError(null);
+    setMediaWarning(null);
   }
 
   function buildPayload(locale: Locale) {
@@ -613,6 +615,7 @@ export function DashboardAdminManager({
 
   async function uploadImage() {
     setError(null);
+    setMediaWarning(null);
     const file = fileInputRef.current?.files?.[0];
 
     if (!file) {
@@ -630,7 +633,7 @@ export function DashboardAdminManager({
       body: form,
     });
 
-    const result = await parseResponse<{ url?: string }>(response);
+    const result = await parseResponse<{ url?: string; driver?: string; warning?: string | null }>(response);
     setUploadingImage(false);
 
     if (!response.ok || !result.ok || !result.data.url) {
@@ -639,6 +642,9 @@ export function DashboardAdminManager({
     }
 
     setComposer((prev) => ({ ...prev, featuredImageUrl: result.data.url ?? prev.featuredImageUrl }));
+    if (result.data.driver === "database_blob_fallback") {
+      setMediaWarning("FTP upload failed, so this image was stored as a database blob URL instead of media.bankinews.com. Check MEDIA_FTP_* connectivity or permissions.");
+    }
     router.refresh();
   }
 
@@ -729,6 +735,7 @@ export function DashboardAdminManager({
       </div>
 
       {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {mediaWarning && <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{mediaWarning}</p>}
 
       <section className="rounded-xl border border-slate-200 bg-gradient-to-r from-[#0A2342] to-[#123A63] p-5 text-white">
         <div className="flex flex-wrap items-center justify-between gap-4">

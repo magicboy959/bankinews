@@ -19,6 +19,12 @@ type MediaRow = DbRow & {
   createdAt: string;
 };
 
+type UploadFailure = {
+  ok: false;
+  error: ReturnType<typeof badRequest> | ReturnType<typeof serverError>;
+  reason: string;
+};
+
 function buildSignature(timestamp: number, apiSecret: string, folder: string) {
   const toSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
   return createHash("sha1").update(toSign).digest("hex");
@@ -74,7 +80,7 @@ async function uploadToCloudinary(file: File) {
   const folder = process.env.CLOUDINARY_UPLOAD_FOLDER ?? "bankinews/admin";
 
   if (!cloudName || !apiKey || !apiSecret) {
-    return { ok: false as const, error: badRequest("Cloudinary credentials are not configured.") };
+    return { ok: false as const, error: badRequest("Cloudinary credentials are not configured."), reason: "cloudinary_credentials_missing" };
   }
 
   const timestamp = Math.floor(Date.now() / 1000);
@@ -97,7 +103,7 @@ async function uploadToCloudinary(file: File) {
 
   if (!uploadResponse.ok) {
     const details = await uploadResponse.text().catch(() => "");
-    return { ok: false as const, error: badRequest("Image upload failed", { details }) };
+    return { ok: false as const, error: badRequest("Image upload failed", { details }), reason: `cloudinary_upload_failed:${details || uploadResponse.status}` };
   }
 
   const uploadJson = (await uploadResponse.json()) as {
@@ -111,7 +117,7 @@ async function uploadToCloudinary(file: File) {
 
   const uploadedUrl = String(uploadJson.secure_url ?? "").trim();
   if (!uploadedUrl) {
-    return { ok: false as const, error: serverError("Cloudinary did not return an image URL") };
+    return { ok: false as const, error: serverError("Cloudinary did not return an image URL"), reason: "cloudinary_missing_url" };
   }
 
   return {
@@ -142,6 +148,7 @@ async function uploadToCpanelFtp(file: File) {
       error: badRequest(
         "FTP storage is not configured. Required: MEDIA_FTP_HOST, MEDIA_FTP_USER, MEDIA_FTP_PASSWORD, MEDIA_FTP_PUBLIC_BASE_URL"
       ),
+      reason: "ftp_config_missing",
     };
   }
 
@@ -179,11 +186,12 @@ async function uploadToCpanelFtp(file: File) {
         height: null,
       },
     };
-  } catch {
+  } catch (error) {
     client.close();
     return {
       ok: false as const,
       error: serverError("FTP upload failed. Check MEDIA_FTP_* values and cPanel folder permissions."),
+      reason: error instanceof Error ? `ftp_upload_failed:${error.message}` : "ftp_upload_failed",
     };
   }
 }
@@ -246,6 +254,7 @@ export async function POST(request: Request) {
     const driver = (process.env.MEDIA_STORAGE_DRIVER ?? "local").trim().toLowerCase();
     let resolvedDriver = driver;
     let uploaded;
+    let fallbackReason: string | null = null;
 
     if (driver === "cloudinary") {
       uploaded = await uploadToCloudinary(file);
@@ -267,6 +276,7 @@ export async function POST(request: Request) {
     if (!uploaded.ok && driver === "cpanel_ftp") {
       const shouldFallbackToDb = (process.env.MEDIA_DB_FALLBACK_ON_FAILURE ?? "true").trim().toLowerCase() === "true";
       if (shouldFallbackToDb) {
+        fallbackReason = "reason" in uploaded ? uploaded.reason : "ftp_upload_failed";
         uploaded = await uploadToDatabaseBlob(file);
         if (uploaded.ok) {
           resolvedDriver = "database_blob_fallback";
@@ -305,7 +315,13 @@ export async function POST(request: Request) {
        LIMIT 1`
     );
 
-    return created({ uploaded: true, media: rows[0] ?? null, url: uploaded.value.url, driver: resolvedDriver });
+    return created({
+      uploaded: true,
+      media: rows[0] ?? null,
+      url: uploaded.value.url,
+      driver: resolvedDriver,
+      warning: resolvedDriver === "database_blob_fallback" ? fallbackReason ?? "ftp_upload_failed" : null,
+    });
   } catch {
     return serverError("Unable to upload image");
   }
