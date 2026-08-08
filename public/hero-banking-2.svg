@@ -1,0 +1,26 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title2 desc2">
+  <title id="title2">Banking hero illustration 2</title>
+  <desc id="desc2">Abstract financial graph with layered waves.</desc>
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#112d4e"/>
+      <stop offset="100%" stop-color="#1f4068"/>
+    </linearGradient>
+    <linearGradient id="line2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f7f7f7" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#7bdff2" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg2)"/>
+  <g fill="none" stroke="url(#line2)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M80 640L260 600L440 650L620 470L800 510L980 360L1160 430L1340 260L1520 320"/>
+    <path d="M80 740L260 700L440 740L620 620L800 650L980 550L1160 610L1340 470L1520 520" opacity="0.45"/>
+  </g>
+  <g fill="#ffffff" fill-opacity="0.18">
+    <circle cx="260" cy="600" r="12"/>
+    <circle cx="620" cy="470" r="12"/>
+    <circle cx="980" cy="360" r="12"/>
+    <circle cx="1340" cy="260" r="12"/>
+  </g>
+  <rect x="0" y="760" width="1600" height="140" fill="#0b1e35" fill-opacity="0.55"/>
+</svg>

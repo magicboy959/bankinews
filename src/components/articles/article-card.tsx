@@ -70,7 +70,6 @@ export function ArticleCardView({
             <Link
               href={`/${locale}/category/${article.categorySlug ?? article.categoryName.toLowerCase().replace(/\s+/g, "-")}`}
               className="rounded bg-slate-100 px-2 py-0.5 text-slate-600 hover:bg-slate-200"
-              onClick={(e) => e.stopPropagation()}
             >
               {article.categoryName}
             </Link>

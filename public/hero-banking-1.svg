@@ -1,0 +1,33 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title1 desc1">
+  <title id="title1">Banking hero illustration 1</title>
+  <desc id="desc1">Abstract banking themed background with geometric layers.</desc>
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a2342"/>
+      <stop offset="100%" stop-color="#145374"/>
+    </linearGradient>
+    <linearGradient id="accent1" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#23a6d5" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#23d5ab" stop-opacity="0.65"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg1)"/>
+  <g opacity="0.22" stroke="#ffffff" stroke-width="1">
+    <path d="M0 120H1600"/>
+    <path d="M0 240H1600"/>
+    <path d="M0 360H1600"/>
+    <path d="M0 480H1600"/>
+    <path d="M0 600H1600"/>
+    <path d="M0 720H1600"/>
+    <path d="M200 0V900"/>
+    <path d="M400 0V900"/>
+    <path d="M600 0V900"/>
+    <path d="M800 0V900"/>
+    <path d="M1000 0V900"/>
+    <path d="M1200 0V900"/>
+    <path d="M1400 0V900"/>
+  </g>
+  <path d="M0 670C260 550 430 600 660 690C920 790 1160 790 1600 590V900H0Z" fill="url(#accent1)"/>
+  <circle cx="1260" cy="260" r="160" fill="#ffffff" fill-opacity="0.08"/>
+  <circle cx="1260" cy="260" r="110" fill="#ffffff" fill-opacity="0.1"/>
+</svg>
