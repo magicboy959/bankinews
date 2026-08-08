@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RichTextEditor, hasRichTextContent } from "./rich-text-editor";
+import { getYouTubeEmbedUrl, looksLikeImageUrl } from "@/lib/media";
 
 type ArticleStatus = "draft" | "review" | "scheduled" | "published" | "archived";
 type Locale = "ar" | "en";
@@ -133,7 +134,7 @@ type QANote = {
   tone: "warning" | "info";
   message: string;
   action?:
-    | { type: "focus"; target: "featuredImage" | "sourceUrl" | "publishAt" | "title" | "summary" | "content" }
+    | { type: "focus"; target: "featuredImage" | "videoUrl" | "sourceUrl" | "publishAt" | "title" | "summary" | "content" }
     | { type: "switchLocale"; locale: Locale };
 };
 
@@ -268,6 +269,7 @@ export function DashboardAdminManager({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const featuredImageInputRef = useRef<HTMLInputElement | null>(null);
+  const videoUrlInputRef = useRef<HTMLInputElement | null>(null);
   const sourceUrlInputRef = useRef<HTMLInputElement | null>(null);
   const publishAtInputRef = useRef<HTMLInputElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
@@ -286,14 +288,24 @@ export function DashboardAdminManager({
   const [error, setError] = useState<string | null>(null);
   const [subscribers, setSubscribers] = useState<SubscriberItem[]>(initialSubscribers);
   const [savingSubscriberId, setSavingSubscriberId] = useState<number | null>(null);
+  const [imagePreviewState, setImagePreviewState] = useState<"idle" | "ok" | "error">("idle");
   const activeSubscriberCount = useMemo(
     () => subscribers.filter((subscriber) => subscriber.status === "active").length,
     [subscribers]
   );
+  const previewLocale: Locale = activeLocale;
+  const previewTitle = composer.translations[previewLocale].title.trim();
+  const previewSummary = composer.translations[previewLocale].summary.trim();
+  const previewEmbedUrl = getYouTubeEmbedUrl(composer.videoUrl);
   const campaignOpenRate = marketingOverview.sentTotal > 0 ? Math.round((marketingOverview.openTotal / marketingOverview.sentTotal) * 1000) / 10 : 0;
   const campaignClickRate = marketingOverview.sentTotal > 0 ? Math.round((marketingOverview.clickTotal / marketingOverview.sentTotal) * 1000) / 10 : 0;
   const avgDwellMinutes = Math.max(0, Math.round((engagementOverview.avgDwellSeconds / 60) * 10) / 10);
   const engagementRangeLabel = engagementRange === "7d" ? "7 Days" : engagementRange === "90d" ? "90 Days" : "30 Days";
+
+  useEffect(() => {
+    setImagePreviewState("idle");
+  }, [composer.featuredImageUrl]);
+
   function focusQaTarget(target: QAFocusAction["target"]) {
     const scheduleFocus = (focusTarget: HTMLElement | null) => {
       focusTarget?.focus();
@@ -307,6 +319,11 @@ export function DashboardAdminManager({
 
     if (target === "sourceUrl") {
       scheduleFocus(sourceUrlInputRef.current);
+      return;
+    }
+
+    if (target === "videoUrl") {
+      scheduleFocus(videoUrlInputRef.current);
       return;
     }
 
@@ -352,10 +369,18 @@ export function DashboardAdminManager({
 
     if (!composer.featuredImageUrl.trim()) {
       notes.push({ tone: "warning", message: "Featured image is missing.", action: { type: "focus", target: "featuredImage" } });
+    } else if (!looksLikeImageUrl(composer.featuredImageUrl)) {
+      notes.push({ tone: "warning", message: "Featured image URL does not look like an image or uploaded media path.", action: { type: "focus", target: "featuredImage" } });
+    } else if (imagePreviewState === "error") {
+      notes.push({ tone: "warning", message: "Featured image preview failed to load. Check the URL before publishing.", action: { type: "focus", target: "featuredImage" } });
     }
 
     if (!composer.sourceUrl.trim()) {
       notes.push({ tone: "warning", message: "Source URL is missing.", action: { type: "focus", target: "sourceUrl" } });
+    }
+
+    if (composer.videoUrl.trim() && !previewEmbedUrl) {
+      notes.push({ tone: "warning", message: "Video URL must be a supported YouTube link to embed in the article.", action: { type: "focus", target: "videoUrl" } });
     }
 
     if (composer.status === "scheduled" && !composer.publishAt.trim()) {
@@ -384,7 +409,7 @@ export function DashboardAdminManager({
     }
 
     return notes;
-  }, [activeLocale, composer.featuredImageUrl, composer.publishAt, composer.sourceUrl, composer.status, composer.translations]);
+  }, [activeLocale, composer.featuredImageUrl, composer.publishAt, composer.sourceUrl, composer.status, composer.translations, composer.videoUrl, imagePreviewState, previewEmbedUrl]);
   const requiresStrictQa = composer.status === "review" || composer.status === "scheduled" || composer.status === "published";
   const blockingQaNotes = qaNotes.filter((note) => note.tone === "warning");
   const submitBlockedByQa = requiresStrictQa && blockingQaNotes.length > 0;
@@ -905,7 +930,7 @@ export function DashboardAdminManager({
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <input className="rounded border border-slate-300 px-3 py-2" placeholder="YouTube video URL (optional)" value={composer.videoUrl} onChange={(e) => updateComposer("videoUrl", e.target.value)} />
+            <input ref={videoUrlInputRef} className="rounded border border-slate-300 px-3 py-2" placeholder="YouTube video URL (optional)" value={composer.videoUrl} onChange={(e) => updateComposer("videoUrl", e.target.value)} />
             <input ref={sourceUrlInputRef} className="rounded border border-slate-300 px-3 py-2" placeholder="Original source URL" value={composer.sourceUrl} onChange={(e) => updateComposer("sourceUrl", e.target.value)} />
             <input className="rounded border border-slate-300 px-3 py-2" placeholder="Source attribution" value={composer.sourceAttribution} onChange={(e) => updateComposer("sourceAttribution", e.target.value)} />
           </div>
@@ -964,6 +989,64 @@ export function DashboardAdminManager({
               />
             </div>
           </div>
+
+          <section className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-wide text-slate-800">Article Preview</h3>
+                <p className="mt-1 text-sm text-slate-600">Live preview for the active locale before you save or publish.</p>
+              </div>
+              <span className="rounded bg-white px-2 py-1 text-xs font-semibold text-slate-700">{previewLocale.toUpperCase()}</span>
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              {composer.featuredImageUrl.trim() ? (
+                <div className="bg-slate-100">
+                  <img
+                    src={composer.featuredImageUrl}
+                    alt={previewTitle || "Article preview"}
+                    className="h-auto max-h-72 w-full object-cover"
+                    onLoad={() => setImagePreviewState("ok")}
+                    onError={() => setImagePreviewState("error")}
+                  />
+                </div>
+              ) : (
+                <div className="flex h-40 items-center justify-center bg-slate-100 text-sm text-slate-500">No featured image selected yet.</div>
+              )}
+
+              <div className="p-4">
+                <div className="mb-2 flex flex-wrap gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                  <span>{composer.articleType || "news"}</span>
+                  <span>•</span>
+                  <span>{composer.status}</span>
+                </div>
+                <h4 className="text-2xl font-black text-slate-900">{previewTitle || "Headline preview"}</h4>
+                <p className="mt-3 text-base leading-7 text-slate-600">{previewSummary || "Summary preview will appear here as you type."}</p>
+
+                {composer.videoUrl.trim() ? (
+                  <div className="mt-4">
+                    {previewEmbedUrl ? (
+                      <div className="aspect-video overflow-hidden rounded-lg border border-slate-200 bg-black">
+                        <iframe
+                          src={previewEmbedUrl}
+                          title="Video preview"
+                          loading="lazy"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          allowFullScreen
+                          className="h-full w-full"
+                        />
+                      </div>
+                    ) : (
+                      <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                        Video URL is present but cannot be embedded. Use a standard YouTube or `youtu.be` link.
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </section>
 
           <section className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between gap-3">
