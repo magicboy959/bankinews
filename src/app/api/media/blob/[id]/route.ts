@@ -36,8 +36,10 @@ export async function GET(
 
     const row = rows[0];
     const data = row.fileData;
+    const bytes = Uint8Array.from(data);
+    const body = new Blob([bytes], { type: row.mimeType || "application/octet-stream" });
 
-    return new NextResponse(data, {
+    return new NextResponse(body, {
       status: 200,
       headers: {
         "Content-Type": row.mimeType || "application/octet-stream",

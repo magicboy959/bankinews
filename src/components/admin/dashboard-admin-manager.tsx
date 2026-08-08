@@ -136,6 +136,9 @@ type QANote = {
     | { type: "switchLocale"; locale: Locale };
 };
 
+type QAAction = NonNullable<QANote["action"]>;
+type QAFocusAction = Extract<QAAction, { type: "focus" }>;
+
 type ApiSuccess<T> = {
   ok: true;
   data: T;
@@ -288,7 +291,7 @@ export function DashboardAdminManager({
   const campaignClickRate = marketingOverview.sentTotal > 0 ? Math.round((marketingOverview.clickTotal / marketingOverview.sentTotal) * 1000) / 10 : 0;
   const avgDwellMinutes = Math.max(0, Math.round((engagementOverview.avgDwellSeconds / 60) * 10) / 10);
   const engagementRangeLabel = engagementRange === "7d" ? "7 Days" : engagementRange === "90d" ? "90 Days" : "30 Days";
-  function focusQaTarget(target: NonNullable<QANote["action"]>["target"]) {
+  function focusQaTarget(target: QAFocusAction["target"]) {
     const scheduleFocus = (focusTarget: HTMLElement | null) => {
       focusTarget?.focus();
       focusTarget?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -322,7 +325,7 @@ export function DashboardAdminManager({
     contentSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  function handleQaAction(action: NonNullable<QANote["action"]>) {
+  function handleQaAction(action: QAAction) {
     if (action.type === "switchLocale") {
       setActiveLocale(action.locale);
       requestAnimationFrame(() => {
@@ -971,23 +974,29 @@ export function DashboardAdminManager({
                 </div>
               ) : (
                 qaNotes.map((note, index) => (
+                  (() => {
+                    const action = note.action;
+
+                    return (
                   <div
                     key={`${note.message}-${index}`}
                     className={`rounded border px-3 py-2 text-sm ${note.tone === "warning" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-700"}`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <p>{note.message}</p>
-                      {note.action ? (
+                      {action ? (
                         <button
                           type="button"
-                          onClick={() => handleQaAction(note.action)}
+                          onClick={() => handleQaAction(action)}
                           className="rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                         >
-                          {note.action.type === "switchLocale" ? `Go to ${note.action.locale.toUpperCase()}` : "Fix"}
+                          {action.type === "switchLocale" ? `Go to ${action.locale.toUpperCase()}` : "Fix"}
                         </button>
                       ) : null}
                     </div>
                   </div>
+                    );
+                  })()
                 ))
               )}
             </div>

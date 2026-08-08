@@ -4,9 +4,9 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 type DbParam = string | number | boolean | Date | Buffer | null;
 type DbParams = DbParam[];
 
-export async function dbQuery<T extends DbRow[]>(sql: string, params: DbParams = []): Promise<T> {
-  const [rows] = await getPool().query<T>(sql, params);
-  return rows;
+export async function dbQuery<T = DbRow[]>(sql: string, params: DbParams = []): Promise<T> {
+  const [rows] = await getPool().query<RowDataPacket[]>(sql, params);
+  return rows as unknown as T;
 }
 
 export async function dbExecute(sql: string, params: DbParams = []): Promise<void> {
@@ -20,7 +20,7 @@ export async function dbInsert(sql: string, params: DbParams = []): Promise<numb
 
 export async function dbTransaction<T>(
   handler: (helpers: {
-    query<R extends RowDataPacket[]>(sql: string, params?: DbParams): Promise<R>;
+    query<R = DbRow[]>(sql: string, params?: DbParams): Promise<R>;
     execute(sql: string, params?: DbParams): Promise<ResultSetHeader>;
   }) => Promise<T>
 ): Promise<T> {
@@ -29,9 +29,9 @@ export async function dbTransaction<T>(
 
     try {
       const result = await handler({
-        query: async <R extends RowDataPacket[]>(sql: string, params: DbParams = []) => {
-          const [rows] = await conn.query<R>(sql, params);
-          return rows;
+        query: async <R = DbRow[]>(sql: string, params: DbParams = []) => {
+          const [rows] = await conn.query<RowDataPacket[]>(sql, params);
+          return rows as unknown as R;
         },
         execute: async (sql: string, params: DbParams = []) => {
           const [result] = await conn.execute<ResultSetHeader>(sql, params);
