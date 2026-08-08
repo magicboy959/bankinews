@@ -7,6 +7,11 @@ function createPool(): Pool {
     throw new Error("Database environment variables are not configured.");
   }
 
+  const configuredConnectionLimit = Number(process.env.DB_CONNECTION_LIMIT ?? 4);
+  const safeConnectionLimit = Number.isFinite(configuredConnectionLimit)
+    ? Math.min(Math.max(1, configuredConnectionLimit), 4)
+    : 4;
+
   return mysql.createPool({
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT ?? 3306),
@@ -14,7 +19,9 @@ function createPool(): Pool {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     waitForConnections: true,
-    connectionLimit: Number(process.env.DB_CONNECTION_LIMIT ?? 10),
+    connectionLimit: safeConnectionLimit,
+    maxIdle: 1,
+    idleTimeout: Number(process.env.DB_IDLE_TIMEOUT_MS ?? 30000),
     queueLimit: 0,
     connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT_MS ?? 10000),
     enableKeepAlive: true,
