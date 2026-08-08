@@ -42,17 +42,16 @@ function getFileExtension(fileName: string, mimeType: string): string {
 }
 
 async function uploadToLocalDisk(file: File) {
-  const uploadsRoot = process.env.MEDIA_LOCAL_UPLOAD_DIR?.trim() || "public/uploads/media";
+  const uploadsRoot = path.join(process.cwd(), "public", "uploads", "media");
   const publicBaseUrl = process.env.MEDIA_LOCAL_PUBLIC_BASE_URL?.trim() || "/uploads/media";
   const now = Date.now();
   const safeBaseName = sanitizeFileName(path.parse(file.name || `image-${now}`).name) || `image-${now}`;
   const extension = getFileExtension(file.name, file.type);
   const fileName = `${safeBaseName}-${now}${extension}`;
-  const targetDir = path.resolve(process.cwd(), uploadsRoot);
-  const targetPath = path.join(targetDir, fileName);
+  const targetPath = path.join(uploadsRoot, fileName);
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-  await mkdir(targetDir, { recursive: true });
+  await mkdir(uploadsRoot, { recursive: true });
   await writeFile(targetPath, fileBuffer);
 
   const normalizedBase = publicBaseUrl.endsWith("/") ? publicBaseUrl.slice(0, -1) : publicBaseUrl;
@@ -246,15 +245,24 @@ export async function POST(request: Request) {
 
     const driver = (process.env.MEDIA_STORAGE_DRIVER ?? "local").trim().toLowerCase();
     let resolvedDriver = driver;
-    let uploaded =
-      driver === "cloudinary"
-        ? await uploadToCloudinary(file)
-        : driver === "cpanel_ftp"
-          ? await uploadToCpanelFtp(file)
-          : {
-              ok: true as const,
-              value: await uploadToLocalDisk(file),
-            };
+    let uploaded;
+
+    if (driver === "cloudinary") {
+      uploaded = await uploadToCloudinary(file);
+    } else if (driver === "cpanel_ftp") {
+      uploaded = await uploadToCpanelFtp(file);
+    } else if (process.env.VERCEL === "1") {
+      // Local disk writes are not durable/reliable on Vercel serverless runtime.
+      uploaded = await uploadToDatabaseBlob(file);
+      if (uploaded.ok) {
+        resolvedDriver = "database_blob_fallback";
+      }
+    } else {
+      uploaded = {
+        ok: true as const,
+        value: await uploadToLocalDisk(file),
+      };
+    }
 
     if (!uploaded.ok && driver === "cpanel_ftp") {
       const shouldFallbackToDb = (process.env.MEDIA_DB_FALLBACK_ON_FAILURE ?? "true").trim().toLowerCase() === "true";
