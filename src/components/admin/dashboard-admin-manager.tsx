@@ -287,6 +287,7 @@ export function DashboardAdminManager({
   const [aiError, setAiError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mediaWarning, setMediaWarning] = useState<string | null>(null);
+  const [deletingMediaId, setDeletingMediaId] = useState<number | null>(null);
   const [subscribers, setSubscribers] = useState<SubscriberItem[]>(initialSubscribers);
   const [savingSubscriberId, setSavingSubscriberId] = useState<number | null>(null);
   const [imagePreviewState, setImagePreviewState] = useState<"idle" | "ok" | "error">("idle");
@@ -373,7 +374,7 @@ export function DashboardAdminManager({
     } else if (!looksLikeImageUrl(composer.featuredImageUrl)) {
       notes.push({ tone: "warning", message: "Featured image URL does not look like an image or uploaded media path.", action: { type: "focus", target: "featuredImage" } });
     } else if (imagePreviewState === "error") {
-      notes.push({ tone: "warning", message: "Featured image preview failed to load. Check the URL before publishing.", action: { type: "focus", target: "featuredImage" } });
+      notes.push({ tone: "info", message: "Featured image preview failed to load in admin. This may be temporary (CDN, hotlink policy, or network). Verify in public page after save.", action: { type: "focus", target: "featuredImage" } });
     }
 
     if (!composer.sourceUrl.trim()) {
@@ -727,6 +728,34 @@ export function DashboardAdminManager({
     setSubscribers((prev) => prev.map((item) => (item.id === id ? { ...item, status } : item)));
   }
 
+  async function deleteMediaItem(id: number) {
+    const shouldDelete = window.confirm("Delete this uploaded media item?");
+    if (!shouldDelete) {
+      return;
+    }
+
+    setDeletingMediaId(id);
+    setError(null);
+
+    const response = await fetch(`/api/media?id=${id}`, {
+      method: "DELETE",
+    });
+
+    const result = await parseResponse<{ deleted: boolean; id: number }>(response);
+    setDeletingMediaId(null);
+
+    if (!response.ok || !result.ok) {
+      setError(result.ok ? "Unable to delete media" : result.error?.message ?? "Unable to delete media");
+      return;
+    }
+
+    if (String(composer.featuredImageUrl).includes(`/api/media/blob/${id}`)) {
+      setComposer((prev) => ({ ...prev, featuredImageUrl: "" }));
+    }
+
+    router.refresh();
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -955,14 +984,23 @@ export function DashboardAdminManager({
           {recentMedia.length ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {recentMedia.slice(0, 6).map((media) => (
-                <button
-                  key={media.id}
-                  type="button"
-                  onClick={() => updateComposer("featuredImageUrl", media.url)}
-                  className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
-                >
-                  {media.fileName}
-                </button>
+                <div key={media.id} className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => updateComposer("featuredImageUrl", media.url)}
+                    className="font-semibold hover:text-[#0A2342]"
+                  >
+                    {media.fileName}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteMediaItem(media.id)}
+                    disabled={deletingMediaId === media.id}
+                    className="rounded border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                  >
+                    {deletingMediaId === media.id ? "..." : "Delete"}
+                  </button>
+                </div>
               ))}
             </div>
           ) : null}

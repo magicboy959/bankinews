@@ -61,3 +61,31 @@ export async function POST(request: Request) {
     return serverError("Unable to save media metadata");
   }
 }
+
+export async function DELETE(request: Request) {
+  const user = await requireRole("author");
+  if (!user) {
+    return forbidden();
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const idRaw = searchParams.get("id") ?? "";
+    const id = Number(idRaw);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return badRequest("A valid media id is required");
+    }
+
+    await dbExecute(
+      `UPDATE media
+       SET deleted_at = NOW(), updated_at = NOW()
+       WHERE id = ? AND deleted_at IS NULL`,
+      [id]
+    );
+
+    return ok({ deleted: true, id });
+  } catch {
+    return serverError("Unable to delete media");
+  }
+}
