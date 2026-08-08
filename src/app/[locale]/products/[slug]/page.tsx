@@ -52,16 +52,16 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6">
-      <h1 className="text-3xl font-black text-slate-900">{product.name}</h1>
-      <p className="mt-2 text-sm text-slate-500">{product.bankName} • {product.category}</p>
-      <p className="mt-4 text-slate-700">{product.description}</p>
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 shadow-[0_10px_30px_rgba(2,6,23,0.06)]">
+      <h1 className="text-3xl font-black text-[var(--foreground)]">{product.name}</h1>
+      <p className="mt-2 text-sm text-[var(--text-subtle)]">{product.bankName} • {product.category}</p>
+      <p className="mt-4 text-[var(--text-muted)]">{product.description}</p>
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <div><h2 className="font-bold text-slate-900">Eligibility</h2><p className="text-slate-600">{product.eligibility ?? "-"}</p></div>
-        <div><h2 className="font-bold text-slate-900">Required Documents</h2><p className="text-slate-600">{product.requiredDocuments ?? "-"}</p></div>
-        <div><h2 className="font-bold text-slate-900">Fees</h2><p className="text-slate-600">{product.fees ?? "-"}</p></div>
-        <div><h2 className="font-bold text-slate-900">Limits</h2><p className="text-slate-600">{product.limitsText ?? "-"}</p></div>
+        <div><h2 className="font-bold text-[var(--foreground)]">Eligibility</h2><p className="mt-1 text-[var(--text-muted)]">{product.eligibility ?? "-"}</p></div>
+        <div><h2 className="font-bold text-[var(--foreground)]">Required Documents</h2><p className="mt-1 text-[var(--text-muted)]">{product.requiredDocuments ?? "-"}</p></div>
+        <div><h2 className="font-bold text-[var(--foreground)]">Fees</h2><p className="mt-1 text-[var(--text-muted)]">{product.fees ?? "-"}</p></div>
+        <div><h2 className="font-bold text-[var(--foreground)]">Limits</h2><p className="mt-1 text-[var(--text-muted)]">{product.limitsText ?? "-"}</p></div>
       </div>
 
       <div className="mt-8 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">

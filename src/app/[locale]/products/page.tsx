@@ -63,12 +63,12 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {products.map((product) => (
-        <article key={product.slug} className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-xl font-black text-slate-900">
+        <article key={product.slug} className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 shadow-[0_10px_30px_rgba(2,6,23,0.06)]">
+          <h2 className="text-xl font-black text-[var(--foreground)]">
             <Link href={`/${safeLocale}/products/${product.slug}`}>{product.name}</Link>
           </h2>
           <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{product.bankName} • {product.category}</p>
-          <p className="mt-2 text-sm text-slate-600">{product.shortDescription}</p>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">{product.shortDescription}</p>
         </article>
       ))}
     </div>

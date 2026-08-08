@@ -71,7 +71,7 @@ export default async function LocaleLayout({
 
   return (
     <div dir={localeDirection(typedLocale)} className="site-page min-h-screen px-3 md:px-5">
-      <div className="site-shell mx-auto flex min-h-screen w-full max-w-[1080px] flex-col overflow-hidden border-x border-slate-200/80 bg-white shadow-[0_22px_80px_rgba(15,23,42,0.10)]">
+      <div className="site-shell mx-auto flex min-h-screen w-full max-w-[1080px] flex-col overflow-hidden border-x shadow-[0_22px_80px_rgba(15,23,42,0.10)]">
         <SiteHeader locale={typedLocale} socialLinks={socialLinks} />
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-6">{children}</main>
         <SiteFooter locale={typedLocale} />

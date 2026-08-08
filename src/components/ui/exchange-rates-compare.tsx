@@ -201,15 +201,15 @@ function buildLinePath(values: Array<number | null>, min: number, max: number): 
 
 function trustToneClasses(tier: "high" | "medium" | "low" | "unverified"): string {
   if (tier === "high") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    return "border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
   }
   if (tier === "medium") {
-    return "border-cyan-200 bg-cyan-50 text-cyan-700";
+    return "border-cyan-500/25 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400";
   }
   if (tier === "low") {
-    return "border-amber-200 bg-amber-50 text-amber-700";
+    return "border-amber-500/25 bg-amber-500/10 text-amber-600 dark:text-amber-400";
   }
-  return "border-slate-300 bg-slate-100 text-slate-700";
+  return "border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]";
 }
 
 function formatFreshness(minutes: number | null, labels: Labels): string {
@@ -468,18 +468,18 @@ export function ExchangeRatesCompare({
   }, [trendData]);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 shadow-[0_10px_30px_rgba(2,6,23,0.06)] md:p-8">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-black text-[#0A2342] md:text-3xl">{labels.title}</h1>
-          <p className="mt-2 text-sm text-slate-600">{labels.subtitle}</p>
+          <h1 className="text-2xl font-black text-[var(--foreground)] md:text-3xl">{labels.title}</h1>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">{labels.subtitle}</p>
         </div>
-        <p className="text-xs text-amber-700">{labels.compareHint}</p>
+        <p className="text-xs text-amber-600 dark:text-amber-400">{labels.compareHint}</p>
       </div>
 
       <form onSubmit={onSubmit} className="mt-6 grid gap-3 md:grid-cols-5">
         <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-600">{labels.currency}</label>
+          <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">{labels.currency}</label>
           <input
             value={currencyCode}
             onChange={(event) => setCurrencyCode(event.target.value.toUpperCase())}
@@ -490,7 +490,7 @@ export function ExchangeRatesCompare({
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-600">{labels.date}</label>
+          <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">{labels.date}</label>
           <input
             type="date"
             value={date}
@@ -500,7 +500,7 @@ export function ExchangeRatesCompare({
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-600">{labels.sourceType}</label>
+          <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">{labels.sourceType}</label>
           <select
             value={sourceType}
             onChange={(event) => setSourceType(normalizeSourceType(event.target.value))}
@@ -513,7 +513,7 @@ export function ExchangeRatesCompare({
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-600">{labels.sortBy}</label>
+          <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">{labels.sortBy}</label>
           <select
             value={sort}
             onChange={(event) => setSort(normalizeSort(event.target.value))}
@@ -533,7 +533,7 @@ export function ExchangeRatesCompare({
           <button
             type="button"
             onClick={onReset}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+            className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)]"
           >
             {labels.reset}
           </button>
@@ -541,10 +541,10 @@ export function ExchangeRatesCompare({
       </form>
 
       {!data && !loading && !error && (
-        <div className="mt-8 rounded-xl border border-dashed border-slate-300 p-6 text-sm text-slate-600">{labels.noData}</div>
+        <div className="mt-8 rounded-xl border border-dashed border-[var(--border)] p-6 text-sm text-[var(--text-muted)]">{labels.noData}</div>
       )}
 
-      {loading && <p className="mt-6 text-sm text-slate-600">{labels.loading}</p>}
+      {loading && <p className="mt-6 text-sm text-[var(--text-muted)]">{labels.loading}</p>}
       {error && <p className="mt-6 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       {data && (
@@ -595,15 +595,15 @@ export function ExchangeRatesCompare({
             {labels.asOf}: {data.date ?? "-"}
           </p>
 
-          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <h2 className="text-lg font-black text-slate-900">{labels.trendsTitle}</h2>
-                <p className="mt-1 text-xs text-slate-600">{labels.trendsSubtitle}</p>
+                <h2 className="text-lg font-black text-[var(--foreground)]">{labels.trendsTitle}</h2>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">{labels.trendsSubtitle}</p>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600">{labels.trendDays}</label>
+                  <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">{labels.trendDays}</label>
                   <select
                     value={trendDays}
                     onChange={(event) => void onTrendDaysChange(Number(event.target.value) as 7 | 30 | 90)}
@@ -615,7 +615,7 @@ export function ExchangeRatesCompare({
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600">{labels.trendMetric}</label>
+                  <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">{labels.trendMetric}</label>
                   <select
                     value={trendMetric}
                     onChange={(event) => void onTrendMetricChange(event.target.value === "buy" ? "buy" : "sell")}
@@ -628,16 +628,16 @@ export function ExchangeRatesCompare({
               </div>
             </div>
 
-            {trendLoading && <p className="mt-4 text-sm text-slate-600">{labels.trendLoading}</p>}
+            {trendLoading && <p className="mt-4 text-sm text-[var(--text-muted)]">{labels.trendLoading}</p>}
             {trendError && <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{trendError}</p>}
 
             {!trendLoading && !trendError && (!trendData || !trendData.series.length || !trendData.dates.length) && (
-              <p className="mt-4 rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-600">{labels.trendNoData}</p>
+              <p className="mt-4 rounded-md border border-dashed border-[var(--border)] p-4 text-sm text-[var(--text-muted)]">{labels.trendNoData}</p>
             )}
 
             {!trendLoading && !trendError && trendData && trendData.series.length > 0 && trendData.dates.length > 0 && (
               <>
-                <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white p-2">
+                <div className="mt-4 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2">
                   <svg viewBox="0 0 320 120" className="h-40 w-full">
                     {trendData.series.map((series, index) => {
                       const path = buildLinePath(
@@ -663,7 +663,7 @@ export function ExchangeRatesCompare({
                   </svg>
                 </div>
 
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-[var(--text-subtle)]">
                   {labels.trendRange}: {trendData.fromDate ?? "-"} - {trendData.toDate ?? "-"}
                 </p>
 
@@ -700,20 +700,20 @@ export function ExchangeRatesCompare({
                   </article>
                 </div>
 
-                <h3 className="mt-4 text-sm font-black text-slate-800">{labels.topMoversTitle}</h3>
+                <h3 className="mt-4 text-sm font-black text-[var(--foreground)]">{labels.topMoversTitle}</h3>
 
                 <div className="mt-3 grid gap-2 md:grid-cols-2">
                   {trendData.series.map((series, index) => (
-                    <div key={series.sourceId} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                    <div key={series.sourceId} className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-semibold text-slate-800">
+                        <p className="font-semibold text-[var(--foreground)]">
                           <span
                             className="me-2 inline-block h-2.5 w-2.5 rounded-full"
                             style={{ backgroundColor: trendColors[index % trendColors.length] }}
                           />
                           {series.sourceName}
                         </p>
-                        <p className="text-slate-600">{formatNumber(series.latestValue, locale)}</p>
+                        <p className="text-[var(--text-muted)]">{formatNumber(series.latestValue, locale)}</p>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${trustToneClasses(series.trustTier)}`}>
@@ -723,7 +723,7 @@ export function ExchangeRatesCompare({
                           {labels.freshness}: {formatFreshness(series.freshnessMinutes, labels)}
                         </span>
                       </div>
-                      <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+                      <div className="mt-1 flex items-center gap-2 text-xs text-[var(--text-subtle)]">
                         <span>{labels.trendChange}: {formatNumber(series.change, locale)}</span>
                         <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[11px] text-slate-600">
                           {labels.volatility}:{" "}
@@ -743,7 +743,7 @@ export function ExchangeRatesCompare({
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left">
+                <tr className="border-b border-[var(--border)] text-left">
                   <th className="p-2">{labels.source}</th>
                   <th className="p-2">{labels.type}</th>
                   <th className="p-2">{labels.trust}</th>
@@ -755,15 +755,15 @@ export function ExchangeRatesCompare({
               </thead>
               <tbody>
                 {data.rows.map((row) => (
-                  <tr key={row.sourceId} className="border-b border-slate-100">
-                    <td className="p-2 font-semibold text-slate-800">{row.sourceName}</td>
-                    <td className="p-2 text-slate-600">{sourceTypeLabel[row.sourceType]}</td>
+                  <tr key={row.sourceId} className="border-b border-[var(--border)]/70">
+                    <td className="p-2 font-semibold text-[var(--foreground)]">{row.sourceName}</td>
+                    <td className="p-2 text-[var(--text-muted)]">{sourceTypeLabel[row.sourceType]}</td>
                     <td className="p-2">
                       <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${trustToneClasses(row.trustTier)}`}>
                         {trustTierLabel[row.trustTier]} ({row.trustScore})
                       </span>
                     </td>
-                    <td className="p-2 text-slate-600">{formatFreshness(row.freshnessMinutes, labels)}</td>
+                    <td className="p-2 text-[var(--text-muted)]">{formatFreshness(row.freshnessMinutes, labels)}</td>
                     <td className="p-2">{formatNumber(row.buyRate, locale)}</td>
                     <td className="p-2">{formatNumber(row.sellRate, locale)}</td>
                     <td className="p-2">{formatNumber(row.spread, locale)}</td>

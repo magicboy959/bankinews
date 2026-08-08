@@ -48,16 +48,16 @@ export default async function BankProfilePage({ params }: { params: Promise<{ lo
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6">
-      <h1 className="text-3xl font-black text-slate-900">{bank.name}</h1>
-      <p className="mt-3 text-slate-600">{bank.shortDescription}</p>
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 shadow-[0_10px_30px_rgba(2,6,23,0.06)]">
+      <h1 className="text-3xl font-black text-[var(--foreground)]">{bank.name}</h1>
+      <p className="mt-3 text-[var(--text-muted)]">{bank.shortDescription}</p>
       <dl className="mt-6 grid gap-3 text-sm md:grid-cols-2">
-        <div><dt className="font-semibold text-slate-700">Website</dt><dd>{bank.officialWebsite ?? "-"}</dd></div>
-        <div><dt className="font-semibold text-slate-700">SWIFT</dt><dd>{bank.swiftCode ?? "-"}</dd></div>
-        <div><dt className="font-semibold text-slate-700">Headquarters</dt><dd>{bank.headquarters ?? "-"}</dd></div>
-        <div><dt className="font-semibold text-slate-700">Customer Service</dt><dd>{bank.customerServiceNumbers ?? "-"}</dd></div>
+        <div><dt className="font-semibold text-[var(--text-muted)]">Website</dt><dd className="mt-1 text-[var(--text-subtle)]">{bank.officialWebsite ?? "-"}</dd></div>
+        <div><dt className="font-semibold text-[var(--text-muted)]">SWIFT</dt><dd className="mt-1 text-[var(--text-subtle)]">{bank.swiftCode ?? "-"}</dd></div>
+        <div><dt className="font-semibold text-[var(--text-muted)]">Headquarters</dt><dd className="mt-1 text-[var(--text-subtle)]">{bank.headquarters ?? "-"}</dd></div>
+        <div><dt className="font-semibold text-[var(--text-muted)]">Customer Service</dt><dd className="mt-1 text-[var(--text-subtle)]">{bank.customerServiceNumbers ?? "-"}</dd></div>
       </dl>
-      {bank.fullDescription && <p className="mt-6 whitespace-pre-wrap text-slate-700">{bank.fullDescription}</p>}
+      {bank.fullDescription && <p className="mt-6 whitespace-pre-wrap text-[var(--text-muted)]">{bank.fullDescription}</p>}
     </div>
   );
 }

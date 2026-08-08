@@ -307,12 +307,12 @@ export function ExchangeRateAdminManager({
     <div>
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-black text-[#0A2342]">Exchange Rates</h1>
-          <p className="mt-2 text-slate-600">Create, edit, and delete stored exchange rates.</p>
+          <h1 className="text-2xl font-black text-[var(--foreground)]">Exchange Rates</h1>
+          <p className="mt-2 text-[var(--text-muted)]">Create, edit, and delete stored exchange rates.</p>
         </div>
         <Link
           href="/admin/exchange-rates/sources"
-          className="inline-flex w-fit items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="inline-flex w-fit items-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
         >
           Manage Sources
         </Link>
@@ -320,38 +320,38 @@ export function ExchangeRateAdminManager({
 
       {error && <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-      <form onSubmit={handleCreate} className="mt-6 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-sm font-black uppercase tracking-wide text-slate-700">Create Rate</h2>
+      <form onSubmit={handleCreate} className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
+        <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Create Rate</h2>
 
         <div className="mt-3 grid gap-3 md:grid-cols-3">
-          <input className="rounded border border-slate-300 px-3 py-2" placeholder="Currency name" value={createForm.currencyName} onChange={(e) => onChange(setCreateForm, "currencyName", e.target.value)} required />
-          <input className="rounded border border-slate-300 px-3 py-2" placeholder="Currency code" maxLength={3} value={createForm.currencyCode} onChange={(e) => onChange(setCreateForm, "currencyCode", e.target.value)} required />
-          <input className="rounded border border-slate-300 px-3 py-2" type="date" value={createForm.rateDate} onChange={(e) => onChange(setCreateForm, "rateDate", e.target.value)} required />
-          <input className="rounded border border-slate-300 px-3 py-2" type="number" step="0.000001" placeholder="Official buy" value={createForm.officialBuy} onChange={(e) => onChange(setCreateForm, "officialBuy", e.target.value)} />
-          <input className="rounded border border-slate-300 px-3 py-2" type="number" step="0.000001" placeholder="Official sell" value={createForm.officialSell} onChange={(e) => onChange(setCreateForm, "officialSell", e.target.value)} />
-          <input className="rounded border border-slate-300 px-3 py-2" type="number" step="0.000001" placeholder="Parallel buy" value={createForm.parallelBuy} onChange={(e) => onChange(setCreateForm, "parallelBuy", e.target.value)} />
-          <input className="rounded border border-slate-300 px-3 py-2" type="number" step="0.000001" placeholder="Parallel sell" value={createForm.parallelSell} onChange={(e) => onChange(setCreateForm, "parallelSell", e.target.value)} />
-          <input className="rounded border border-slate-300 px-3 py-2 md:col-span-2" placeholder="Source" value={createForm.source} onChange={(e) => onChange(setCreateForm, "source", e.target.value)} required />
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Currency name" value={createForm.currencyName} onChange={(e) => onChange(setCreateForm, "currencyName", e.target.value)} required />
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Currency code" maxLength={3} value={createForm.currencyCode} onChange={(e) => onChange(setCreateForm, "currencyCode", e.target.value)} required />
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" type="date" value={createForm.rateDate} onChange={(e) => onChange(setCreateForm, "rateDate", e.target.value)} required />
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" type="number" step="0.000001" placeholder="Official buy" value={createForm.officialBuy} onChange={(e) => onChange(setCreateForm, "officialBuy", e.target.value)} />
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" type="number" step="0.000001" placeholder="Official sell" value={createForm.officialSell} onChange={(e) => onChange(setCreateForm, "officialSell", e.target.value)} />
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" type="number" step="0.000001" placeholder="Parallel buy" value={createForm.parallelBuy} onChange={(e) => onChange(setCreateForm, "parallelBuy", e.target.value)} />
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" type="number" step="0.000001" placeholder="Parallel sell" value={createForm.parallelSell} onChange={(e) => onChange(setCreateForm, "parallelSell", e.target.value)} />
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)] md:col-span-2" placeholder="Source" value={createForm.source} onChange={(e) => onChange(setCreateForm, "source", e.target.value)} required />
         </div>
 
-        <textarea className="mt-3 min-h-20 w-full rounded border border-slate-300 px-3 py-2" placeholder="Notes (optional)" value={createForm.notes} onChange={(e) => onChange(setCreateForm, "notes", e.target.value)} />
+        <textarea className="mt-3 min-h-20 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Notes (optional)" value={createForm.notes} onChange={(e) => onChange(setCreateForm, "notes", e.target.value)} />
 
         <button type="submit" disabled={submitting} className="mt-4 rounded bg-[#0A2342] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
           {submitting ? "Saving..." : "Create Rate"}
         </button>
       </form>
 
-      <section className="mt-6 rounded-lg border border-slate-200 p-4">
+      <section className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <h2 className="text-sm font-black uppercase tracking-wide text-slate-700">Source Trust Controls</h2>
-            <p className="mt-1 text-xs text-slate-500">Manage source visibility and trust metadata used on compare and trend pages.</p>
+            <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Source Trust Controls</h2>
+            <p className="mt-1 text-xs text-[var(--text-subtle)]">Manage source visibility and trust metadata used on compare and trend pages.</p>
           </div>
         </div>
 
-        <div className="mt-3 overflow-x-auto rounded-lg border border-slate-200">
+        <div className="mt-3 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-600">
+            <thead className="bg-[var(--surface-strong)] text-left text-[var(--text-muted)]">
               <tr>
                 <th className="px-3 py-2 font-semibold">Source</th>
                 <th className="px-3 py-2 font-semibold">Type</th>
@@ -364,19 +364,19 @@ export function ExchangeRateAdminManager({
             </thead>
             <tbody>
               {sortedSources.map((source) => (
-                <tr key={source.id} className="border-t border-slate-100">
-                  <td className="px-3 py-2 font-semibold text-slate-800">{source.name}</td>
-                  <td className="px-3 py-2 text-slate-600">{source.sourceType}</td>
-                  <td className="px-3 py-2 text-slate-600">{source.trustTier}</td>
-                  <td className="px-3 py-2 text-slate-600">{source.trustScore}</td>
-                  <td className="px-3 py-2 text-slate-600">{source.lastVerifiedAt ?? "-"}</td>
-                  <td className="px-3 py-2 text-slate-600">{source.isActive ? "Yes" : "No"}</td>
+                <tr key={source.id} className="border-t border-[var(--border)]">
+                  <td className="px-3 py-2 font-semibold text-[var(--foreground)]">{source.name}</td>
+                  <td className="px-3 py-2 text-[var(--text-muted)]">{source.sourceType}</td>
+                  <td className="px-3 py-2 text-[var(--text-muted)]">{source.trustTier}</td>
+                  <td className="px-3 py-2 text-[var(--text-muted)]">{source.trustScore}</td>
+                  <td className="px-3 py-2 text-[var(--text-muted)]">{source.lastVerifiedAt ?? "-"}</td>
+                  <td className="px-3 py-2 text-[var(--text-muted)]">{source.isActive ? "Yes" : "No"}</td>
                   <td className="px-3 py-2">
                     <button
                       type="button"
                       onClick={() => startSourceEdit(source)}
                       disabled={sourceSubmitting}
-                      className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                      className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] disabled:opacity-60"
                     >
                       Edit Trust
                     </button>
@@ -388,10 +388,10 @@ export function ExchangeRateAdminManager({
         </div>
 
         {editingSourceId && (
-          <form onSubmit={handleSourceUpdate} className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
+          <form onSubmit={handleSourceUpdate} className="mt-4 rounded-md border border-[var(--border)] bg-[var(--surface-strong)] p-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-800">Edit Source #{editingSourceId}</h3>
-              <button type="button" onClick={() => setEditingSourceId(null)} className="text-xs font-semibold text-slate-600">Cancel</button>
+              <h3 className="text-sm font-semibold text-[var(--foreground)]">Edit Source #{editingSourceId}</h3>
+              <button type="button" onClick={() => setEditingSourceId(null)} className="text-xs font-semibold text-[var(--text-muted)]">Cancel</button>
             </div>
 
             <div className="mt-3 grid gap-3 md:grid-cols-4">
@@ -424,7 +424,7 @@ export function ExchangeRateAdminManager({
                 className="rounded border border-slate-300 px-3 py-2"
               />
 
-              <label className="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700">
+              <label className="inline-flex items-center gap-2 rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-muted)]">
                 <input
                   type="checkbox"
                   checked={sourceForm.isActive}
@@ -441,9 +441,9 @@ export function ExchangeRateAdminManager({
         )}
       </section>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200">
+      <div className="mt-6 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-600">
+          <thead className="bg-[var(--surface-strong)] text-left text-[var(--text-muted)]">
             <tr>
               <th className="px-3 py-2 font-semibold">ID</th>
               <th className="px-3 py-2 font-semibold">Currency</th>
@@ -456,17 +456,17 @@ export function ExchangeRateAdminManager({
           </thead>
           <tbody>
             {sortedRows.map((row) => (
-              <tr key={row.id} className="border-t border-slate-100">
-                <td className="px-3 py-2 text-slate-700">{row.id}</td>
-                <td className="px-3 py-2 text-slate-900">{row.currencyName}</td>
-                <td className="px-3 py-2 text-slate-700">{row.currencyCode}</td>
-                <td className="px-3 py-2 text-slate-700">{row.officialBuy ?? "-"}</td>
-                <td className="px-3 py-2 text-slate-700">{row.officialSell ?? "-"}</td>
-                <td className="px-3 py-2 text-slate-700">{toDateInputValue(row.rateDate)}</td>
+              <tr key={row.id} className="border-t border-[var(--border)]">
+                <td className="px-3 py-2 text-[var(--text-muted)]">{row.id}</td>
+                <td className="px-3 py-2 text-[var(--foreground)]">{row.currencyName}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{row.currencyCode}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{row.officialBuy ?? "-"}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{row.officialSell ?? "-"}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{toDateInputValue(row.rateDate)}</td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => startEdit(row.id)} disabled={loadingId === row.id || submitting} className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">{loadingId === row.id ? "Loading..." : "Edit"}</button>
-                    <button type="button" onClick={() => handleDelete(row.id)} disabled={loadingId === row.id || submitting} className="rounded border border-red-300 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60">Delete</button>
+                    <button type="button" onClick={() => startEdit(row.id)} disabled={loadingId === row.id || submitting} className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] disabled:opacity-60">{loadingId === row.id ? "Loading..." : "Edit"}</button>
+                    <button type="button" onClick={() => handleDelete(row.id)} disabled={loadingId === row.id || submitting} className="rounded border border-red-400/30 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-500/10 disabled:opacity-60">Delete</button>
                   </div>
                 </td>
               </tr>
@@ -476,24 +476,24 @@ export function ExchangeRateAdminManager({
       </div>
 
       {editingId && (
-        <form onSubmit={handleUpdate} className="mt-6 rounded-lg border border-slate-200 p-4">
+        <form onSubmit={handleUpdate} className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black uppercase tracking-wide text-slate-700">Edit Rate #{editingId}</h2>
-            <button type="button" className="text-sm font-semibold text-slate-600" onClick={() => setEditingId(null)}>Cancel</button>
+            <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Edit Rate #{editingId}</h2>
+            <button type="button" className="text-sm font-semibold text-[var(--text-muted)]" onClick={() => setEditingId(null)}>Cancel</button>
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-3">
-            <input className="rounded border border-slate-300 px-3 py-2" placeholder="Currency name" value={editForm.currencyName} onChange={(e) => onChange(setEditForm, "currencyName", e.target.value)} required />
-            <input className="rounded border border-slate-300 px-3 py-2" placeholder="Currency code" maxLength={3} value={editForm.currencyCode} onChange={(e) => onChange(setEditForm, "currencyCode", e.target.value)} required />
-            <input className="rounded border border-slate-300 px-3 py-2" type="date" value={editForm.rateDate} onChange={(e) => onChange(setEditForm, "rateDate", e.target.value)} required />
-            <input className="rounded border border-slate-300 px-3 py-2" type="number" step="0.000001" placeholder="Official buy" value={editForm.officialBuy} onChange={(e) => onChange(setEditForm, "officialBuy", e.target.value)} />
-            <input className="rounded border border-slate-300 px-3 py-2" type="number" step="0.000001" placeholder="Official sell" value={editForm.officialSell} onChange={(e) => onChange(setEditForm, "officialSell", e.target.value)} />
-            <input className="rounded border border-slate-300 px-3 py-2" type="number" step="0.000001" placeholder="Parallel buy" value={editForm.parallelBuy} onChange={(e) => onChange(setEditForm, "parallelBuy", e.target.value)} />
-            <input className="rounded border border-slate-300 px-3 py-2" type="number" step="0.000001" placeholder="Parallel sell" value={editForm.parallelSell} onChange={(e) => onChange(setEditForm, "parallelSell", e.target.value)} />
-            <input className="rounded border border-slate-300 px-3 py-2 md:col-span-2" placeholder="Source" value={editForm.source} onChange={(e) => onChange(setEditForm, "source", e.target.value)} required />
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Currency name" value={editForm.currencyName} onChange={(e) => onChange(setEditForm, "currencyName", e.target.value)} required />
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Currency code" maxLength={3} value={editForm.currencyCode} onChange={(e) => onChange(setEditForm, "currencyCode", e.target.value)} required />
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" type="date" value={editForm.rateDate} onChange={(e) => onChange(setEditForm, "rateDate", e.target.value)} required />
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" type="number" step="0.000001" placeholder="Official buy" value={editForm.officialBuy} onChange={(e) => onChange(setEditForm, "officialBuy", e.target.value)} />
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" type="number" step="0.000001" placeholder="Official sell" value={editForm.officialSell} onChange={(e) => onChange(setEditForm, "officialSell", e.target.value)} />
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" type="number" step="0.000001" placeholder="Parallel buy" value={editForm.parallelBuy} onChange={(e) => onChange(setEditForm, "parallelBuy", e.target.value)} />
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" type="number" step="0.000001" placeholder="Parallel sell" value={editForm.parallelSell} onChange={(e) => onChange(setEditForm, "parallelSell", e.target.value)} />
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)] md:col-span-2" placeholder="Source" value={editForm.source} onChange={(e) => onChange(setEditForm, "source", e.target.value)} required />
           </div>
 
-          <textarea className="mt-3 min-h-20 w-full rounded border border-slate-300 px-3 py-2" placeholder="Notes (optional)" value={editForm.notes} onChange={(e) => onChange(setEditForm, "notes", e.target.value)} />
+          <textarea className="mt-3 min-h-20 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Notes (optional)" value={editForm.notes} onChange={(e) => onChange(setEditForm, "notes", e.target.value)} />
 
           <button type="submit" disabled={submitting} className="mt-4 rounded bg-[#0A2342] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
             {submitting ? "Saving..." : "Save Changes"}

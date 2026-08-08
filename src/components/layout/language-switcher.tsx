@@ -12,7 +12,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
   return (
     <Link
       href={nextPath}
-      className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+      className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)]"
       aria-label={locale === "ar" ? "Switch to English" : "التبديل إلى العربية"}
     >
       {locale === "ar" ? "EN" : "AR"}

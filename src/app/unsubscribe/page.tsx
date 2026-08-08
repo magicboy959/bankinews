@@ -50,10 +50,10 @@ export default async function UnsubscribePage({
   }
 
   return (
-    <div className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-      <h1 className="text-2xl font-black text-[#0A2342]">Newsletter Unsubscribe</h1>
-      <p className="mt-4 text-slate-700">{message}</p>
-      <p className="mt-6 text-sm text-slate-500">
+    <div className="mx-auto max-w-2xl rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-8 text-center shadow-[0_10px_30px_rgba(2,6,23,0.06)]">
+      <h1 className="text-2xl font-black text-[var(--foreground)]">Newsletter Unsubscribe</h1>
+      <p className="mt-4 text-[var(--text-muted)]">{message}</p>
+      <p className="mt-6 text-sm text-[var(--text-subtle)]">
         {ok ? "You will no longer receive campaign emails from Banki News." : "If you need help, contact our editorial team from the website."}
       </p>
       <div className="mt-8">

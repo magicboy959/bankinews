@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -11,6 +14,21 @@ type BrandMarkProps = {
 
 function BrandContent({ locale = "ar", size = "full" }: { locale?: Locale; size?: "full" | "compact" | "admin" }) {
   const isArabic = locale === "ar";
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const updateTheme = () => {
+      const theme = document.documentElement.getAttribute("data-theme") || "light";
+      setIsDarkMode(theme === "dark");
+    };
+
+    updateTheme();
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+    return () => observer.disconnect();
+  }, []);
+
   const logoClass =
     size === "admin"
       ? "h-auto w-[150px] max-w-full object-contain sm:w-[170px] md:w-[190px] lg:w-[210px]"
@@ -20,7 +38,7 @@ function BrandContent({ locale = "ar", size = "full" }: { locale?: Locale; size?
 
   return (
     <img
-      src="/logo-bankinews.png"
+      src={isDarkMode ? "/banki-news-primary-logo-footer.png" : "/logo-bankinews.png"}
       alt={isArabic ? "بنكي أخبار السودان" : "Banki News Sudan"}
       className={logoClass}
       decoding="async"

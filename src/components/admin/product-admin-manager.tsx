@@ -202,13 +202,13 @@ export function ProductAdminManager({
 
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#0A2342]">Products</h1>
-      <p className="mt-2 text-slate-600">Create, edit, and delete products linked to banks.</p>
+      <h1 className="text-2xl font-black text-[var(--foreground)]">Products</h1>
+      <p className="mt-2 text-[var(--text-muted)]">Create, edit, and delete products linked to banks.</p>
 
       {error && <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-      <form onSubmit={handleCreate} className="mt-6 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-sm font-black uppercase tracking-wide text-slate-700">Create Product</h2>
+      <form onSubmit={handleCreate} className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
+        <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Create Product</h2>
 
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <input
@@ -226,7 +226,7 @@ export function ProductAdminManager({
             required
           />
           <select
-            className="rounded border border-slate-300 px-3 py-2"
+            className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]"
             value={createForm.bankId}
             onChange={(e) => onChange(setCreateForm, "bankId", e.target.value)}
             required
@@ -248,7 +248,7 @@ export function ProductAdminManager({
         </div>
 
         <textarea
-          className="mt-3 min-h-24 w-full rounded border border-slate-300 px-3 py-2"
+          className="mt-3 min-h-24 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
           placeholder="Description"
           value={createForm.description}
           onChange={(e) => onChange(setCreateForm, "description", e.target.value)}
@@ -256,7 +256,7 @@ export function ProductAdminManager({
         />
 
         <input
-          className="mt-3 w-full rounded border border-slate-300 px-3 py-2"
+          className="mt-3 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
           placeholder="Official source URL (optional)"
           value={createForm.officialSourceUrl}
           onChange={(e) => onChange(setCreateForm, "officialSourceUrl", e.target.value)}
@@ -271,9 +271,9 @@ export function ProductAdminManager({
         </button>
       </form>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200">
+      <div className="mt-6 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-600">
+          <thead className="bg-[var(--surface-strong)] text-left text-[var(--text-muted)]">
             <tr>
               <th className="px-3 py-2 font-semibold">ID</th>
               <th className="px-3 py-2 font-semibold">Name</th>
@@ -284,18 +284,18 @@ export function ProductAdminManager({
           </thead>
           <tbody>
             {sortedRows.map((row) => (
-              <tr key={row.id} className="border-t border-slate-100">
-                <td className="px-3 py-2 text-slate-700">{row.id}</td>
-                <td className="px-3 py-2 text-slate-900">{row.name ?? row.slug}</td>
-                <td className="px-3 py-2 text-slate-700">{row.bankName ?? "-"}</td>
-                <td className="px-3 py-2 text-slate-700">{row.category}</td>
+              <tr key={row.id} className="border-t border-[var(--border)]">
+                <td className="px-3 py-2 text-[var(--text-muted)]">{row.id}</td>
+                <td className="px-3 py-2 text-[var(--foreground)]">{row.name ?? row.slug}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{row.bankName ?? "-"}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{row.category}</td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => startEdit(row.id)}
                       disabled={loadingId === row.id || submitting}
-                      className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                      className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] disabled:opacity-60"
                     >
                       {loadingId === row.id ? "Loading..." : "Edit"}
                     </button>
@@ -303,7 +303,7 @@ export function ProductAdminManager({
                       type="button"
                       onClick={() => handleDelete(row.id)}
                       disabled={loadingId === row.id || submitting}
-                      className="rounded border border-red-300 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                      className="rounded border border-red-400/30 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-500/10 disabled:opacity-60"
                     >
                       Delete
                     </button>
@@ -316,10 +316,10 @@ export function ProductAdminManager({
       </div>
 
       {editingId && (
-        <form onSubmit={handleUpdate} className="mt-6 rounded-lg border border-slate-200 p-4">
+        <form onSubmit={handleUpdate} className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black uppercase tracking-wide text-slate-700">Edit Product #{editingId}</h2>
-            <button type="button" className="text-sm font-semibold text-slate-600" onClick={() => setEditingId(null)}>
+            <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Edit Product #{editingId}</h2>
+            <button type="button" className="text-sm font-semibold text-[var(--text-muted)]" onClick={() => setEditingId(null)}>
               Cancel
             </button>
           </div>
@@ -340,7 +340,7 @@ export function ProductAdminManager({
               required
             />
             <select
-              className="rounded border border-slate-300 px-3 py-2"
+              className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]"
               value={editForm.bankId}
               onChange={(e) => onChange(setEditForm, "bankId", e.target.value)}
               required
@@ -362,7 +362,7 @@ export function ProductAdminManager({
           </div>
 
           <textarea
-            className="mt-3 min-h-24 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-3 min-h-24 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
             placeholder="Description"
             value={editForm.description}
             onChange={(e) => onChange(setEditForm, "description", e.target.value)}
@@ -370,7 +370,7 @@ export function ProductAdminManager({
           />
 
           <input
-            className="mt-3 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-3 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
             placeholder="Official source URL (optional)"
             value={editForm.officialSourceUrl}
             onChange={(e) => onChange(setEditForm, "officialSourceUrl", e.target.value)}

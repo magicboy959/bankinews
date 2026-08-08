@@ -318,21 +318,21 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
 
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#0A2342]">Articles</h1>
-      <p className="mt-2 text-slate-600">Create, edit, and delete articles from the admin panel.</p>
+      <h1 className="text-2xl font-black text-[var(--foreground)]">Articles</h1>
+      <p className="mt-2 text-[var(--text-muted)]">Create, edit, and delete articles from the admin panel.</p>
 
       {error && <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-      <form onSubmit={handleCreate} className="mt-6 rounded-lg border border-slate-200 p-4">
-        <h2 className="text-sm font-black uppercase tracking-wide text-slate-700">Create Article</h2>
+      <form onSubmit={handleCreate} className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
+        <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Create Article</h2>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <input className="rounded border border-slate-300 px-3 py-2" placeholder="Title" value={createForm.title} onChange={(e) => onChange(setCreateForm, "title", e.target.value)} required />
-          <input className="rounded border border-slate-300 px-3 py-2" placeholder="Article Type (e.g. news)" value={createForm.articleType} onChange={(e) => onChange(setCreateForm, "articleType", e.target.value)} required />
-          <select className="rounded border border-slate-300 px-3 py-2" value={createForm.locale} onChange={(e) => onChange(setCreateForm, "locale", e.target.value as Locale)}>
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Title" value={createForm.title} onChange={(e) => onChange(setCreateForm, "title", e.target.value)} required />
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Article Type (e.g. news)" value={createForm.articleType} onChange={(e) => onChange(setCreateForm, "articleType", e.target.value)} required />
+          <select className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" value={createForm.locale} onChange={(e) => onChange(setCreateForm, "locale", e.target.value as Locale)}>
             <option value="ar">Arabic</option>
             <option value="en">English</option>
           </select>
-          <select className="rounded border border-slate-300 px-3 py-2" value={createForm.status} onChange={(e) => onChange(setCreateForm, "status", e.target.value as ArticleStatus)}>
+          <select className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" value={createForm.status} onChange={(e) => onChange(setCreateForm, "status", e.target.value as ArticleStatus)}>
             <option value="draft">draft</option>
             <option value="review">review</option>
             <option value="scheduled">scheduled</option>
@@ -341,16 +341,16 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
           </select>
         </div>
 
-        <textarea className="mt-3 min-h-20 w-full rounded border border-slate-300 px-3 py-2" placeholder="Summary" value={createForm.summary} onChange={(e) => onChange(setCreateForm, "summary", e.target.value)} required />
+        <textarea className="mt-3 min-h-20 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Summary" value={createForm.summary} onChange={(e) => onChange(setCreateForm, "summary", e.target.value)} required />
         <div className="mt-3">
-          <label className="mb-2 block text-sm font-semibold text-slate-700">Content</label>
+          <label className="mb-2 block text-sm font-semibold text-[var(--text-muted)]">Content</label>
           <RichTextEditor
             value={createForm.contentHtml}
             onChange={(value) => onChange(setCreateForm, "contentHtml", value)}
             placeholder="Write your article content"
           />
         </div>
-        <input className="mt-3 w-full rounded border border-slate-300 px-3 py-2" placeholder="Featured image URL (optional)" value={createForm.featuredImageUrl} onChange={(e) => onChange(setCreateForm, "featuredImageUrl", e.target.value)} />
+        <input className="mt-3 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Featured image URL (optional)" value={createForm.featuredImageUrl} onChange={(e) => onChange(setCreateForm, "featuredImageUrl", e.target.value)} />
 
         <div className="mt-3 flex flex-wrap gap-4 text-sm">
           <label><input type="checkbox" checked={createForm.isBreaking} onChange={(e) => onChange(setCreateForm, "isBreaking", e.target.checked)} /> <span className="ml-1">Breaking</span></label>
@@ -364,9 +364,9 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
         </button>
       </form>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200">
+      <div className="mt-6 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-600">
+          <thead className="bg-[var(--surface-strong)] text-left text-[var(--text-muted)]">
             <tr>
               <th className="px-3 py-2 font-semibold">ID</th>
               <th className="px-3 py-2 font-semibold">Title</th>
@@ -378,16 +378,16 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
           </thead>
           <tbody>
             {sortedRows.map((row) => (
-              <tr key={row.id} className="border-t border-slate-100">
-                <td className="px-3 py-2 text-slate-700">{row.id}</td>
-                <td className="px-3 py-2 text-slate-900">{row.title ?? row.slug}</td>
-                <td className="px-3 py-2 text-slate-700">{row.articleType}</td>
-                <td className="px-3 py-2"><span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{row.status}</span></td>
-                <td className="px-3 py-2 text-slate-700">{new Date(row.updatedAt).toLocaleString()}</td>
+              <tr key={row.id} className="border-t border-[var(--border)]">
+                <td className="px-3 py-2 text-[var(--text-muted)]">{row.id}</td>
+                <td className="px-3 py-2 text-[var(--foreground)]">{row.title ?? row.slug}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{row.articleType}</td>
+                <td className="px-3 py-2"><span className="rounded bg-[var(--surface-strong)] px-2 py-0.5 text-xs font-semibold text-[var(--text-muted)]">{row.status}</span></td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{new Date(row.updatedAt).toLocaleString()}</td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => startEdit(row.id)} disabled={loadingId === row.id || submitting} className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">{loadingId === row.id ? "Loading..." : "Edit"}</button>
-                    <button type="button" onClick={() => handleDelete(row.id)} disabled={loadingId === row.id || submitting} className="rounded border border-red-300 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60">Delete</button>
+                    <button type="button" onClick={() => startEdit(row.id)} disabled={loadingId === row.id || submitting} className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] disabled:opacity-60">{loadingId === row.id ? "Loading..." : "Edit"}</button>
+                    <button type="button" onClick={() => handleDelete(row.id)} disabled={loadingId === row.id || submitting} className="rounded border border-red-400/30 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-500/10 disabled:opacity-60">Delete</button>
                   </div>
                 </td>
               </tr>
@@ -397,12 +397,12 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
       </div>
 
       {editingId && (
-        <form onSubmit={handleUpdate} className="mt-6 rounded-lg border border-slate-200 p-4">
+        <form onSubmit={handleUpdate} className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black uppercase tracking-wide text-slate-700">Edit Article #{editingId}</h2>
+            <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Edit Article #{editingId}</h2>
             <button
               type="button"
-              className="text-sm font-semibold text-slate-600"
+              className="text-sm font-semibold text-[var(--text-muted)]"
               onClick={() => {
                 setEditingId(null);
                 setEditHistory([]);
@@ -412,31 +412,31 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
             </button>
           </div>
 
-          <section className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
-            <h3 className="text-xs font-black uppercase tracking-wide text-slate-700">
+          <section className="mt-3 rounded-md border border-[var(--border)] bg-[var(--surface-strong)] p-3">
+            <h3 className="text-xs font-black uppercase tracking-wide text-[var(--foreground)]">
               {editForm.locale === "ar" ? "سجل التصحيحات" : "Correction History"}
             </h3>
             {historyLoading && (
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-[var(--text-subtle)]">
                 {editForm.locale === "ar" ? "جاري تحميل السجل..." : "Loading history..."}
               </p>
             )}
             {!historyLoading && editHistory.length === 0 && (
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-[var(--text-subtle)]">
                 {editForm.locale === "ar" ? "لا يوجد سجل تصحيحات حتى الآن." : "No correction history recorded yet."}
               </p>
             )}
             {!historyLoading && editHistory.length > 0 && (
               <div className="mt-3 space-y-2">
                 {editHistory.map((item, index) => (
-                  <div key={`${item.action}-${item.createdAt}-${index}`} className="rounded border border-slate-200 bg-white p-2">
+                  <div key={`${item.action}-${item.createdAt}-${index}`} className="rounded border border-[var(--border)] bg-[var(--surface)] p-2">
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <span className="font-semibold text-slate-800">{historyLabel(item.action, editForm.locale)}</span>
-                      <span className="text-slate-500">{new Date(item.createdAt).toLocaleString()}</span>
+                      <span className="font-semibold text-[var(--foreground)]">{historyLabel(item.action, editForm.locale)}</span>
+                      <span className="text-[var(--text-subtle)]">{new Date(item.createdAt).toLocaleString()}</span>
                     </div>
-                    <p className="mt-1 text-xs text-slate-600">{historySummary(item, editForm.locale)}</p>
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">{historySummary(item, editForm.locale)}</p>
                     {item.editorName && (
-                      <p className="mt-1 text-[11px] text-slate-500">
+                      <p className="mt-1 text-[11px] text-[var(--text-subtle)]">
                         {editForm.locale === "ar" ? `بواسطة ${item.editorName}` : `By ${item.editorName}`}
                       </p>
                     )}
@@ -447,13 +447,13 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
           </section>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <input className="rounded border border-slate-300 px-3 py-2" placeholder="Title" value={editForm.title} onChange={(e) => onChange(setEditForm, "title", e.target.value)} required />
-            <input className="rounded border border-slate-300 px-3 py-2" placeholder="Article Type" value={editForm.articleType} onChange={(e) => onChange(setEditForm, "articleType", e.target.value)} required />
-            <select className="rounded border border-slate-300 px-3 py-2" value={editForm.locale} onChange={(e) => onChange(setEditForm, "locale", e.target.value as Locale)}>
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Title" value={editForm.title} onChange={(e) => onChange(setEditForm, "title", e.target.value)} required />
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Article Type" value={editForm.articleType} onChange={(e) => onChange(setEditForm, "articleType", e.target.value)} required />
+            <select className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" value={editForm.locale} onChange={(e) => onChange(setEditForm, "locale", e.target.value as Locale)}>
               <option value="ar">Arabic</option>
               <option value="en">English</option>
             </select>
-            <select className="rounded border border-slate-300 px-3 py-2" value={editForm.status} onChange={(e) => onChange(setEditForm, "status", e.target.value as ArticleStatus)}>
+            <select className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" value={editForm.status} onChange={(e) => onChange(setEditForm, "status", e.target.value as ArticleStatus)}>
               <option value="draft">draft</option>
               <option value="review">review</option>
               <option value="scheduled">scheduled</option>
@@ -462,16 +462,16 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
             </select>
           </div>
 
-          <textarea className="mt-3 min-h-20 w-full rounded border border-slate-300 px-3 py-2" placeholder="Summary" value={editForm.summary} onChange={(e) => onChange(setEditForm, "summary", e.target.value)} required />
+          <textarea className="mt-3 min-h-20 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Summary" value={editForm.summary} onChange={(e) => onChange(setEditForm, "summary", e.target.value)} required />
           <div className="mt-3">
-            <label className="mb-2 block text-sm font-semibold text-slate-700">Content</label>
+            <label className="mb-2 block text-sm font-semibold text-[var(--text-muted)]">Content</label>
             <RichTextEditor
               value={editForm.contentHtml}
               onChange={(value) => onChange(setEditForm, "contentHtml", value)}
               placeholder="Update the article content"
             />
           </div>
-          <input className="mt-3 w-full rounded border border-slate-300 px-3 py-2" placeholder="Featured image URL (optional)" value={editForm.featuredImageUrl} onChange={(e) => onChange(setEditForm, "featuredImageUrl", e.target.value)} />
+          <input className="mt-3 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Featured image URL (optional)" value={editForm.featuredImageUrl} onChange={(e) => onChange(setEditForm, "featuredImageUrl", e.target.value)} />
 
           <div className="mt-3 flex flex-wrap gap-4 text-sm">
             <label><input type="checkbox" checked={editForm.isBreaking} onChange={(e) => onChange(setEditForm, "isBreaking", e.target.checked)} /> <span className="ml-1">Breaking</span></label>

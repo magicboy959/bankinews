@@ -194,14 +194,14 @@ export function RateSourceAdminManager({
     <div>
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-black text-[#0A2342]">Rate Sources</h1>
-          <p className="mt-2 text-slate-600">
+          <h1 className="text-2xl font-black text-[var(--foreground)]">Rate Sources</h1>
+          <p className="mt-2 text-[var(--text-muted)]">
             Search, filter, and update trust settings for exchange-rate sources.
           </p>
         </div>
         <a
           href="/admin/exchange-rates"
-          className="inline-flex w-fit items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="inline-flex w-fit items-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
         >
           Back to Exchange Rates
         </a>
@@ -214,7 +214,7 @@ export function RateSourceAdminManager({
           event.preventDefault();
           router.push(buildNextUrl(1));
         }}
-        className="mt-6 rounded-lg border border-slate-200 p-4"
+        className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4"
       >
         <div className="grid gap-3 md:grid-cols-4">
           <input
@@ -255,7 +255,7 @@ export function RateSourceAdminManager({
                 setActive("all");
                 router.push(pathname);
               }}
-              className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+              className="rounded border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)]"
             >
               Reset
             </button>
@@ -263,7 +263,7 @@ export function RateSourceAdminManager({
         </div>
       </form>
 
-      <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
+      <div className="mt-4 flex items-center justify-between text-sm text-[var(--text-muted)]">
         <p>
           Showing {sortedSources.length} of {totalCount} sources
         </p>
@@ -272,9 +272,9 @@ export function RateSourceAdminManager({
         </p>
       </div>
 
-      <div className="mt-3 overflow-x-auto rounded-lg border border-slate-200">
+      <div className="mt-3 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-600">
+          <thead className="bg-[var(--surface-strong)] text-left text-[var(--text-muted)]">
             <tr>
               <th className="px-3 py-2 font-semibold">Source</th>
               <th className="px-3 py-2 font-semibold">Type</th>
@@ -289,25 +289,25 @@ export function RateSourceAdminManager({
           </thead>
           <tbody>
             {sortedSources.map((source) => (
-              <tr key={source.id} className="border-t border-slate-100">
-                <td className="px-3 py-2 font-semibold text-slate-800">{source.name}</td>
-                <td className="px-3 py-2 text-slate-600">{source.sourceType}</td>
-                <td className="px-3 py-2 text-slate-600">{source.rateCount}</td>
-                <td className="px-3 py-2 text-slate-600">{toDateInputValue(source.latestRateDate)}</td>
+              <tr key={source.id} className="border-t border-[var(--border)]">
+                <td className="px-3 py-2 font-semibold text-[var(--foreground)]">{source.name}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{source.sourceType}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{source.rateCount}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{toDateInputValue(source.latestRateDate)}</td>
                 <td className="px-3 py-2">
                   <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${trustBadgeClass(source.trustTier)}`}>
                     {source.trustTier}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-slate-600">{source.trustScore}</td>
-                <td className="px-3 py-2 text-slate-600">{source.lastVerifiedAt ?? "-"}</td>
-                <td className="px-3 py-2 text-slate-600">{source.isActive ? "Yes" : "No"}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{source.trustScore}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{source.lastVerifiedAt ?? "-"}</td>
+                <td className="px-3 py-2 text-[var(--text-muted)]">{source.isActive ? "Yes" : "No"}</td>
                 <td className="px-3 py-2">
                   <button
                     type="button"
                     onClick={() => startSourceEdit(source)}
                     disabled={sourceSubmitting}
-                    className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                    className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] disabled:opacity-60"
                   >
                     Edit
                   </button>
@@ -338,10 +338,10 @@ export function RateSourceAdminManager({
       </div>
 
       {editingSourceId && (
-        <form onSubmit={handleSourceUpdate} className="mt-5 rounded-md border border-slate-200 bg-slate-50 p-4">
+        <form onSubmit={handleSourceUpdate} className="mt-5 rounded-md border border-[var(--border)] bg-[var(--surface-strong)] p-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">Edit Source #{editingSourceId}</h3>
-            <button type="button" onClick={() => setEditingSourceId(null)} className="text-xs font-semibold text-slate-600">
+            <h3 className="text-sm font-semibold text-[var(--foreground)]">Edit Source #{editingSourceId}</h3>
+            <button type="button" onClick={() => setEditingSourceId(null)} className="text-xs font-semibold text-[var(--text-muted)]">
               Cancel
             </button>
           </div>

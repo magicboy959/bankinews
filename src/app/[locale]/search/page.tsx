@@ -69,10 +69,10 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 shadow-[0_10px_30px_rgba(2,6,23,0.06)]">
       <form onSubmit={onSubmit} className="flex gap-2">
         <input
-          className="w-full rounded-md border border-slate-300 px-3 py-2"
+          className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={isArabic ? "ابحث..." : "Search..."}
@@ -84,9 +84,9 @@ export default function SearchPage() {
 
       {showArabicFallback ? (
         <section className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <h2 className="text-base font-black text-slate-900">Arabic Is Our Main Language</h2>
-          <p className="mt-2 text-sm text-slate-700">This content is not available in this language right now.</p>
-          <p className="mt-1 text-sm text-slate-600">Try your query in Arabic to find more results.</p>
+          <h2 className="text-base font-black text-[var(--foreground)]">Arabic Is Our Main Language</h2>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">This content is not available in this language right now.</p>
+          <p className="mt-1 text-sm text-[var(--text-subtle)]">Try your query in Arabic to find more results.</p>
           <Link
             href={`/ar/search`}
             className="mt-3 inline-flex rounded bg-[#0A2342] px-3 py-2 text-sm font-semibold text-white hover:bg-[#091b35]"
@@ -99,7 +99,7 @@ export default function SearchPage() {
       {data && (
         <div className="mt-6 space-y-6">
           <section>
-            <h2 className="text-lg font-black text-slate-900">{isArabic ? "المقالات" : "Articles"}</h2>
+            <h2 className="text-lg font-black text-[var(--foreground)]">{isArabic ? "المقالات" : "Articles"}</h2>
             <div className="mt-2 space-y-2">
               {data.articles.length ? (
                 data.articles.map((article) => (
@@ -115,11 +115,11 @@ export default function SearchPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-black text-slate-900">{isArabic ? "البنوك" : "Banks"}</h2>
+            <h2 className="text-lg font-black text-[var(--foreground)]">{isArabic ? "البنوك" : "Banks"}</h2>
             <div className="mt-2 space-y-2">
               {data.banks.length ? (
                 data.banks.map((bank) => (
-                  <Link key={bank.id} href={`/${activeLocale}/banks/${bank.slug}`} className="block rounded-md border border-slate-200 p-3 hover:bg-slate-50">
+                  <Link key={bank.id} href={`/${activeLocale}/banks/${bank.slug}`} className="block rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 transition hover:bg-[var(--surface-muted)]">
                     <p className="font-bold">{bank.name}</p>
                   </Link>
                 ))

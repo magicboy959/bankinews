@@ -20,7 +20,7 @@ export function ArticleCardView({
 
   if (compact) {
     return (
-      <article className="flex gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:shadow-md">
+      <article className="flex gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-3 shadow-[0_10px_30px_rgba(2,6,23,0.06)] transition duration-200 hover:-translate-y-0.5 hover:border-[color:var(--accent)]/40 hover:shadow-[0_16px_36px_rgba(2,6,23,0.12)]">
         {article.featuredImageUrl && (
           <Link href={href} className="shrink-0">
             <img
@@ -32,10 +32,10 @@ export function ArticleCardView({
           </Link>
         )}
         <div className="min-w-0">
-          <h3 className="line-clamp-2 text-sm font-bold leading-5 text-slate-900">
+          <h3 className="break-words text-sm font-bold leading-5 text-[var(--foreground)] sm:line-clamp-2">
             <Link href={href}>{article.title}</Link>
           </h3>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-[var(--text-subtle)]">
             {article.publishedAt ? formatDate(article.publishedAt, locale) : "-"} · {article.readingTimeMinutes} min
           </p>
         </div>
@@ -44,7 +44,7 @@ export function ArticleCardView({
   }
 
   return (
-    <article className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+    <article className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] shadow-[0_10px_30px_rgba(2,6,23,0.06)] transition duration-200 hover:-translate-y-0.5 hover:border-[color:var(--accent)]/40 hover:shadow-[0_16px_36px_rgba(2,6,23,0.12)]">
       {article.featuredImageUrl ? (
         <Link href={href} className="block">
           <img
@@ -69,19 +69,19 @@ export function ArticleCardView({
           {article.categoryName && (
             <Link
               href={`/${locale}/category/${article.categorySlug ?? article.categoryName.toLowerCase().replace(/\s+/g, "-")}`}
-              className="rounded bg-slate-100 px-2 py-0.5 text-slate-600 hover:bg-slate-200"
+              className="rounded bg-[var(--surface-strong)] px-2 py-0.5 text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)]"
             >
               {article.categoryName}
             </Link>
           )}
         </div>
 
-        <h3 className="line-clamp-2 text-base font-extrabold leading-snug text-slate-900">
+        <h3 className="break-words text-base font-extrabold leading-snug text-[var(--foreground)] sm:line-clamp-2">
           <Link href={href}>{article.title}</Link>
         </h3>
-        <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-600">{article.summary}</p>
+        <p className="mt-2 break-words text-sm leading-5 text-[var(--text-muted)] sm:line-clamp-2">{article.summary}</p>
 
-        <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+        <div className="mt-3 flex items-center justify-between text-xs text-[var(--text-subtle)]">
           <span>{article.publishedAt ? formatDate(article.publishedAt, locale) : "-"}</span>
           <span>{article.readingTimeMinutes} min</span>
         </div>

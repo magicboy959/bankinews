@@ -57,7 +57,7 @@ export default async function NewsPage({
       <SectionHeading title={t.nav.latest} />
 
       {articles.length === 0 ? (
-        <p className="mt-6 text-slate-500">
+        <p className="mt-6 text-[var(--text-muted)]">
           {safeLocale === "ar" ? "لا توجد مقالات منشورة حالياً." : "No published articles yet."}
         </p>
       ) : (
@@ -73,29 +73,29 @@ export default async function NewsPage({
           {hasPrev ? (
             <Link
               href={`/${safeLocale}/news${page - 1 === 1 ? "" : `?page=${page - 1}`}`}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
             >
               {safeLocale === "ar" ? "→ السابق" : "← Prev"}
             </Link>
           ) : (
-            <span className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-400">
+            <span className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm text-[var(--text-subtle)]">
               {safeLocale === "ar" ? "→ السابق" : "← Prev"}
             </span>
           )}
 
-          <span className="px-3 text-sm text-slate-600">
+          <span className="px-3 text-sm text-[var(--text-muted)]">
             {safeLocale === "ar" ? `${page} / ${totalPages}` : `${page} of ${totalPages}`}
           </span>
 
           {hasNext ? (
             <Link
               href={`/${safeLocale}/news?page=${page + 1}`}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
             >
               {safeLocale === "ar" ? "← التالي" : "Next →"}
             </Link>
           ) : (
-            <span className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-400">
+            <span className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm text-[var(--text-subtle)]">
               {safeLocale === "ar" ? "← التالي" : "Next →"}
             </span>
           )}

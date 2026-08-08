@@ -37,12 +37,12 @@ export function ContactForm({ locale }: { locale: Locale }) {
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4 md:grid-cols-2">
-      <input name="fullName" required placeholder={locale === "ar" ? "الاسم الكامل" : "Full name"} className="rounded-md border border-slate-300 px-3 py-2" />
-      <input name="email" type="email" required placeholder={locale === "ar" ? "البريد الإلكتروني" : "Email"} className="rounded-md border border-slate-300 px-3 py-2" />
-      <input name="phone" placeholder={locale === "ar" ? "الهاتف (اختياري)" : "Phone (optional)"} className="rounded-md border border-slate-300 px-3 py-2" />
-      <input name="subject" required placeholder={locale === "ar" ? "الموضوع" : "Subject"} className="rounded-md border border-slate-300 px-3 py-2" />
-      <textarea name="message" required placeholder={locale === "ar" ? "الرسالة" : "Message"} className="md:col-span-2 min-h-40 rounded-md border border-slate-300 px-3 py-2" />
-      <label className="md:col-span-2 flex items-center gap-2 text-sm text-slate-600">
+      <input name="fullName" required placeholder={locale === "ar" ? "الاسم الكامل" : "Full name"} className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" />
+      <input name="email" type="email" required placeholder={locale === "ar" ? "البريد الإلكتروني" : "Email"} className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" />
+      <input name="phone" placeholder={locale === "ar" ? "الهاتف (اختياري)" : "Phone (optional)"} className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" />
+      <input name="subject" required placeholder={locale === "ar" ? "الموضوع" : "Subject"} className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" />
+      <textarea name="message" required placeholder={locale === "ar" ? "الرسالة" : "Message"} className="md:col-span-2 min-h-40 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" />
+      <label className="md:col-span-2 flex items-center gap-2 text-sm text-[var(--text-muted)]">
         <input type="checkbox" name="consent" required />
         {locale === "ar" ? "أوافق على معالجة البيانات" : "I consent to data processing"}
       </label>

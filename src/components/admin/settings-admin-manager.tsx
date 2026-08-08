@@ -401,27 +401,27 @@ export function SettingsAdminManager({
 
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#0A2342]">Settings</h1>
-      <p className="mt-2 text-slate-600">Manage JSON settings and homepage sections.</p>
+      <h1 className="text-2xl font-black text-[var(--foreground)]">Settings</h1>
+      <p className="mt-2 text-[var(--text-muted)]">Manage JSON settings and homepage sections.</p>
 
       {error && <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <section className="rounded-lg border border-slate-200 p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black uppercase tracking-wide text-slate-700">Settings Store</h2>
+            <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Settings Store</h2>
             {editingSettingId && (
-              <button type="button" onClick={resetSettingForm} className="text-sm font-semibold text-slate-600">
+              <button type="button" onClick={resetSettingForm} className="text-sm font-semibold text-[var(--text-muted)]">
                 Cancel edit
               </button>
             )}
           </div>
 
-          <div className="mt-3 rounded-lg border border-cyan-200 bg-cyan-50 p-3">
+          <div className="mt-3 rounded-lg border border-cyan-500/25 bg-cyan-500/10 p-3">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-sm font-bold text-slate-900">Header Social Links</p>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="text-sm font-bold text-[var(--foreground)]">Header Social Links</p>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
                   Add the links shown next to search in the website header.
                 </p>
               </div>
@@ -434,21 +434,21 @@ export function SettingsAdminManager({
               </button>
             </div>
 
-            <div className="mt-3 rounded-md border border-cyan-300 bg-white p-3">
+            <div className="mt-3 rounded-md border border-cyan-500/25 bg-[var(--surface)] p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-700">Visual Social Links Builder</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-[var(--foreground)]">Visual Social Links Builder</p>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={addSocialLinkRow}
-                    className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                    className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
                   >
                     Add Row
                   </button>
                   <button
                     type="button"
                     onClick={importSocialRowsFromJson}
-                    className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                    className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
                   >
                     Import From JSON
                   </button>
@@ -459,7 +459,7 @@ export function SettingsAdminManager({
                 {socialLinksDraft.map((item, index) => (
                   <div key={`social-row-${index}`} className="grid gap-2 md:grid-cols-[170px_1fr_auto]">
                     <select
-                      className="rounded border border-slate-300 bg-white px-2 py-2 text-sm"
+                      className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-2 py-2 text-sm text-[var(--foreground)]"
                       value={item.platform}
                       onChange={(e) =>
                         setSocialLinksDraft((prev) =>
@@ -474,7 +474,7 @@ export function SettingsAdminManager({
                       ))}
                     </select>
                     <input
-                      className="rounded border border-slate-300 px-3 py-2 text-sm"
+                      className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
                       placeholder="https://..."
                       value={item.href}
                       onChange={(e) =>
@@ -488,7 +488,7 @@ export function SettingsAdminManager({
                     <button
                       type="button"
                       onClick={() => setSocialLinksDraft((prev) => prev.filter((_, rowIndex) => rowIndex !== index))}
-                      className="rounded border border-red-300 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
+                      className="rounded border border-red-400/30 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-500/10"
                     >
                       Remove
                     </button>
@@ -500,7 +500,7 @@ export function SettingsAdminManager({
 
           <form onSubmit={submitSetting} className="mt-3">
             <input
-              className="w-full rounded border border-slate-300 px-3 py-2"
+              className="w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
               placeholder="setting_key"
               value={settingForm.settingKey}
               onChange={(e) => setSettingForm((prev) => ({ ...prev, settingKey: e.target.value }))}
@@ -528,14 +528,14 @@ export function SettingsAdminManager({
 
           <div className="mt-4 space-y-2">
             {sortedSettings.length === 0 ? (
-              <p className="text-sm text-slate-500">No settings found.</p>
+              <p className="text-sm text-[var(--text-subtle)]">No settings found.</p>
             ) : (
               sortedSettings.map((row) => (
                 <div key={row.id} className="rounded border border-slate-100 px-3 py-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{row.settingKey}</p>
-                      <p className="text-xs text-slate-500">Updated: {new Date(row.updatedAt).toLocaleString()}</p>
+                      <p className="text-sm font-semibold text-[var(--foreground)]">{row.settingKey}</p>
+                      <p className="text-xs text-[var(--text-subtle)]">Updated: {new Date(row.updatedAt).toLocaleString()}</p>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -564,9 +564,9 @@ export function SettingsAdminManager({
 
         <section className="rounded-lg border border-slate-200 p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black uppercase tracking-wide text-slate-700">Homepage Sections</h2>
+            <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Homepage Sections</h2>
             {editingSectionId && (
-              <button type="button" onClick={resetSectionForm} className="text-sm font-semibold text-slate-600">
+              <button type="button" onClick={resetSectionForm} className="text-sm font-semibold text-[var(--text-muted)]">
                 Cancel edit
               </button>
             )}
@@ -591,7 +591,7 @@ export function SettingsAdminManager({
               />
             </div>
 
-            <label className="mt-3 flex items-center gap-2 text-sm text-slate-700">
+            <label className="mt-3 flex items-center gap-2 text-sm text-[var(--text-muted)]">
               <input
                 type="checkbox"
                 checked={sectionForm.enabled}
@@ -639,14 +639,14 @@ export function SettingsAdminManager({
 
           <div className="mt-4 space-y-2">
             {sortedSections.length === 0 ? (
-              <p className="text-sm text-slate-500">No homepage sections found.</p>
+              <p className="text-sm text-[var(--text-subtle)]">No homepage sections found.</p>
             ) : (
               sortedSections.map((row) => (
                 <div key={row.id} className="rounded border border-slate-100 px-3 py-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{row.sectionKey}</p>
-                      <p className="text-xs text-slate-500">Sort: {row.sortOrder} • {truthy(row.enabled) ? "enabled" : "disabled"}</p>
+                      <p className="text-sm font-semibold text-[var(--foreground)]">{row.sectionKey}</p>
+                      <p className="text-xs text-[var(--text-subtle)]">Sort: {row.sortOrder} • {truthy(row.enabled) ? "enabled" : "disabled"}</p>
                     </div>
                     <div className="flex gap-2">
                       <button

@@ -40,10 +40,10 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
   return (
     <div className="space-y-4">
       {jobs.map((job, index) => (
-        <article key={`${job.title}-${index}`} className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-xl font-black text-slate-900">{job.title}</h2>
+        <article key={`${job.title}-${index}`} className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 shadow-[0_10px_30px_rgba(2,6,23,0.06)]">
+          <h2 className="text-xl font-black text-[var(--foreground)]">{job.title}</h2>
           <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{job.organization} • {job.location} • {job.employmentType}</p>
-          <p className="mt-2 text-sm text-slate-600">{job.description}</p>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">{job.description}</p>
           <p className="mt-3 text-xs text-slate-500">Deadline: {String(job.applicationDeadline).slice(0, 10)}</p>
         </article>
       ))}

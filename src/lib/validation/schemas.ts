@@ -1,5 +1,32 @@
 import { z } from "zod";
 
+function isValidUrlOrLocalPath(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return true;
+  }
+
+  if (trimmed.startsWith("/")) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+const optionalUrlOrLocalPathSchema = z
+  .string()
+  .trim()
+  .nullable()
+  .optional()
+  .refine((value) => value === null || value === undefined || isValidUrlOrLocalPath(value), {
+    message: "Must be a valid URL or local media path",
+  });
+
 export const loginSchema = z.object({
   email: z.email(),
   password: z.string().min(8).max(128),
@@ -7,15 +34,15 @@ export const loginSchema = z.object({
 
 export const articleCreateSchema = z.object({
   locale: z.enum(["ar", "en"]),
-  title: z.string().min(5).max(255),
-  summary: z.string().min(20).max(1000),
-  contentHtml: z.string().min(50),
-  articleType: z.string().min(2),
+  title: z.string().trim().min(1).max(255),
+  summary: z.string().trim().min(1).max(1000),
+  contentHtml: z.string().trim().min(1),
+  articleType: z.string().trim().min(1),
   status: z.enum(["draft", "review", "scheduled", "published", "archived"]).default("draft"),
   slug: z.string().min(2).max(190).regex(/^[a-z0-9-]+$/, "Slug may only contain lowercase letters, digits, and hyphens").optional().nullable(),
-  featuredImageUrl: z.url().optional().nullable(),
-  videoUrl: z.url().optional().nullable(),
-  sourceUrl: z.url().optional().nullable(),
+  featuredImageUrl: optionalUrlOrLocalPathSchema,
+  videoUrl: optionalUrlOrLocalPathSchema,
+  sourceUrl: optionalUrlOrLocalPathSchema,
   sourceAttribution: z.string().max(255).optional().nullable(),
   relatedBankId: z.number().int().positive().optional().nullable(),
   categoryId: z.number().int().positive().optional().nullable(),

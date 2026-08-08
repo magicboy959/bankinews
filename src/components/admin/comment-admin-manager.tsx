@@ -504,15 +504,15 @@ export function CommentAdminManager({
 
   function statusBadge(status: CommentStatus) {
     if (status === "approved") {
-      return "bg-green-100 text-green-800";
+      return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400";
     }
     if (status === "rejected") {
-      return "bg-rose-100 text-rose-800";
+      return "bg-rose-500/15 text-rose-700 dark:text-rose-400";
     }
     if (status === "spam") {
-      return "bg-amber-100 text-amber-900";
+      return "bg-amber-500/15 text-amber-700 dark:text-amber-400";
     }
-    return "bg-slate-100 text-slate-700";
+    return "bg-[var(--surface-strong)] text-[var(--text-muted)]";
   }
 
   function statusLabel(status: string | null): string {
@@ -545,11 +545,11 @@ export function CommentAdminManager({
 
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#0A2342]">{t.title}</h1>
-      <p className="mt-2 text-slate-600">{t.subtitle}</p>
+      <h1 className="text-2xl font-black text-[var(--foreground)]">{t.title}</h1>
+      <p className="mt-2 text-[var(--text-muted)]">{t.subtitle}</p>
 
       <div className="mt-3 flex items-center gap-2">
-        <label className="text-xs font-semibold text-slate-700" htmlFor="comments-ui-locale">
+        <label className="text-xs font-semibold text-[var(--text-muted)]" htmlFor="comments-ui-locale">
           {t.chooseLanguage}
         </label>
         <select
@@ -569,7 +569,7 @@ export function CommentAdminManager({
         <select
           value={statusFilter}
           onChange={(event) => pushFilters({ status: event.target.value as StatusFilter, page: 1 })}
-          className="rounded border border-slate-300 px-3 py-2 text-sm"
+          className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)]"
         >
           <option value="all">{t.allStatuses}</option>
           <option value="pending">{t.pending}</option>
@@ -587,59 +587,59 @@ export function CommentAdminManager({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className="w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
             placeholder={t.searchPlaceholder}
           />
-          <button type="submit" className="rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <button type="submit" className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]">
             {t.search}
           </button>
-          <button type="button" onClick={resetAllFilters} className="rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={resetAllFilters} className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]">
             {t.resetFilters}
           </button>
           <a
             href={buildExportHref()}
-            className="rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
           >
             {exportButtonLabel()}
           </a>
         </form>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-        <p className="text-xs font-semibold text-slate-700">{t.dateRange}:</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2">
+        <p className="text-xs font-semibold text-[var(--text-muted)]">{t.dateRange}:</p>
         <button
           type="button"
           onClick={() => pushFilters({ range: "all", page: 1 })}
-          className={`rounded border px-2 py-1 text-xs font-semibold ${dateRange === "all" ? "border-blue-300 bg-blue-50 text-blue-800" : "border-slate-300 text-slate-700 hover:bg-white"}`}
+          className={`rounded border px-2 py-1 text-xs font-semibold ${dateRange === "all" ? "border-blue-400/30 bg-blue-500/10 text-blue-700 dark:text-blue-400" : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface)]"}`}
         >
           {t.allTime}
         </button>
         <button
           type="button"
           onClick={() => pushFilters({ range: "today", page: 1 })}
-          className={`rounded border px-2 py-1 text-xs font-semibold ${dateRange === "today" ? "border-blue-300 bg-blue-50 text-blue-800" : "border-slate-300 text-slate-700 hover:bg-white"}`}
+          className={`rounded border px-2 py-1 text-xs font-semibold ${dateRange === "today" ? "border-blue-400/30 bg-blue-500/10 text-blue-700 dark:text-blue-400" : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface)]"}`}
         >
           {t.today}
         </button>
         <button
           type="button"
           onClick={() => pushFilters({ range: "7d", page: 1 })}
-          className={`rounded border px-2 py-1 text-xs font-semibold ${dateRange === "7d" ? "border-blue-300 bg-blue-50 text-blue-800" : "border-slate-300 text-slate-700 hover:bg-white"}`}
+          className={`rounded border px-2 py-1 text-xs font-semibold ${dateRange === "7d" ? "border-blue-400/30 bg-blue-500/10 text-blue-700 dark:text-blue-400" : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface)]"}`}
         >
           {t.last7d}
         </button>
         <button
           type="button"
           onClick={() => pushFilters({ range: "30d", page: 1 })}
-          className={`rounded border px-2 py-1 text-xs font-semibold ${dateRange === "30d" ? "border-blue-300 bg-blue-50 text-blue-800" : "border-slate-300 text-slate-700 hover:bg-white"}`}
+          className={`rounded border px-2 py-1 text-xs font-semibold ${dateRange === "30d" ? "border-blue-400/30 bg-blue-500/10 text-blue-700 dark:text-blue-400" : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface)]"}`}
         >
           {t.last30d}
         </button>
       </div>
 
-      <section className="mt-3 rounded-md border border-slate-200 bg-white p-3">
+      <section className="mt-3 rounded-md border border-[var(--border)] bg-[var(--surface)] p-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{t.visibleSet}</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-subtle)]">{t.visibleSet}</p>
           {statusFilter !== "all" && (
             <button
               type="button"
@@ -654,52 +654,52 @@ export function CommentAdminManager({
           <button
             type="button"
             onClick={() => pushFilters({ status: "all", page: 1 })}
-            className={`rounded border px-2 py-2 text-left ${statusFilter === "all" ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-slate-50"}`}
+            className={`rounded border px-2 py-2 text-left ${statusFilter === "all" ? "border-blue-400/30 bg-blue-500/10" : "border-[var(--border)] bg-[var(--surface-strong)]"}`}
           >
-            <p className="text-[11px] font-semibold text-slate-500">{t.total}</p>
-            <p className="text-sm font-bold text-slate-800">{summary.total}</p>
+            <p className="text-[11px] font-semibold text-[var(--text-subtle)]">{t.total}</p>
+            <p className="text-sm font-bold text-[var(--foreground)]">{summary.total}</p>
           </button>
           <button
             type="button"
             onClick={() => pushFilters({ status: "pending", page: 1 })}
-            className={`rounded border px-2 py-2 text-left ${statusFilter === "pending" ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-slate-50"}`}
+            className={`rounded border px-2 py-2 text-left ${statusFilter === "pending" ? "border-blue-400/30 bg-blue-500/10" : "border-[var(--border)] bg-[var(--surface-strong)]"}`}
           >
-            <p className="text-[11px] font-semibold text-slate-500">{t.pendingCount}</p>
-            <p className="text-sm font-bold text-slate-800">{summary.pending}</p>
+            <p className="text-[11px] font-semibold text-[var(--text-subtle)]">{t.pendingCount}</p>
+            <p className="text-sm font-bold text-[var(--foreground)]">{summary.pending}</p>
           </button>
           <button
             type="button"
             onClick={() => pushFilters({ status: "approved", page: 1 })}
-            className={`rounded border px-2 py-2 text-left ${statusFilter === "approved" ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-slate-50"}`}
+            className={`rounded border px-2 py-2 text-left ${statusFilter === "approved" ? "border-blue-400/30 bg-blue-500/10" : "border-[var(--border)] bg-[var(--surface-strong)]"}`}
           >
-            <p className="text-[11px] font-semibold text-slate-500">{t.approvedCount}</p>
-            <p className="text-sm font-bold text-slate-800">{summary.approved}</p>
+            <p className="text-[11px] font-semibold text-[var(--text-subtle)]">{t.approvedCount}</p>
+            <p className="text-sm font-bold text-[var(--foreground)]">{summary.approved}</p>
           </button>
           <button
             type="button"
             onClick={() => pushFilters({ status: "rejected", page: 1 })}
-            className={`rounded border px-2 py-2 text-left ${statusFilter === "rejected" ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-slate-50"}`}
+            className={`rounded border px-2 py-2 text-left ${statusFilter === "rejected" ? "border-blue-400/30 bg-blue-500/10" : "border-[var(--border)] bg-[var(--surface-strong)]"}`}
           >
-            <p className="text-[11px] font-semibold text-slate-500">{t.rejectedCount}</p>
-            <p className="text-sm font-bold text-slate-800">{summary.rejected}</p>
+            <p className="text-[11px] font-semibold text-[var(--text-subtle)]">{t.rejectedCount}</p>
+            <p className="text-sm font-bold text-[var(--foreground)]">{summary.rejected}</p>
           </button>
           <button
             type="button"
             onClick={() => pushFilters({ status: "spam", page: 1 })}
-            className={`rounded border px-2 py-2 text-left ${statusFilter === "spam" ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-slate-50"}`}
+            className={`rounded border px-2 py-2 text-left ${statusFilter === "spam" ? "border-blue-400/30 bg-blue-500/10" : "border-[var(--border)] bg-[var(--surface-strong)]"}`}
           >
-            <p className="text-[11px] font-semibold text-slate-500">{t.spamCount}</p>
-            <p className="text-sm font-bold text-slate-800">{summary.spam}</p>
+            <p className="text-[11px] font-semibold text-[var(--text-subtle)]">{t.spamCount}</p>
+            <p className="text-sm font-bold text-[var(--foreground)]">{summary.spam}</p>
           </button>
-          <div className="rounded border border-slate-200 bg-blue-50 px-2 py-2">
-            <p className="text-[11px] font-semibold text-blue-700">{t.selectedCount}</p>
-            <p className="text-sm font-bold text-blue-900">{selectedIds.length}</p>
+          <div className="rounded border border-blue-400/30 bg-blue-500/10 px-2 py-2">
+            <p className="text-[11px] font-semibold text-blue-700 dark:text-blue-400">{t.selectedCount}</p>
+            <p className="text-sm font-bold text-blue-900 dark:text-blue-300">{selectedIds.length}</p>
           </div>
         </div>
       </section>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-        <p className="text-xs font-semibold text-slate-700">
+      <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2">
+        <p className="text-xs font-semibold text-[var(--text-muted)]">
           {t.selected}: {selectedIds.length}
         </p>
         <select
@@ -724,7 +724,7 @@ export function CommentAdminManager({
           type="button"
           onClick={removeSelectedComments}
           disabled={!selectedIds.length || bulkSubmitting || bulkDeleting}
-          className="rounded border border-rose-300 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-white disabled:opacity-50"
+          className="rounded border border-rose-400/30 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-500/10 disabled:opacity-50"
         >
           {bulkDeleting ? t.deleting : t.bulkDeleteSelected}
         </button>
@@ -738,17 +738,17 @@ export function CommentAdminManager({
         </button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-muted)]">
         <div className="flex flex-wrap items-center gap-2">
           <p>
             {totalCount} {t.results}
           </p>
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-700">{t.perPage}</span>
+            <span className="font-semibold text-[var(--foreground)]">{t.perPage}</span>
             <select
               value={currentPageSize}
               onChange={(event) => pushFilters({ pageSize: Number(event.target.value), page: 1 })}
-              className="rounded border border-slate-300 px-2 py-1 text-xs"
+              className="rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs text-[var(--foreground)]"
             >
               {pageSizeOptions.map((value) => (
                 <option key={value} value={value}>
@@ -767,7 +767,7 @@ export function CommentAdminManager({
           >
             {t.previous}
           </button>
-          <p className="font-semibold text-slate-700">
+          <p className="font-semibold text-[var(--foreground)]">
             {t.page} {currentPage} {t.of} {totalPages}
           </p>
           <button
@@ -781,9 +781,9 @@ export function CommentAdminManager({
         </div>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
+      <div className="mt-4 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-600">
+          <thead className="bg-[var(--surface-strong)] text-left text-[var(--text-muted)]">
             <tr>
               <th className="px-3 py-2 font-semibold">
                 <input
@@ -804,7 +804,7 @@ export function CommentAdminManager({
           <tbody>
             {rows.map((row) => (
               <Fragment key={row.id}>
-                <tr className="border-t border-slate-100 align-top">
+                <tr className="border-t border-[var(--border)] align-top">
                   <td className="px-3 py-3">
                     <input
                       type="checkbox"
@@ -813,7 +813,7 @@ export function CommentAdminManager({
                       aria-label={`Select comment ${row.id}`}
                     />
                   </td>
-                  <td className="max-w-[380px] px-3 py-3 text-slate-800">
+                  <td className="max-w-[380px] px-3 py-3 text-[var(--foreground)]">
                     <p className="line-clamp-4 whitespace-pre-wrap">{row.comment}</p>
                     {row.reportCount > 0 && (
                       <p className="mt-1 text-xs font-semibold text-amber-700">{t.reports}: {row.reportCount}</p>
@@ -821,25 +821,25 @@ export function CommentAdminManager({
                   </td>
                   <td className="px-3 py-3 text-slate-700">
                     <p className="font-semibold">{row.articleTitle ?? row.articleSlug}</p>
-                    <p className="text-xs text-slate-500">/{row.articleSlug}</p>
+                    <p className="text-xs text-[var(--text-subtle)]">/{row.articleSlug}</p>
                   </td>
                   <td className="px-3 py-3 text-slate-700">
                     <p className="font-semibold">{row.name}</p>
-                    <p className="text-xs text-slate-500">{row.email}</p>
+                    <p className="text-xs text-[var(--text-subtle)]">{row.email}</p>
                   </td>
                   <td className="px-3 py-3">
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusBadge(row.approvalStatus)}`}>
                       {statusLabel(row.approvalStatus)}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-xs text-slate-500">{new Date(row.createdAt).toLocaleString()}</td>
+                  <td className="px-3 py-3 text-xs text-[var(--text-subtle)]">{new Date(row.createdAt).toLocaleString()}</td>
                   <td className="px-3 py-3">
                     <div className="flex flex-wrap gap-2">
                       {statusOptions.map((status) => (
                         <button
                           key={status}
                           type="button"
-                          className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                          className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] disabled:opacity-50"
                           disabled={loadingId === row.id || row.approvalStatus === status}
                           onClick={() => updateStatus(row.id, status)}
                         >
@@ -856,7 +856,7 @@ export function CommentAdminManager({
                       </button>
                       <button
                         type="button"
-                        className="rounded border border-rose-300 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                        className="rounded border border-rose-400/30 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-500/10 disabled:opacity-50"
                         disabled={loadingId === row.id}
                         onClick={() => removeComment(row.id)}
                       >

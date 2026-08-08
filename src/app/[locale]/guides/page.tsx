@@ -40,11 +40,11 @@ export default async function GuidesPage({ params }: { params: Promise<{ locale:
   return (
     <div className="space-y-4">
       {guides.map((guide) => (
-        <article key={guide.slug} className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-xl font-black text-slate-900">
+        <article key={guide.slug} className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 shadow-[0_10px_30px_rgba(2,6,23,0.06)]">
+          <h2 className="text-xl font-black text-[var(--foreground)]">
             <Link href={`/${safeLocale}/news/${guide.slug}`}>{guide.title}</Link>
           </h2>
-          <p className="mt-2 text-sm text-slate-600">{guide.summary}</p>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">{guide.summary}</p>
         </article>
       ))}
     </div>

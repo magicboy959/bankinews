@@ -811,8 +811,8 @@ export function DashboardAdminManager({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-black text-[#0A2342]">Editorial Dashboard</h1>
-        <p className="mt-2 text-slate-600">Create, review, schedule, and publish from one workspace without digging through technical settings.</p>
+        <h1 className="text-2xl font-black text-[var(--foreground)]">Editorial Dashboard</h1>
+        <p className="mt-2 text-[var(--text-muted)]">Create, review, schedule, and publish from one workspace without digging through technical settings.</p>
       </div>
 
       {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
@@ -826,7 +826,7 @@ export function DashboardAdminManager({
               Campaign health at a glance, with subscriber count and delivery performance.
             </p>
           </div>
-          <Link href="/admin/marketing" className="rounded bg-white px-3 py-2 text-sm font-semibold text-[#0A2342] hover:bg-slate-100">
+          <Link href="/admin/marketing" className="rounded bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[#0A2342] hover:bg-[var(--surface-elevated)]">
             Open Marketing Dashboard
           </Link>
         </div>
@@ -839,11 +839,11 @@ export function DashboardAdminManager({
         </div>
       </section>
 
-      <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-4">
+      <section className="rounded-xl border border-cyan-500/25 bg-cyan-500/10 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Homepage Hero Carousel</h2>
-            <p className="mt-1 text-sm text-slate-700">
+            <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Homepage Hero Carousel</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               Update hero images and slide content from Homepage Sections using section key <span className="font-mono">hero_carousel</span>.
             </p>
           </div>
@@ -856,11 +856,11 @@ export function DashboardAdminManager({
         </div>
       </section>
 
-      <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+      <section className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-sm font-black uppercase tracking-wide text-emerald-900">Reader Engagement ({engagementRangeLabel})</h2>
-            <p className="mt-1 text-sm text-emerald-800">
+            <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
               Measures real reading behavior: depth, completion, dwell time, and interaction volume.
             </p>
           </div>
@@ -870,19 +870,19 @@ export function DashboardAdminManager({
             </span>
             <Link
               href="/admin?engagementRange=7d"
-              className={`rounded border px-2 py-1 text-xs font-semibold ${engagementRange === "7d" ? "border-emerald-700 bg-emerald-700 text-white" : "border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"}`}
+              className={`rounded border px-2 py-1 text-xs font-semibold ${engagementRange === "7d" ? "border-emerald-700 bg-emerald-700 text-white" : "border-emerald-400/30 bg-[var(--surface)] text-emerald-800 hover:bg-emerald-500/10 dark:text-emerald-300"}`}
             >
               7d
             </Link>
             <Link
               href="/admin?engagementRange=30d"
-              className={`rounded border px-2 py-1 text-xs font-semibold ${engagementRange === "30d" ? "border-emerald-700 bg-emerald-700 text-white" : "border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"}`}
+              className={`rounded border px-2 py-1 text-xs font-semibold ${engagementRange === "30d" ? "border-emerald-700 bg-emerald-700 text-white" : "border-emerald-400/30 bg-[var(--surface)] text-emerald-800 hover:bg-emerald-500/10 dark:text-emerald-300"}`}
             >
               30d
             </Link>
             <Link
               href="/admin?engagementRange=90d"
-              className={`rounded border px-2 py-1 text-xs font-semibold ${engagementRange === "90d" ? "border-emerald-700 bg-emerald-700 text-white" : "border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"}`}
+              className={`rounded border px-2 py-1 text-xs font-semibold ${engagementRange === "90d" ? "border-emerald-700 bg-emerald-700 text-white" : "border-emerald-400/30 bg-[var(--surface)] text-emerald-800 hover:bg-emerald-500/10 dark:text-emerald-300"}`}
             >
               90d
             </Link>
@@ -896,18 +896,18 @@ export function DashboardAdminManager({
           <SummaryCard label="Engaged Articles" value={topEngagedArticles.length} />
         </div>
 
-        <div className="mt-4 rounded-lg border border-emerald-200 bg-white p-4">
+        <div className="mt-4 rounded-lg border border-emerald-500/25 bg-[var(--surface)] p-4">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-black uppercase tracking-wide text-slate-700">Top Engaged Articles</h3>
-            <span className="text-xs font-semibold text-slate-500">Depth + dwell signal</span>
+            <h3 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Top Engaged Articles</h3>
+            <span className="text-xs font-semibold text-[var(--text-subtle)]">Depth + dwell signal</span>
           </div>
           {topEngagedArticles.length ? (
             <div className="space-y-2">
               {topEngagedArticles.slice(0, 6).map((item) => (
-                <div key={item.id} className="grid grid-cols-[1fr_auto] items-center gap-3 rounded border border-slate-100 p-2">
+                <div key={item.id} className="grid grid-cols-[1fr_auto] items-center gap-3 rounded border border-[var(--border)] bg-[var(--surface)] p-2">
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">{item.title}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-[var(--foreground)]">{item.title}</p>
+                    <p className="text-xs text-[var(--text-subtle)]">
                       Max depth {Math.round(item.maxScroll)}% • Max dwell {Math.round(item.maxDwellSeconds)}s • {item.events} events
                     </p>
                   </div>
@@ -915,7 +915,7 @@ export function DashboardAdminManager({
                     type="button"
                     onClick={() => startEdit(item.id)}
                     disabled={loadingArticleId === item.id}
-                    className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                    className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] disabled:opacity-60"
                   >
                     {loadingArticleId === item.id ? "..." : "Edit"}
                   </button>
@@ -923,7 +923,7 @@ export function DashboardAdminManager({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">No engagement signals yet. Published articles will appear here as readers interact.</p>
+            <p className="text-sm text-[var(--text-muted)]">No engagement signals yet. Published articles will appear here as readers interact.</p>
           )}
         </div>
       </section>
@@ -939,25 +939,25 @@ export function DashboardAdminManager({
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
-        <form onSubmit={createOrUpdateArticle} className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+        <form onSubmit={createOrUpdateArticle} className="rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-black text-slate-900">Article Studio</h2>
+            <h2 className="text-lg font-black text-[var(--foreground)]">Article Studio</h2>
             {editingId ? (
               <button
                 type="button"
                 onClick={resetComposer}
-                className="rounded border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                className="rounded border border-[var(--border)] px-3 py-1.5 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface)]"
               >
                 Cancel Edit
               </button>
             ) : null}
           </div>
 
-          <section className="mt-4 rounded-lg border border-cyan-200 bg-cyan-50 p-4">
+          <section className="mt-4 rounded-lg border border-cyan-500/25 bg-cyan-500/10 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 className="text-sm font-black uppercase tracking-wide text-slate-800">AI Writing Helper</h3>
-                <p className="mt-1 text-sm text-slate-700">
+                <h3 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">AI Writing Helper</h3>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
                   Draft or rewrite the {activeLocale === "ar" ? "Arabic" : "English"} version, or generate both locales together from one prompt.
                 </p>
               </div>
@@ -981,54 +981,54 @@ export function DashboardAdminManager({
               </div>
             </div>
             <textarea
-              className="mt-3 min-h-24 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              className="mt-3 min-h-24 w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
               placeholder="Describe the angle, facts, or message you want AI to turn into a draft..."
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
             />
-            <p className="mt-2 text-xs text-slate-600">
+            <p className="mt-2 text-xs text-[var(--text-subtle)]">
               The assistant will fill the current locale's title, summary, and content without switching away from the article editor.
             </p>
             {aiError && <p className="mt-2 text-sm text-red-700">{aiError}</p>}
           </section>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <select className="rounded border border-slate-300 bg-white px-3 py-2" value={composer.status} onChange={(e) => updateComposer("status", e.target.value as ArticleStatus)}>
+            <select className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)]" value={composer.status} onChange={(e) => updateComposer("status", e.target.value as ArticleStatus)}>
               <option value="draft">Draft</option>
               <option value="review">Review</option>
               <option value="scheduled">Scheduled</option>
               <option value="published">Published</option>
               <option value="archived">Archived</option>
             </select>
-            <input className="rounded border border-slate-300 px-3 py-2" placeholder="Article type" value={composer.articleType} onChange={(e) => updateComposer("articleType", e.target.value)} required />
-            <select className="rounded border border-slate-300 bg-white px-3 py-2" value={composer.categoryId} onChange={(e) => updateComposer("categoryId", e.target.value)}>
+            <input className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Article type" value={composer.articleType} onChange={(e) => updateComposer("articleType", e.target.value)} required />
+            <select className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)]" value={composer.categoryId} onChange={(e) => updateComposer("categoryId", e.target.value)}>
               <option value="">Select category</option>
               {categoryOptions.map((item) => (
                 <option key={item.id} value={item.id}>{item.name}</option>
               ))}
             </select>
-            <select className="rounded border border-slate-300 bg-white px-3 py-2" value={composer.relatedBankId} onChange={(e) => updateComposer("relatedBankId", e.target.value)}>
+            <select className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)]" value={composer.relatedBankId} onChange={(e) => updateComposer("relatedBankId", e.target.value)}>
               <option value="">Select related bank</option>
               {bankOptions.map((item) => (
                 <option key={item.id} value={item.id}>{item.name}</option>
               ))}
             </select>
-            <input ref={publishAtInputRef} type="datetime-local" className="rounded border border-slate-300 px-3 py-2" value={composer.publishAt} onChange={(e) => updateComposer("publishAt", e.target.value)} />
-            <input type="datetime-local" className="rounded border border-slate-300 px-3 py-2" value={composer.expiresAt} onChange={(e) => updateComposer("expiresAt", e.target.value)} />
+            <input ref={publishAtInputRef} type="datetime-local" className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)]" value={composer.publishAt} onChange={(e) => updateComposer("publishAt", e.target.value)} />
+            <input type="datetime-local" className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)]" value={composer.expiresAt} onChange={(e) => updateComposer("expiresAt", e.target.value)} />
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <input ref={videoUrlInputRef} className="rounded border border-slate-300 px-3 py-2" placeholder="YouTube video URL (optional)" value={composer.videoUrl} onChange={(e) => updateComposer("videoUrl", e.target.value)} />
-            <input ref={sourceUrlInputRef} className="rounded border border-slate-300 px-3 py-2" placeholder="Original source URL" value={composer.sourceUrl} onChange={(e) => updateComposer("sourceUrl", e.target.value)} />
-            <input className="rounded border border-slate-300 px-3 py-2" placeholder="Source attribution" value={composer.sourceAttribution} onChange={(e) => updateComposer("sourceAttribution", e.target.value)} />
+            <input ref={videoUrlInputRef} className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="YouTube video URL (optional)" value={composer.videoUrl} onChange={(e) => updateComposer("videoUrl", e.target.value)} />
+            <input ref={sourceUrlInputRef} className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Original source URL" value={composer.sourceUrl} onChange={(e) => updateComposer("sourceUrl", e.target.value)} />
+            <input className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Source attribution" value={composer.sourceAttribution} onChange={(e) => updateComposer("sourceAttribution", e.target.value)} />
           </div>
 
           <div className="mt-3">
-            <label className="mb-1 block text-xs font-semibold text-slate-600">URL Slug (auto-generated · editable)</label>
+            <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">URL Slug (auto-generated · editable)</label>
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400">/ar/news/</span>
               <input
-                className="flex-1 rounded border border-slate-300 px-3 py-2 font-mono text-sm"
+                className="flex-1 rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 font-mono text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
                 placeholder="article-url-slug"
                 value={composer.slug}
                 onChange={(e) => updateComposer("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-"))}
@@ -1036,7 +1036,7 @@ export function DashboardAdminManager({
               <button
                 type="button"
                 onClick={() => updateComposer("slug", slugify(composer.translations.ar.title || composer.translations.en.title))}
-                className="rounded border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                className="rounded border border-[var(--border)] px-2 py-2 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface)]"
               >
                 Re-generate
               </button>
@@ -1044,10 +1044,10 @@ export function DashboardAdminManager({
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
-            <input ref={featuredImageInputRef} className="rounded border border-slate-300 px-3 py-2" placeholder="Featured image URL" value={composer.featuredImageUrl} onChange={(e) => updateComposer("featuredImageUrl", e.target.value)} />
+            <input ref={featuredImageInputRef} className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Featured image URL" value={composer.featuredImageUrl} onChange={(e) => updateComposer("featuredImageUrl", e.target.value)} />
             <div className="flex gap-2">
-              <input ref={fileInputRef} type="file" accept="image/*" className="max-w-44 rounded border border-slate-300 px-2 py-2 text-xs" />
-              <button type="button" onClick={uploadImage} disabled={uploadingImage} className="rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60">
+              <input ref={fileInputRef} type="file" accept="image/*" className="max-w-44 rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-2 text-xs text-[var(--foreground)]" />
+              <button type="button" onClick={uploadImage} disabled={uploadingImage} className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface)] disabled:opacity-60">
                 {uploadingImage ? "Uploading..." : "Upload"}
               </button>
             </div>
@@ -1056,11 +1056,11 @@ export function DashboardAdminManager({
           {mediaItems.length ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {mediaItems.slice(0, 6).map((media) => (
-                <div key={media.id} className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700">
+                <div key={media.id} className="inline-flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs text-[var(--text-muted)]">
                   <button
                     type="button"
                     onClick={() => updateComposer("featuredImageUrl", media.url)}
-                    className="font-semibold hover:text-[#0A2342]"
+                    className="font-semibold hover:text-[var(--primary)]"
                   >
                     {media.fileName}
                   </button>
@@ -1068,7 +1068,7 @@ export function DashboardAdminManager({
                     type="button"
                     onClick={() => deleteMediaItem(media.id)}
                     disabled={deletingMediaId === media.id}
-                    className="rounded border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                    className="rounded border border-red-400/30 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 hover:bg-red-500/10 disabled:opacity-60"
                   >
                     {deletingMediaId === media.id ? "..." : "Delete"}
                   </button>
@@ -1081,22 +1081,22 @@ export function DashboardAdminManager({
             <button
               type="button"
               onClick={() => setActiveLocale("ar")}
-              className={`rounded px-3 py-1.5 text-sm font-semibold ${activeLocale === "ar" ? "bg-[#0A2342] text-white" : "border border-slate-300 text-slate-700"}`}
+              className={`rounded px-3 py-1.5 text-sm font-semibold ${activeLocale === "ar" ? "bg-[#0A2342] text-white" : "border border-[var(--border)] text-[var(--text-muted)]"}`}
             >
               Arabic
             </button>
             <button
               type="button"
               onClick={() => setActiveLocale("en")}
-              className={`rounded px-3 py-1.5 text-sm font-semibold ${activeLocale === "en" ? "bg-[#0A2342] text-white" : "border border-slate-300 text-slate-700"}`}
+              className={`rounded px-3 py-1.5 text-sm font-semibold ${activeLocale === "en" ? "bg-[#0A2342] text-white" : "border border-[var(--border)] text-[var(--text-muted)]"}`}
             >
               English
             </button>
           </div>
 
           <div className="mt-3 space-y-3">
-            <input ref={titleInputRef} className="w-full rounded border border-slate-300 px-3 py-2" placeholder={`${activeLocale.toUpperCase()} title`} value={composer.translations[activeLocale].title} onChange={(e) => updateLocaleDraft(activeLocale, "title", e.target.value)} required={activeLocale === "ar"} />
-            <textarea ref={summaryInputRef} className="min-h-20 w-full rounded border border-slate-300 px-3 py-2" placeholder={`${activeLocale.toUpperCase()} summary`} value={composer.translations[activeLocale].summary} onChange={(e) => updateLocaleDraft(activeLocale, "summary", e.target.value)} required={activeLocale === "ar"} />
+            <input ref={titleInputRef} className="w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder={`${activeLocale.toUpperCase()} title`} value={composer.translations[activeLocale].title} onChange={(e) => updateLocaleDraft(activeLocale, "title", e.target.value)} required={activeLocale === "ar"} />
+            <textarea ref={summaryInputRef} className="min-h-20 w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder={`${activeLocale.toUpperCase()} summary`} value={composer.translations[activeLocale].summary} onChange={(e) => updateLocaleDraft(activeLocale, "summary", e.target.value)} required={activeLocale === "ar"} />
             <div ref={contentSectionRef}>
               <label className="mb-2 block text-sm font-semibold text-slate-700">{activeLocale.toUpperCase()} content</label>
               <RichTextEditor
@@ -1110,13 +1110,13 @@ export function DashboardAdminManager({
           <section className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-black uppercase tracking-wide text-slate-800">Article Preview</h3>
-                <p className="mt-1 text-sm text-slate-600">Live preview for the active locale before you save or publish.</p>
+                <h3 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Article Preview</h3>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">Live preview for the active locale before you save or publish.</p>
               </div>
-              <span className="rounded bg-white px-2 py-1 text-xs font-semibold text-slate-700">{previewLocale.toUpperCase()}</span>
+              <span className="rounded bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)]">{previewLocale.toUpperCase()}</span>
             </div>
 
-            <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="mt-4 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm">
               {composer.featuredImageUrl.trim() ? (
                 <div className="bg-slate-100">
                   <img
@@ -1128,17 +1128,17 @@ export function DashboardAdminManager({
                   />
                 </div>
               ) : (
-                <div className="flex h-40 items-center justify-center bg-slate-100 text-sm text-slate-500">No featured image selected yet.</div>
+                <div className="flex h-40 items-center justify-center bg-[var(--surface-strong)] text-sm text-[var(--text-subtle)]">No featured image selected yet.</div>
               )}
 
               <div className="p-4">
-                <div className="mb-2 flex flex-wrap gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                <div className="mb-2 flex flex-wrap gap-2 text-[11px] font-bold uppercase tracking-wide text-[var(--text-subtle)]">
                   <span>{composer.articleType || "news"}</span>
                   <span>•</span>
                   <span>{composer.status}</span>
                 </div>
-                <h4 className="text-2xl font-black text-slate-900">{previewTitle || "Headline preview"}</h4>
-                <p className="mt-3 text-base leading-7 text-slate-600">{previewSummary || "Summary preview will appear here as you type."}</p>
+                <h4 className="text-2xl font-black text-[var(--foreground)]">{previewTitle || "Headline preview"}</h4>
+                <p className="mt-3 text-base leading-7 text-[var(--text-muted)]">{previewSummary || "Summary preview will appear here as you type."}</p>
 
                 {composer.videoUrl.trim() ? (
                   <div className="mt-4">
@@ -1165,12 +1165,12 @@ export function DashboardAdminManager({
             </div>
           </section>
 
-          <section className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
+          <section className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-black uppercase tracking-wide text-slate-800">Content QA</h3>
-              <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{qaNotes.length} checks</span>
+              <h3 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Content QA</h3>
+              <span className="rounded bg-[var(--surface-strong)] px-2 py-0.5 text-xs font-semibold text-[var(--text-muted)]">{qaNotes.length} checks</span>
             </div>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               Quick editorial checks before publish, including bilingual completeness and required story metadata.
             </p>
             <div className="mt-3 space-y-2">
@@ -1186,7 +1186,7 @@ export function DashboardAdminManager({
                     return (
                   <div
                     key={`${note.message}-${index}`}
-                    className={`rounded border px-3 py-2 text-sm ${note.tone === "warning" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-700"}`}
+                    className={`rounded border px-3 py-2 text-sm ${note.tone === "warning" ? "border-amber-400/30 bg-amber-500/10 text-amber-700 dark:text-amber-400" : "border-[var(--border)] bg-[var(--surface-strong)] text-[var(--text-muted)]"}`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <p>{note.message}</p>
@@ -1194,7 +1194,7 @@ export function DashboardAdminManager({
                         <button
                           type="button"
                           onClick={() => handleQaAction(action)}
-                          className="rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                          className="rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
                         >
                           {action.type === "switchLocale" ? `Go to ${action.locale.toUpperCase()}` : "Fix"}
                         </button>
@@ -1208,7 +1208,7 @@ export function DashboardAdminManager({
             </div>
           </section>
 
-          <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-700">
+          <div className="mt-3 flex flex-wrap gap-4 text-sm text-[var(--text-muted)]">
             <label><input type="checkbox" checked={composer.isFeatured} onChange={(e) => updateComposer("isFeatured", e.target.checked)} /> <span className="ml-1">Featured</span></label>
             <label><input type="checkbox" checked={composer.isBreaking} onChange={(e) => updateComposer("isBreaking", e.target.checked)} /> <span className="ml-1">Breaking</span></label>
             <label><input type="checkbox" checked={composer.isOpinion} onChange={(e) => updateComposer("isOpinion", e.target.checked)} /> <span className="ml-1">Opinion</span></label>
@@ -1242,8 +1242,8 @@ export function DashboardAdminManager({
           <Panel title="Most Read" count={popularRows.length}>
             {popularRows.slice(0, 7).map((row) => (
               <div key={row.id} className="flex items-center justify-between gap-3 rounded border border-slate-100 p-2 text-sm">
-                <p className="font-medium text-slate-800">{row.title}</p>
-                <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{row.views} views</span>
+                <p className="font-medium text-[var(--foreground)]">{row.title}</p>
+                <span className="rounded bg-[var(--surface-strong)] px-2 py-0.5 text-xs font-semibold text-[var(--text-muted)]">{row.views} views</span>
               </div>
             ))}
           </Panel>
@@ -1253,21 +1253,21 @@ export function DashboardAdminManager({
       <section className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
         <div className="rounded-xl border border-slate-200 p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-black text-slate-900">Newsletter Subscribers</h2>
-            <p className="text-xs text-slate-500">Manage from dashboard</p>
+            <h2 className="text-lg font-black text-[var(--foreground)]">Newsletter Subscribers</h2>
+            <p className="text-xs text-[var(--text-subtle)]">Manage from dashboard</p>
           </div>
 
           <div className="max-h-80 overflow-y-auto space-y-2">
             {subscribers.slice(0, 80).map((item) => (
               <div key={item.id} className="grid grid-cols-1 gap-2 rounded border border-slate-100 p-2 md:grid-cols-[1fr_auto_auto] md:items-center">
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">{item.name || "Unnamed"}</p>
-                  <p className="text-xs text-slate-600">{item.email} • {item.preferredLanguage.toUpperCase()}</p>
+                  <p className="text-sm font-semibold text-[var(--foreground)]">{item.name || "Unnamed"}</p>
+                  <p className="text-xs text-[var(--text-muted)]">{item.email} • {item.preferredLanguage.toUpperCase()}</p>
                 </div>
                 <select
                   value={item.status}
                   onChange={(e) => setSubscribers((prev) => prev.map((row) => (row.id === item.id ? { ...row, status: e.target.value as SubscriberItem["status"] } : row)))}
-                  className="rounded border border-slate-300 px-2 py-1 text-sm"
+                  className="rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-sm text-[var(--foreground)]"
                 >
                   <option value="pending">pending</option>
                   <option value="active">active</option>
@@ -1277,7 +1277,7 @@ export function DashboardAdminManager({
                   type="button"
                   onClick={() => updateSubscriberStatus(item.id, item.status)}
                   disabled={savingSubscriberId === item.id}
-                  className="rounded border border-slate-300 px-2 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  className="rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] disabled:opacity-60"
                 >
                   {savingSubscriberId === item.id ? "Saving..." : "Save"}
                 </button>
@@ -1290,8 +1290,8 @@ export function DashboardAdminManager({
           <Panel title="Expired Jobs" count={expiredJobs.length}>
             {expiredJobs.slice(0, 6).map((job) => (
               <div key={job.id} className="rounded border border-slate-100 p-2 text-sm">
-                <p className="font-medium text-slate-800">{job.title}</p>
-                <p className="text-xs text-slate-500">Deadline: {new Date(job.applicationDeadline).toLocaleDateString()}</p>
+                <p className="font-medium text-[var(--foreground)]">{job.title}</p>
+                <p className="text-xs text-[var(--text-subtle)]">Deadline: {new Date(job.applicationDeadline).toLocaleDateString()}</p>
               </div>
             ))}
           </Panel>
@@ -1299,8 +1299,8 @@ export function DashboardAdminManager({
           <Panel title="Rates Needing Update" count={staleRates.length}>
             {staleRates.slice(0, 6).map((rate) => (
               <div key={rate.id} className="rounded border border-slate-100 p-2 text-sm">
-                <p className="font-medium text-slate-800">{rate.currencyCode}</p>
-                <p className="text-xs text-slate-500">Last update: {new Date(rate.rateDate).toLocaleDateString()}</p>
+                <p className="font-medium text-[var(--foreground)]">{rate.currencyCode}</p>
+                <p className="text-xs text-[var(--text-subtle)]">Last update: {new Date(rate.rateDate).toLocaleDateString()}</p>
               </div>
             ))}
           </Panel>
@@ -1308,21 +1308,21 @@ export function DashboardAdminManager({
           <Panel title="Messages Requiring Response" count={pendingMessages.length}>
             {pendingMessages.slice(0, 6).map((msg) => (
               <div key={msg.id} className="rounded border border-slate-100 p-2 text-sm">
-                <p className="font-medium text-slate-800">{msg.subject}</p>
-                <p className="text-xs text-slate-500">{msg.status} • {new Date(msg.createdAt).toLocaleDateString()}</p>
+                <p className="font-medium text-[var(--foreground)]">{msg.subject}</p>
+                <p className="text-xs text-[var(--text-subtle)]">{msg.status} • {new Date(msg.createdAt).toLocaleDateString()}</p>
               </div>
             ))}
           </Panel>
         </div>
       </section>
 
-      <section className="rounded-xl border border-slate-200 p-5">
-        <h2 className="text-lg font-black text-slate-900">Recent Articles</h2>
-        <p className="mt-1 text-sm text-slate-600">Quickly jump into edits without leaving this screen.</p>
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+        <h2 className="text-lg font-black text-[var(--foreground)]">Recent Articles</h2>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">Quickly jump into edits without leaving this screen.</p>
 
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-600">
+            <thead className="bg-[var(--surface-strong)] text-left text-[var(--text-muted)]">
               <tr>
                 <th className="px-3 py-2 font-semibold">Article</th>
                 <th className="px-3 py-2 font-semibold">Type</th>
@@ -1335,17 +1335,17 @@ export function DashboardAdminManager({
             <tbody>
               {sortedArticles.slice(0, 40).map((row) => (
                 <tr key={row.id} className="border-t border-slate-100">
-                  <td className="px-3 py-2 text-slate-900">{row.title ?? row.slug}</td>
-                  <td className="px-3 py-2 text-slate-700">{row.articleType}</td>
-                  <td className="px-3 py-2 text-slate-700">{row.status}</td>
-                  <td className="px-3 py-2 text-slate-700">
+                  <td className="px-3 py-2 text-[var(--foreground)]">{row.title ?? row.slug}</td>
+                  <td className="px-3 py-2 text-[var(--text-muted)]">{row.articleType}</td>
+                  <td className="px-3 py-2 text-[var(--text-muted)]">{row.status}</td>
+                  <td className="px-3 py-2 text-[var(--text-muted)]">
                     {truthyFlag(row.isFeatured) ? "Featured" : "-"}
                     {truthyFlag(row.isBreaking) ? " • Breaking" : ""}
                   </td>
                   <td className="px-3 py-2 text-slate-700">{new Date(row.updatedAt).toLocaleString()}</td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
-                      <button type="button" onClick={() => startEdit(row.id)} disabled={loadingArticleId === row.id} className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+                      <button type="button" onClick={() => startEdit(row.id)} disabled={loadingArticleId === row.id} className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] disabled:opacity-60">
                         {loadingArticleId === row.id ? "Loading..." : "Edit"}
                       </button>
                       <button type="button" onClick={() => deleteArticle(row.id)} className="rounded border border-red-300 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
@@ -1365,8 +1365,8 @@ export function DashboardAdminManager({
 
 function SummaryCard({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 text-slate-900">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 text-[var(--foreground)]">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">{label}</p>
       <p className="mt-2 text-2xl font-black text-[#0A2342]">{value}</p>
     </div>
   );
@@ -1374,10 +1374,10 @@ function SummaryCard({ label, value }: { label: string; value: ReactNode }) {
 
 function Panel({ title, count, children }: { title: string; count: number; children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-slate-200 p-4">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-black uppercase tracking-wide text-slate-700">{title}</h3>
-        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{count}</span>
+        <h3 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">{title}</h3>
+        <span className="rounded bg-[var(--surface-strong)] px-2 py-0.5 text-xs font-semibold text-[var(--text-muted)]">{count}</span>
       </div>
       <div className="space-y-2">{children}</div>
     </div>
@@ -1396,12 +1396,12 @@ function QuickRow({
   loading: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[1fr_auto] items-center gap-2 rounded border border-slate-100 p-2">
+    <div className="grid grid-cols-[1fr_auto] items-center gap-2 rounded border border-[var(--border)] bg-[var(--surface)] p-2">
       <div>
-        <p className="text-sm font-medium text-slate-800">{label}</p>
-        <p className="text-xs text-slate-500">{meta}</p>
+        <p className="text-sm font-medium text-[var(--foreground)]">{label}</p>
+        <p className="text-xs text-[var(--text-subtle)]">{meta}</p>
       </div>
-      <button type="button" onClick={onEdit} disabled={loading} className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+      <button type="button" onClick={onEdit} disabled={loading} className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] disabled:opacity-60">
         {loading ? "..." : "Edit"}
       </button>
     </div>

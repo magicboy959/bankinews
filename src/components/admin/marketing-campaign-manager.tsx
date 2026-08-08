@@ -201,19 +201,19 @@ export function MarketingCampaignManager({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-black text-[#0A2342]">Marketing Campaigns</h1>
-        <p className="mt-2 text-slate-600">
+        <h1 className="text-2xl font-black text-[var(--foreground)]">Marketing Campaigns</h1>
+        <p className="mt-2 text-[var(--text-muted)]">
           Compose newsletter campaigns for your active subscriber list. Active subscribers available: {activeSubscriberCount}.
         </p>
       </div>
 
       {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-      <section className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-        <h2 className="text-lg font-black text-slate-900">New Campaign</h2>
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+        <h2 className="text-lg font-black text-[var(--foreground)]">New Campaign</h2>
         <form onSubmit={createCampaign} className="mt-4 space-y-3">
           <select
-            className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm"
+            className="w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)]"
             value={templateKey}
             onChange={(e) => applyTemplate(e.target.value as MarketingTemplateKey | "")}
           >
@@ -225,14 +225,14 @@ export function MarketingCampaignManager({
             ))}
           </select>
           <input
-            className="w-full rounded border border-slate-300 px-3 py-2"
+            className="w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
             placeholder="Subject"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             required
           />
           <div>
-            <p className="mb-2 text-sm font-semibold text-slate-700">Campaign content</p>
+            <p className="mb-2 text-sm font-semibold text-[var(--text-muted)]">Campaign content</p>
             <RichTextEditor
               value={htmlContent}
               onChange={setHtmlContent}
@@ -240,18 +240,18 @@ export function MarketingCampaignManager({
             />
           </div>
           <textarea
-            className="min-h-28 w-full rounded border border-slate-300 px-3 py-2 font-mono text-sm"
+            className="min-h-28 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 font-mono text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
             placeholder="Optional plain text version"
             value={textContent}
             onChange={(e) => setTextContent(e.target.value)}
           />
           <input
             type="datetime-local"
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+            className="w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)]"
             value={scheduleAt}
             onChange={(e) => setScheduleAt(e.target.value)}
           />
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
             <input type="checkbox" checked={sendNow} onChange={(e) => setSendNow(e.target.checked)} />
             Send immediately to all active subscribers
           </label>
@@ -265,23 +265,23 @@ export function MarketingCampaignManager({
         </form>
       </section>
 
-      <section className="rounded-xl border border-slate-200 p-5">
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-black text-slate-900">Campaign History</h2>
-          <p className="text-sm text-slate-500">{sortedCampaigns.length} campaigns</p>
+          <h2 className="text-lg font-black text-[var(--foreground)]">Campaign History</h2>
+          <p className="text-sm text-[var(--text-subtle)]">{sortedCampaigns.length} campaigns</p>
         </div>
 
         <div className="mt-4 space-y-3">
           {sortedCampaigns.length === 0 ? (
-            <p className="text-sm text-slate-500">No campaigns yet.</p>
+            <p className="text-sm text-[var(--text-subtle)]">No campaigns yet.</p>
           ) : (
             sortedCampaigns.map((campaign) => (
-              <div key={campaign.id} className="rounded border border-slate-100 p-4">
+              <div key={campaign.id} className="rounded border border-[var(--border)] bg-[var(--surface)] p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{campaign.subject}</p>
-                    <p className="mt-1 text-xs text-slate-500">{toSnippet(campaign.htmlContent)}</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-[var(--foreground)]">{campaign.subject}</p>
+                    <p className="mt-1 text-xs text-[var(--text-subtle)]">{toSnippet(campaign.htmlContent)}</p>
+                    <p className="mt-1 text-xs text-[var(--text-subtle)]">
                       Status: {campaign.status} • Recipients: {campaign.recipientCount} • Sent: {campaign.sentCount} • Failed: {campaign.failedCount}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
@@ -315,59 +315,59 @@ export function MarketingCampaignManager({
                 </div>
 
                 {expandedCampaignId === campaign.id && (
-                  <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--surface-strong)] p-4">
                     {loadingStatsId === campaign.id ? (
-                      <p className="text-sm text-slate-500">Loading campaign stats...</p>
+                      <p className="text-sm text-[var(--text-subtle)]">Loading campaign stats...</p>
                     ) : !campaignStats[campaign.id] ? (
-                      <p className="text-sm text-slate-500">Unable to load campaign stats.</p>
+                      <p className="text-sm text-[var(--text-subtle)]">Unable to load campaign stats.</p>
                     ) : (
                       <>
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                          <div className="rounded bg-white p-3">
-                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Sent</p>
-                            <p className="mt-1 text-lg font-black text-slate-900">{campaignStats[campaign.id]?.campaign.sentCount}</p>
+                          <div className="rounded bg-[var(--surface)] p-3">
+                            <p className="text-[11px] uppercase tracking-wide text-[var(--text-subtle)]">Sent</p>
+                            <p className="mt-1 text-lg font-black text-[var(--foreground)]">{campaignStats[campaign.id]?.campaign.sentCount}</p>
                           </div>
-                          <div className="rounded bg-white p-3">
-                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Failed</p>
-                            <p className="mt-1 text-lg font-black text-slate-900">{campaignStats[campaign.id]?.campaign.failedCount}</p>
+                          <div className="rounded bg-[var(--surface)] p-3">
+                            <p className="text-[11px] uppercase tracking-wide text-[var(--text-subtle)]">Failed</p>
+                            <p className="mt-1 text-lg font-black text-[var(--foreground)]">{campaignStats[campaign.id]?.campaign.failedCount}</p>
                           </div>
-                          <div className="rounded bg-white p-3">
-                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Opens</p>
-                            <p className="mt-1 text-lg font-black text-slate-900">{campaignStats[campaign.id]?.campaign.openCount}</p>
+                          <div className="rounded bg-[var(--surface)] p-3">
+                            <p className="text-[11px] uppercase tracking-wide text-[var(--text-subtle)]">Opens</p>
+                            <p className="mt-1 text-lg font-black text-[var(--foreground)]">{campaignStats[campaign.id]?.campaign.openCount}</p>
                           </div>
-                          <div className="rounded bg-white p-3">
-                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Clicks</p>
-                            <p className="mt-1 text-lg font-black text-slate-900">{campaignStats[campaign.id]?.campaign.clickCount}</p>
+                          <div className="rounded bg-[var(--surface)] p-3">
+                            <p className="text-[11px] uppercase tracking-wide text-[var(--text-subtle)]">Clicks</p>
+                            <p className="mt-1 text-lg font-black text-[var(--foreground)]">{campaignStats[campaign.id]?.campaign.clickCount}</p>
                           </div>
-                          <div className="rounded bg-white p-3">
-                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Open rate</p>
-                            <p className="mt-1 text-lg font-black text-slate-900">{campaignStats[campaign.id]?.campaign.openRate}%</p>
+                          <div className="rounded bg-[var(--surface)] p-3">
+                            <p className="text-[11px] uppercase tracking-wide text-[var(--text-subtle)]">Open rate</p>
+                            <p className="mt-1 text-lg font-black text-[var(--foreground)]">{campaignStats[campaign.id]?.campaign.openRate}%</p>
                           </div>
-                          <div className="rounded bg-white p-3">
-                            <p className="text-[11px] uppercase tracking-wide text-slate-500">Click rate</p>
-                            <p className="mt-1 text-lg font-black text-slate-900">{campaignStats[campaign.id]?.campaign.clickRate}%</p>
+                          <div className="rounded bg-[var(--surface)] p-3">
+                            <p className="text-[11px] uppercase tracking-wide text-[var(--text-subtle)]">Click rate</p>
+                            <p className="mt-1 text-lg font-black text-[var(--foreground)]">{campaignStats[campaign.id]?.campaign.clickRate}%</p>
                           </div>
                         </div>
 
                         <div className="mt-4">
-                          <h3 className="text-xs font-black uppercase tracking-wide text-slate-700">Recent Activity</h3>
+                          <h3 className="text-xs font-black uppercase tracking-wide text-[var(--foreground)]">Recent Activity</h3>
                           {campaignStats[campaign.id]?.recentEvents.length ? (
                             <ul className="mt-2 space-y-2">
                               {campaignStats[campaign.id]?.recentEvents.map((event) => (
-                                <li key={event.id} className="rounded border border-slate-200 bg-white px-3 py-2 text-sm">
+                                <li key={event.id} className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm">
                                   <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <span className="font-semibold text-slate-900">{event.eventType === "open" ? "Opened" : "Clicked"}</span>
-                                    <span className="text-xs text-slate-500">{new Date(event.createdAt).toLocaleString()}</span>
+                                    <span className="font-semibold text-[var(--foreground)]">{event.eventType === "open" ? "Opened" : "Clicked"}</span>
+                                    <span className="text-xs text-[var(--text-subtle)]">{new Date(event.createdAt).toLocaleString()}</span>
                                   </div>
-                                  <p className="mt-1 text-xs text-slate-600">{event.subscriberEmail}</p>
+                                  <p className="mt-1 text-xs text-[var(--text-muted)]">{event.subscriberEmail}</p>
                                   {event.targetUrl && (
-                                    <p className="mt-1 break-all text-xs text-slate-500">{event.targetUrl}</p>
+                                    <p className="mt-1 break-all text-xs text-[var(--text-subtle)]">{event.targetUrl}</p>
                                   )}
                                 </li>
                               ))}
                             </ul>
                           ) : (
-                            <p className="mt-2 text-sm text-slate-500">No recent activity recorded yet.</p>
+                            <p className="mt-2 text-sm text-[var(--text-subtle)]">No recent activity recorded yet.</p>
                           )}
                         </div>
                       </>

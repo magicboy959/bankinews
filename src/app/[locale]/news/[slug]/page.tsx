@@ -59,12 +59,12 @@ export default async function ArticlePage({
 
         return (
           <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-            <article className="rounded-xl border border-slate-200 bg-white p-6">
-              <h1 className="text-2xl font-black text-slate-900">Arabic Is Our Main Language</h1>
-              <p className="mt-3 text-base leading-7 text-slate-700">
+            <article className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
+              <h1 className="text-2xl font-black text-[var(--foreground)]">Arabic Is Our Main Language</h1>
+              <p className="mt-3 text-base leading-7 text-slate-600 dark:text-slate-300">
                 This content is not available in this language right now.
               </p>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 For the full story, please switch to the Arabic version.
               </p>
               <Link
@@ -130,18 +130,18 @@ export default async function ArticlePage({
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-      <article className="rounded-xl border border-slate-200 bg-white p-6">
+      <article className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
         <div className="mb-4 flex flex-wrap gap-2 text-xs font-bold uppercase">
           {article.isSponsored && <span className="rounded bg-amber-100 px-2 py-1 text-amber-700">{t.labels.sponsored}</span>}
           {article.isOpinion && <span className="rounded bg-cyan-100 px-2 py-1 text-cyan-700">{t.labels.opinion}</span>}
           {article.isPressRelease && <span className="rounded bg-slate-200 px-2 py-1 text-slate-700">{t.labels.pressRelease}</span>}
         </div>
 
-        <h1 className="text-3xl font-black text-slate-900">{article.title}</h1>
-        <p className="mt-3 text-lg text-slate-600">{article.summary}</p>
+        <h1 className="text-3xl font-black text-[var(--foreground)]">{article.title}</h1>
+        <p className="mt-3 text-lg text-slate-600 dark:text-slate-300">{article.summary}</p>
 
         {article.featuredImageUrl ? (
-          <div className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+          <div className="mt-5 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-muted)]">
             <img
               src={article.featuredImageUrl}
               alt={article.title}
@@ -152,8 +152,8 @@ export default async function ArticlePage({
         ) : null}
 
         {(article as { videoUrl?: string | null }).videoUrl ? (
-          <section className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <h2 className="mb-2 text-sm font-black uppercase tracking-wide text-slate-700">
+          <section className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
+            <h2 className="mb-2 text-sm font-black uppercase tracking-wide text-slate-700 dark:text-slate-300">
               {safeLocale === "ar" ? "فيديو مرتبط" : "Related Video"}
             </h2>
             {youtubeEmbedUrl ? (
@@ -181,7 +181,7 @@ export default async function ArticlePage({
           </section>
         ) : null}
 
-        <div className="mt-4 text-sm text-slate-500">
+        <div className="mt-4 text-sm text-slate-500 dark:text-slate-400">
           {article.publishedAt ? formatDate(article.publishedAt, safeLocale) : "-"}
           <span className="mx-2">•</span>
           {article.readingTimeMinutes} min
@@ -199,39 +199,39 @@ export default async function ArticlePage({
           </ArticleReaderExperience>
         </div>
 
-        <section className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <h2 className="text-lg font-black text-[#0A2342]">
+        <section className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+          <h2 className="text-lg font-black text-[var(--primary)]">
             {safeLocale === "ar" ? "المصدر والتحقق" : "Source & Verification"}
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
+          <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">
             {safeLocale === "ar"
               ? "نراجع الأخبار المالية والمصرفية عبر مصادر رسمية أو موثوقة قبل النشر، ونوضح مصدر المادة كلما توفر ذلك."
               : "We verify banking and financial coverage against official or trusted sources before publication and disclose source attribution whenever available."}
           </p>
 
           <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2">
-            <div className="rounded-lg border border-slate-200 bg-white p-3">
-              <dt className="font-semibold text-slate-500">
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+              <dt className="font-semibold text-slate-500 dark:text-slate-400">
                 {safeLocale === "ar" ? "مستوى التحقق" : "Verification level"}
               </dt>
-              <dd className="mt-1 font-medium text-slate-800">
+              <dd className="mt-1 font-medium text-slate-800 dark:text-slate-200">
                 {safeLocale === "ar" ? "مراجعة تحريرية" : "Editorial review"}
               </dd>
             </div>
 
-            <div className="rounded-lg border border-slate-200 bg-white p-3">
-              <dt className="font-semibold text-slate-500">
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+              <dt className="font-semibold text-slate-500 dark:text-slate-400">
                 {safeLocale === "ar" ? "آخر تحديث" : "Last updated"}
               </dt>
-              <dd className="mt-1 font-medium text-slate-800">
+              <dd className="mt-1 font-medium text-slate-800 dark:text-slate-200">
                 {article.updatedAt ? formatDate(article.updatedAt, safeLocale) : "-"}
               </dd>
             </div>
           </dl>
 
           {article.sourceAttribution && (
-            <p className="mt-4 text-sm leading-6 text-slate-700">
-              <span className="font-semibold text-slate-900">
+            <p className="mt-4 text-sm leading-6 text-slate-700 dark:text-slate-300">
+              <span className="font-semibold text-[var(--foreground)]">
                 {safeLocale === "ar" ? "الإسناد: " : "Attribution: "}
               </span>
               {article.sourceAttribution}
@@ -239,8 +239,8 @@ export default async function ArticlePage({
           )}
 
           {article.sourceUrl && (
-            <p className="mt-3 text-sm leading-6 text-slate-700">
-              <span className="font-semibold text-slate-900">
+            <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+              <span className="font-semibold text-[var(--foreground)]">
                 {safeLocale === "ar" ? "المصدر الأصلي: " : "Original source: "}
               </span>
               <a href={article.sourceUrl} target="_blank" rel="noreferrer" className="text-[#005F73] underline">
@@ -263,11 +263,11 @@ export default async function ArticlePage({
         </section>
 
         {correctionHistory.length > 1 && (
-          <section className="mt-8 rounded-xl border border-slate-200 bg-white p-4">
-            <h2 className="text-lg font-black text-[#0A2342]">
+          <section className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            <h2 className="text-lg font-black text-[var(--primary)]">
               {safeLocale === "ar" ? "سجل التصحيحات" : "Correction History"}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-700">
+            <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">
               {safeLocale === "ar"
                 ? "يعرض هذا السجل التغييرات التحريرية الجوهرية المسجلة على المادة."
                 : "This log shows the material editorial changes recorded for the article."}
@@ -275,12 +275,12 @@ export default async function ArticlePage({
 
             <div className="mt-4 space-y-3">
               {correctionHistory.map((item) => (
-                <div key={`${item.action}-${item.createdAt}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div key={`${item.action}-${item.createdAt}`} className="rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                    <p className="font-semibold text-slate-800">{historyLabel(item.action)}</p>
-                    <p className="text-slate-500">{formatDate(item.createdAt, safeLocale)}</p>
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">{historyLabel(item.action)}</p>
+                    <p className="text-slate-500 dark:text-slate-400">{formatDate(item.createdAt, safeLocale)}</p>
                   </div>
-                  <p className="mt-2 text-sm text-slate-700">{historySummary(item)}</p>
+                  <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{historySummary(item)}</p>
                 </div>
               ))}
             </div>

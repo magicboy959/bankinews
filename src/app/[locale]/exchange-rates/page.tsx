@@ -46,9 +46,9 @@ export default async function ExchangeRatesPage({ params }: { params: Promise<{ 
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6">
-      <h1 className="text-2xl font-black text-[#0A2342]">{t.nav.rates}</h1>
-      <p className="mt-2 text-sm text-amber-700">{t.labels.informationalRates}</p>
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 shadow-[0_10px_30px_rgba(2,6,23,0.06)]">
+      <h1 className="text-2xl font-black text-[var(--foreground)]">{t.nav.rates}</h1>
+      <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">{t.labels.informationalRates}</p>
       <div className="mt-4">
         <Link
           href={`/${safeLocale}/exchange-rates/compare`}
@@ -60,7 +60,7 @@ export default async function ExchangeRatesPage({ params }: { params: Promise<{ 
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[720px] border-collapse text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left">
+            <tr className="border-b border-[var(--border)] text-left">
               <th className="p-2">Currency</th>
               <th className="p-2">Code</th>
               <th className="p-2">Official Buy</th>
@@ -72,14 +72,14 @@ export default async function ExchangeRatesPage({ params }: { params: Promise<{ 
           </thead>
           <tbody>
             {rows.map((row, i) => (
-              <tr key={`${row.currencyCode}-${i}`} className="border-b border-slate-100">
-                <td className="p-2">{row.currencyName}</td>
-                <td className="p-2">{row.currencyCode}</td>
-                <td className="p-2">{row.officialBuy ?? "-"}</td>
-                <td className="p-2">{row.officialSell ?? "-"}</td>
-                <td className="p-2">{row.parallelBuy ?? "-"}</td>
-                <td className="p-2">{row.parallelSell ?? "-"}</td>
-                <td className="p-2">{String(row.rateDate).slice(0, 10)}</td>
+              <tr key={`${row.currencyCode}-${i}`} className="border-b border-[var(--border)]/70">
+                <td className="p-2 text-[var(--foreground)]">{row.currencyName}</td>
+                <td className="p-2 text-[var(--text-muted)]">{row.currencyCode}</td>
+                <td className="p-2 text-[var(--text-muted)]">{row.officialBuy ?? "-"}</td>
+                <td className="p-2 text-[var(--text-muted)]">{row.officialSell ?? "-"}</td>
+                <td className="p-2 text-[var(--text-muted)]">{row.parallelBuy ?? "-"}</td>
+                <td className="p-2 text-[var(--text-muted)]">{row.parallelSell ?? "-"}</td>
+                <td className="p-2 text-[var(--text-muted)]">{String(row.rateDate).slice(0, 10)}</td>
               </tr>
             ))}
           </tbody>

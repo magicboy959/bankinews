@@ -46,24 +46,24 @@ export function AdminLoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-      <form onSubmit={onSubmit} className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--page-bg)] p-4">
+      <form onSubmit={onSubmit} className="w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 shadow-[0_10px_30px_rgba(2,6,23,0.06)]">
         <BrandMark locale="ar" size="admin" className="mb-5" />
-        <h1 className="text-2xl font-black text-[#0A2342]">Admin Login</h1>
-        <p className="mt-2 text-sm text-slate-600">Use your author, editor, or admin account credentials.</p>
+        <h1 className="text-2xl font-black text-[var(--foreground)]">Admin Login</h1>
+        <p className="mt-2 text-sm text-[var(--text-muted)]">Use your author, editor, or admin account credentials.</p>
 
-        <label className="mt-5 block text-sm font-semibold text-slate-700">Email</label>
+        <label className="mt-5 block text-sm font-semibold text-[var(--text-muted)]">Email</label>
         <input
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+          className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
 
-        <label className="mt-4 block text-sm font-semibold text-slate-700">Password</label>
+        <label className="mt-4 block text-sm font-semibold text-[var(--text-muted)]">Password</label>
         <input
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+          className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

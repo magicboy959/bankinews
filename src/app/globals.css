@@ -1,11 +1,39 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
   --primary: #0a2342;
   --accent: #0ea5a8;
   --gold: #c9a227;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --surface-elevated: #ffffff;
+  --surface-strong: #f1f5f9;
+  --text-muted: rgba(15, 23, 42, 0.72);
+  --text-subtle: rgba(15, 23, 42, 0.58);
+  --border: rgba(15, 23, 42, 0.12);
+  --header-bg: rgba(255, 255, 255, 0.96);
+  --page-bg: #eef2f7;
+}
+
+:root[data-theme="dark"] {
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --primary: #e2e8f0;
+  --accent: #5eead4;
+  --gold: #fbbf24;
+  --surface: #0f172a;
+  --surface-muted: #111827;
+  --surface-elevated: #111827;
+  --surface-strong: #0b1220;
+  --text-muted: rgba(226, 232, 240, 0.86);
+  --text-subtle: rgba(148, 163, 184, 0.9);
+  --border: rgba(148, 163, 184, 0.24);
+  --header-bg: rgba(2, 6, 23, 0.92);
+  --page-bg: #020617;
 }
 
 @theme inline {
@@ -18,10 +46,11 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-cairo), sans-serif;
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 .site-page {
-  background-color: #eef2f7;
+  background-color: var(--page-bg);
   background-image:
     linear-gradient(30deg, rgba(10, 35, 66, 0.045) 12%, transparent 12.5%, transparent 87%, rgba(10, 35, 66, 0.045) 87.5%, rgba(10, 35, 66, 0.045)),
     linear-gradient(150deg, rgba(10, 35, 66, 0.045) 12%, transparent 12.5%, transparent 87%, rgba(10, 35, 66, 0.045) 87.5%, rgba(10, 35, 66, 0.045)),
@@ -35,6 +64,8 @@ body {
 
 .site-shell {
   backdrop-filter: blur(4px);
+  background-color: var(--surface);
+  border-color: var(--border);
 }
 
 html[lang="en"] body {

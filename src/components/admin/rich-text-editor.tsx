@@ -27,7 +27,7 @@ function ToolbarButton({
       onClick={onClick}
       title={title}
       className={`rounded border px-2 py-1 text-sm font-semibold transition ${
-        active ? "border-[#0A2342] bg-[#0A2342] text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+        active ? "border-[#0A2342] bg-[#0A2342] text-white" : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
       }`}
     >
       {children}
@@ -47,7 +47,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     content: value || "<p></p>",
     editorProps: {
       attributes: {
-        class: "min-h-[220px] outline-none text-sm leading-7 text-slate-800",
+        class: "min-h-[220px] outline-none text-sm leading-7 text-[var(--foreground)]",
       },
     },
     onUpdate: ({ editor }) => {
@@ -73,8 +73,8 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   }
 
   return (
-    <div className="overflow-hidden rounded border border-slate-300 bg-white">
-      <div className="flex flex-wrap gap-1 border-b border-slate-200 bg-slate-50 p-2">
+    <div className="overflow-hidden rounded border border-[var(--border)] bg-[var(--surface)]">
+      <div className="flex flex-wrap gap-1 border-b border-[var(--border)] bg-[var(--surface-strong)] p-2">
         <ToolbarButton active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} title="Bold">
           B
         </ToolbarButton>
@@ -109,7 +109,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
 
       <EditorContent editor={editor} className="min-h-[220px] px-3 py-3" />
 
-      {placeholder && !value ? <p className="px-3 pb-3 text-sm text-slate-400">{placeholder}</p> : null}
+      {placeholder && !value ? <p className="px-3 pb-3 text-sm text-[var(--text-subtle)]">{placeholder}</p> : null}
 
       <style jsx global>{`
         .ProseMirror {

@@ -6,6 +6,7 @@ import { dictionary } from "@/lib/i18n/dictionary";
 import type { Locale } from "@/lib/i18n/config";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -446,13 +447,13 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white/96 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-[var(--header-bg)] backdrop-blur dark:border-slate-700/70">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6 md:py-4">
         <div className="flex items-center gap-3">
           <button
             type="button"
             aria-label={locale === "ar" ? "فتح القائمة" : "Open menu"}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-slate-700 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] shadow-sm md:hidden"
             onClick={() => setMenuOpen((value) => !value)}
           >
             <span className="text-xl leading-none">{menuOpen ? "×" : "☰"}</span>
@@ -488,7 +489,7 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
             <div className="flex items-center gap-1">
               <form onSubmit={submitSearch}>
                 <input
-                  className="w-56 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-800 focus:border-[#0A2342] focus:outline-none"
+                  className="w-56 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)] focus:border-[color:var(--accent)] focus:outline-none"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   onFocus={() => setShowSearchOverlay(true)}
@@ -506,18 +507,18 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
                 <button
                   type="button"
                   onClick={() => setShowSearchSettingsMenu((value) => !value)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-100"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)]"
                   aria-label={locale === "ar" ? "إعدادات البحث" : "Search settings"}
                   aria-expanded={showSearchSettingsMenu && !menuOpen}
                 >
                   ⚙
                 </button>
                 {showSearchSettingsMenu && !menuOpen ? (
-                  <div className="search-settings-pop absolute end-0 z-50 mt-1 w-44 origin-top-right rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
+                  <div className="search-settings-pop absolute end-0 z-50 mt-1 w-44 origin-top-right rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] p-2 shadow-lg">
                     <button
                       type="button"
                       onClick={showShortcutHint ? dismissShortcutHint : restoreShortcutHint}
-                      className="w-full rounded px-2 py-1 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                      className="w-full rounded px-2 py-1 text-left text-xs font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)]"
                     >
                       {showShortcutHint
                         ? locale === "ar"
@@ -530,7 +531,7 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
                     <button
                       type="button"
                       onClick={resetSearchState}
-                      className="mt-1 w-full rounded px-2 py-1 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                      className="mt-1 w-full rounded px-2 py-1 text-left text-xs font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)]"
                     >
                       {locale === "ar" ? "إعادة ضبط البحث" : "Reset search state"}
                     </button>
@@ -544,7 +545,7 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
               </p>
             ) : null}
             {showSearchOverlay && (searchQuery.trim().length >= 2 || searchLoading) ? (
-              <div id={desktopListboxId} role="listbox" aria-label={locale === "ar" ? "اقتراحات البحث" : "Search suggestions"} className="absolute end-0 z-50 mt-2 w-[26rem] rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+              <div id={desktopListboxId} role="listbox" aria-label={locale === "ar" ? "اقتراحات البحث" : "Search suggestions"} className="absolute end-0 z-50 mt-2 w-[26rem] rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-3 shadow-xl">
                 <p className="sr-only" aria-live="polite">
                   {searchLoading
                     ? locale === "ar"
@@ -609,10 +610,10 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
                               event.preventDefault();
                               openSuggestion(`/${locale}/news/${article.slug}`);
                             }}
-                            className={`block rounded-md border px-2 py-1.5 text-sm hover:bg-slate-50 ${
+                            className={`block rounded-md border px-2 py-1.5 text-sm transition hover:bg-[var(--surface-muted)] ${
                               searchSuggestions[activeSuggestionIndex]?.id === `article-${article.id}`
-                                ? "border-[#0A2342] bg-slate-100 text-slate-900"
-                                : "border-slate-200 text-slate-700"
+                                ? "border-[color:var(--accent)] bg-[var(--surface-strong)] text-[var(--foreground)]"
+                                : "border-[var(--border)] text-[var(--text-muted)]"
                             }`}
                           >
                             {article.title}
@@ -643,10 +644,10 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
                               event.preventDefault();
                               openSuggestion(`/${locale}/banks/${bank.slug}`);
                             }}
-                            className={`block rounded-md border px-2 py-1.5 text-sm hover:bg-slate-50 ${
+                            className={`block rounded-md border px-2 py-1.5 text-sm transition hover:bg-[var(--surface-muted)] ${
                               searchSuggestions[activeSuggestionIndex]?.id === `bank-${bank.id}`
-                                ? "border-[#0A2342] bg-slate-100 text-slate-900"
-                                : "border-slate-200 text-slate-700"
+                                ? "border-[color:var(--accent)] bg-[var(--surface-strong)] text-[var(--foreground)]"
+                                : "border-[var(--border)] text-[var(--text-muted)]"
                             }`}
                           >
                             {bank.name}
@@ -673,7 +674,7 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
                         openSuggestion(`/${locale}/search?q=${encodeURIComponent(searchQuery.trim())}`);
                       }}
                       className={`inline-flex text-xs font-semibold underline ${
-                        searchSuggestions[activeSuggestionIndex]?.kind === "viewAll" ? "text-[#0A2342]" : "text-slate-700"
+                        searchSuggestions[activeSuggestionIndex]?.kind === "viewAll" ? "text-[var(--accent)]" : "text-[var(--text-muted)]"
                       }`}
                     >
                       {locale === "ar" ? "عرض كل النتائج" : "View all results"}
@@ -683,12 +684,13 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
               </div>
             ) : null}
           </div>
+          <ThemeToggle locale={locale} />
           <LanguageSwitcher locale={locale} />
         </div>
       </div>
 
       <div className="hidden md:block">
-        <div className="border-t border-slate-200 bg-[#223253] text-white">
+        <div className="border-t border-slate-200 bg-[#223253] text-white dark:border-slate-700">
           <nav className="mx-auto flex max-w-7xl items-center overflow-x-auto px-4 py-3 md:px-6" aria-label="Website navigation">
             <ul className="flex min-w-max items-center gap-4 text-sm font-semibold text-slate-100">
               {websiteItems.map(([key, href]) => (
@@ -702,7 +704,7 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
           </nav>
         </div>
 
-        <div className="border-t border-emerald-800 bg-[#0E6B57] text-white">
+        <div className="border-t border-emerald-800 bg-[#0E6B57] text-white dark:border-emerald-700">
           <nav className="mx-auto flex max-w-7xl items-center overflow-x-auto px-4 py-3 md:px-6" aria-label="Financial services navigation">
             <ul className="flex min-w-max items-center gap-4 text-sm font-semibold text-white">
               {serviceItems.map(([key, href]) => (
@@ -727,7 +729,7 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
       )}
 
       <div
-        className={`relative z-40 border-t border-slate-700 bg-[#172544] px-4 py-4 text-white transition-all duration-300 md:hidden ${
+        className={`relative z-40 border-t border-slate-700 bg-[#172544] px-4 py-4 text-white transition-all duration-300 md:hidden dark:border-slate-600 ${
           menuOpen ? "max-h-[75vh] opacity-100" : "max-h-0 overflow-hidden border-t-0 py-0 opacity-0"
         }`}
         aria-label="Mobile navigation"

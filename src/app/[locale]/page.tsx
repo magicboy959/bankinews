@@ -60,9 +60,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <div className="space-y-8 md:space-y-10">
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="mb-2 text-xs font-bold uppercase text-red-700">{t.labels.breaking}</p>
-        <div className="text-sm text-slate-700">
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4 shadow-[0_10px_30px_rgba(2,6,23,0.08)]">
+        <p className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-red-700">{t.labels.breaking}</p>
+        <div className="text-sm text-[var(--text-muted)]">
           {data.featured ? data.featured.title : safeLocale === "ar" ? "لا توجد أخبار عاجلة حالياً" : "No breaking item at the moment"}
         </div>
       </section>
@@ -106,24 +106,24 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 shadow-[0_10px_30px_rgba(2,6,23,0.08)]">
         <SectionHeading title={t.labels.featuredBank} />
         {data.featuredBank ? (
           <div>
-            <p className="text-lg font-bold text-slate-900">{data.featuredBank.name}</p>
-            <p className="mt-2 text-sm text-slate-600">{data.featuredBank.shortDescription}</p>
+            <p className="text-lg font-bold text-[var(--foreground)]">{data.featuredBank.name}</p>
+            <p className="mt-2 text-sm text-[var(--foreground)]/70">{data.featuredBank.shortDescription}</p>
           </div>
         ) : (
-          <p className="text-sm text-slate-600">{safeLocale === "ar" ? "لا يوجد بنك مميز حالياً" : "No featured bank yet"}</p>
+          <p className="text-sm text-[var(--foreground)]/70">{safeLocale === "ar" ? "لا يوجد بنك مميز حالياً" : "No featured bank yet"}</p>
         )}
       </section>
 
-      <section className="grid gap-5 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-2 md:p-6">
+      <section className="grid gap-5 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 shadow-[0_10px_30px_rgba(2,6,23,0.08)] md:grid-cols-2 md:p-6">
         <div>
           <SectionHeading title={safeLocale === "ar" ? "ملاحظات السوق" : "Market Notes"} />
-          <ul className="space-y-2 text-sm text-slate-700">
+          <ul className="space-y-2 text-sm text-[var(--foreground)]/80">
             {marketNotes.map((note) => (
-              <li key={note} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <li key={note} className="rounded-md border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2">
                 {note}
               </li>
             ))}
@@ -131,7 +131,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
         <div>
           <SectionHeading title={safeLocale === "ar" ? "تحديثات تحريرية" : "Editorial Updates"} />
-          <div className="space-y-3 text-sm text-slate-700">
+          <div className="space-y-3 text-sm text-[var(--foreground)]/80">
             <p>
               {safeLocale === "ar"
                 ? "نعمل يوميا على مراجعة الأخبار المصرفية ومقارنتها مع البيانات الرسمية قبل النشر، مع توضيح تاريخ التحديث والمصدر." 

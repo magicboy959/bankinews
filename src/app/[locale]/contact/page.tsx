@@ -6,9 +6,9 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   const safeLocale: Locale = isLocale(locale) ? locale : "ar";
 
   return (
-    <div className="space-y-6 rounded-xl border border-slate-200 bg-white p-6">
-      <h1 className="text-3xl font-black text-[#0A2342]">{safeLocale === "ar" ? "اتصل بنا" : "Contact Us"}</h1>
-      <p className="text-sm text-slate-600">
+    <div className="space-y-6 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 shadow-[0_10px_30px_rgba(2,6,23,0.06)]">
+      <h1 className="text-3xl font-black text-[var(--foreground)]">{safeLocale === "ar" ? "اتصل بنا" : "Contact Us"}</h1>
+      <p className="text-sm text-[var(--text-muted)]">
         {safeLocale === "ar"
           ? "للاستفسارات العامة والتصحيحات والتحذيرات الأمنية والتغطية التحريرية."
           : "For general inquiries, editorial corrections, security alerts, and press submissions."}
