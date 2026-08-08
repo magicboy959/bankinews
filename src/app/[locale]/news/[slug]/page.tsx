@@ -8,6 +8,43 @@ import { ArticleCardView } from "@/components/articles/article-card";
 import { ArticleReaderExperience } from "@/components/articles/article-reader-experience";
 import { formatDate } from "@/lib/utils";
 
+function getYouTubeEmbedUrl(rawUrl: string | null | undefined): string | null {
+  if (!rawUrl) {
+    return null;
+  }
+
+  const value = rawUrl.trim();
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(value);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    let videoId = "";
+
+    if (host === "youtu.be") {
+      videoId = parsed.pathname.replace(/^\//, "").split("/")[0] ?? "";
+    } else if (host === "youtube.com" || host === "m.youtube.com") {
+      if (parsed.pathname === "/watch") {
+        videoId = parsed.searchParams.get("v") ?? "";
+      } else if (parsed.pathname.startsWith("/shorts/")) {
+        videoId = parsed.pathname.split("/")[2] ?? "";
+      } else if (parsed.pathname.startsWith("/embed/")) {
+        videoId = parsed.pathname.split("/")[2] ?? "";
+      }
+    }
+
+    if (!/^[a-zA-Z0-9_-]{6,20}$/.test(videoId)) {
+      return null;
+    }
+
+    return `https://www.youtube.com/embed/${videoId}`;
+  } catch {
+    return null;
+  }
+}
+
 export default async function ArticlePage({
   params,
 }: {
@@ -60,6 +97,7 @@ export default async function ArticlePage({
 
   const related = (await getPublishedArticles(safeLocale, 6)).filter((a) => a.slug !== slug);
   const correctionHistory = await getArticleCorrectionHistory(article.id);
+  const youtubeEmbedUrl = getYouTubeEmbedUrl((article as { videoUrl?: string | null }).videoUrl);
 
   function historyLabel(action: string): string {
     if (safeLocale === "ar") {
@@ -115,6 +153,36 @@ export default async function ArticlePage({
               className="h-auto max-h-[480px] w-full object-cover"
             />
           </div>
+        ) : null}
+
+        {(article as { videoUrl?: string | null }).videoUrl ? (
+          <section className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <h2 className="mb-2 text-sm font-black uppercase tracking-wide text-slate-700">
+              {safeLocale === "ar" ? "فيديو مرتبط" : "Related Video"}
+            </h2>
+            {youtubeEmbedUrl ? (
+              <div className="aspect-video overflow-hidden rounded-lg border border-slate-200 bg-black">
+                <iframe
+                  src={youtubeEmbedUrl}
+                  title={safeLocale === "ar" ? "فيديو يوتيوب" : "YouTube video"}
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                  className="h-full w-full"
+                />
+              </div>
+            ) : (
+              <a
+                href={(article as { videoUrl?: string | null }).videoUrl ?? "#"}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+              >
+                {safeLocale === "ar" ? "مشاهدة الفيديو" : "Watch video"}
+              </a>
+            )}
+          </section>
         ) : null}
 
         <div className="mt-4 text-sm text-slate-500">

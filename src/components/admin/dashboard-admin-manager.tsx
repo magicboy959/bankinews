@@ -26,6 +26,7 @@ type ArticleDetailItem = {
   status: ArticleStatus;
   articleType: string;
   featuredImageUrl: string | null;
+  videoUrl: string | null;
   sourceUrl: string | null;
   sourceAttribution: string | null;
   relatedBankId: number | null;
@@ -155,6 +156,7 @@ type ComposerState = {
   status: ArticleStatus;
   articleType: string;
   featuredImageUrl: string;
+  videoUrl: string;
   sourceUrl: string;
   sourceAttribution: string;
   relatedBankId: string;
@@ -172,6 +174,7 @@ const emptyComposer: ComposerState = {
   status: "draft",
   articleType: "news",
   featuredImageUrl: "",
+  videoUrl: "",
   sourceUrl: "",
   sourceAttribution: "",
   relatedBankId: "",
@@ -425,6 +428,7 @@ export function DashboardAdminManager({
       articleType: composer.articleType.trim(),
       status: composer.status,
       featuredImageUrl: composer.featuredImageUrl.trim() || null,
+      videoUrl: composer.videoUrl.trim() || null,
       sourceUrl: composer.sourceUrl.trim() || null,
       sourceAttribution: composer.sourceAttribution.trim() || null,
       relatedBankId: composer.relatedBankId ? Number(composer.relatedBankId) : null,
@@ -565,6 +569,7 @@ export function DashboardAdminManager({
       status: base.status,
       articleType: base.articleType,
       featuredImageUrl: base.featuredImageUrl ?? "",
+      videoUrl: base.videoUrl ?? "",
       sourceUrl: base.sourceUrl ?? "",
       sourceAttribution: base.sourceAttribution ?? "",
       relatedBankId: base.relatedBankId ? String(base.relatedBankId) : "",
@@ -900,6 +905,7 @@ export function DashboardAdminManager({
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <input className="rounded border border-slate-300 px-3 py-2" placeholder="YouTube video URL (optional)" value={composer.videoUrl} onChange={(e) => updateComposer("videoUrl", e.target.value)} />
             <input ref={sourceUrlInputRef} className="rounded border border-slate-300 px-3 py-2" placeholder="Original source URL" value={composer.sourceUrl} onChange={(e) => updateComposer("sourceUrl", e.target.value)} />
             <input className="rounded border border-slate-300 px-3 py-2" placeholder="Source attribution" value={composer.sourceAttribution} onChange={(e) => updateComposer("sourceAttribution", e.target.value)} />
           </div>

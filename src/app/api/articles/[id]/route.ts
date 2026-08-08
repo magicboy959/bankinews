@@ -11,6 +11,7 @@ type ArticleDetailRow = DbRow & {
   status: string;
   articleType: string;
   featuredImageUrl: string | null;
+  videoUrl: string | null;
   sourceUrl: string | null;
   sourceAttribution: string | null;
   relatedBankId: number | null;
@@ -31,6 +32,7 @@ type ArticlePreviousRow = DbRow & {
   status: string;
   articleType: string;
   featuredImageUrl: string | null;
+  videoUrl: string | null;
   sourceUrl: string | null;
   sourceAttribution: string | null;
   relatedBankId: number | null;
@@ -57,6 +59,7 @@ export async function GET(
       `
       SELECT a.id, a.slug, a.status, a.article_type AS articleType,
               a.featured_image_url AS featuredImageUrl,
+              a.video_url AS videoUrl,
               a.source_url AS sourceUrl,
               a.source_attribution AS sourceAttribution,
               a.related_bank_id AS relatedBankId,
@@ -119,6 +122,7 @@ export async function PUT(
     const updated = await dbTransaction(async ({ query, execute }) => {
       const previousRows = await query<ArticlePreviousRow[]>(
         `SELECT a.status, a.article_type AS articleType, a.featured_image_url AS featuredImageUrl,
+                a.video_url AS videoUrl,
                 a.source_url AS sourceUrl, a.source_attribution AS sourceAttribution,
                 a.related_bank_id AS relatedBankId, a.publish_at AS publishAt, a.expires_at AS expiresAt,
                 a.is_breaking AS isBreaking, a.is_sponsored AS isSponsored,
@@ -135,6 +139,7 @@ export async function PUT(
       const articleResult = await execute(
         `UPDATE articles
          SET status = ?, article_type = ?, featured_image_url = ?,
+           video_url = ?,
              source_url = ?, source_attribution = ?, related_bank_id = ?,
              is_breaking = ?, is_sponsored = ?, is_opinion = ?, is_press_release = ?,
              publish_at = ?, expires_at = ?,
@@ -145,6 +150,7 @@ export async function PUT(
           payload.status,
           payload.articleType,
           payload.featuredImageUrl ?? null,
+          payload.videoUrl ?? null,
           payload.sourceUrl ?? null,
           payload.sourceAttribution ?? null,
           payload.relatedBankId ?? null,
@@ -191,6 +197,7 @@ export async function PUT(
           articleType: { from: previous?.articleType ?? null, to: payload.articleType },
           title: { from: previous?.title ?? null, to: payload.title },
           summary: { from: previous?.summary ?? null, to: payload.summary },
+          videoUrl: { from: previous?.videoUrl ?? null, to: payload.videoUrl ?? null },
           sourceUrl: { from: previous?.sourceUrl ?? null, to: payload.sourceUrl ?? null },
           sourceAttribution: { from: previous?.sourceAttribution ?? null, to: payload.sourceAttribution ?? null },
           featuredImageUrl: { from: previous?.featuredImageUrl ?? null, to: payload.featuredImageUrl ?? null },

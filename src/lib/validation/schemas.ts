@@ -13,6 +13,7 @@ export const articleCreateSchema = z.object({
   articleType: z.string().min(2),
   status: z.enum(["draft", "review", "scheduled", "published", "archived"]).default("draft"),
   featuredImageUrl: z.url().optional().nullable(),
+  videoUrl: z.url().optional().nullable(),
   sourceUrl: z.url().optional().nullable(),
   sourceAttribution: z.string().max(255).optional().nullable(),
   relatedBankId: z.number().int().positive().optional().nullable(),

@@ -16,6 +16,7 @@ type ArticleListRow = DbRow & {
   status: string;
   articleType: string;
   featuredImageUrl: string | null;
+  videoUrl: string | null;
   publishedAt: string | null;
   updatedAt: string;
   readingTimeMinutes: number;
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
     const rows = await dbQuery<ArticleListRow[]>(
       `
       SELECT a.id, a.slug, a.status, a.article_type AS articleType,
-             a.featured_image_url AS featuredImageUrl, a.published_at AS publishedAt,
+              a.featured_image_url AS featuredImageUrl, a.video_url AS videoUrl, a.published_at AS publishedAt,
              a.updated_at AS updatedAt, a.reading_time_minutes AS readingTimeMinutes,
              a.is_breaking AS isBreaking, a.is_sponsored AS isSponsored,
              at.title, at.summary
@@ -85,6 +86,7 @@ export async function POST(request: Request) {
     const createMetadata = {
       locale: payload.locale,
       title: payload.title,
+      videoUrl: payload.videoUrl ?? null,
       sourceUrl: payload.sourceUrl ?? null,
       sourceAttribution: payload.sourceAttribution ?? null,
       categoryId: payload.categoryId ?? null,
@@ -95,7 +97,7 @@ export async function POST(request: Request) {
       const articleResult = await execute(
         `
         INSERT INTO articles
-        (slug, status, article_type, featured_image_url, source_url, source_attribution,
+        (slug, status, article_type, featured_image_url, video_url, source_url, source_attribution,
          related_bank_id, author_id, reading_time_minutes,
          is_breaking, is_sponsored, is_opinion, is_press_release,
          publish_at, expires_at, published_at, created_at, updated_at)
@@ -106,6 +108,7 @@ export async function POST(request: Request) {
           payload.status,
           payload.articleType,
           payload.featuredImageUrl ?? null,
+          payload.videoUrl ?? null,
           payload.sourceUrl ?? null,
           payload.sourceAttribution ?? null,
           payload.relatedBankId ?? null,

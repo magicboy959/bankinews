@@ -17,6 +17,71 @@ type SocialLink = {
   href: string;
 };
 
+type SocialPlatform = "facebook" | "x" | "linkedin" | "instagram" | "youtube" | "other";
+
+function detectSocialPlatform(link: SocialLink): SocialPlatform {
+  const label = link.label.toLowerCase();
+  const href = link.href.toLowerCase();
+
+  if (label.includes("instagram") || label === "ig" || href.includes("instagram.com")) return "instagram";
+  if (label.includes("facebook") || label === "fb" || href.includes("facebook.com")) return "facebook";
+  if (label === "x" || label.includes("twitter") || href.includes("x.com") || href.includes("twitter.com")) return "x";
+  if (label.includes("linkedin") || label === "in" || href.includes("linkedin.com")) return "linkedin";
+  if (label.includes("youtube") || label === "yt" || href.includes("youtube.com") || href.includes("youtu.be")) return "youtube";
+
+  return "other";
+}
+
+function socialButtonClass(platform: SocialPlatform, mobile = false): string {
+  if (mobile) {
+    if (platform === "instagram") return "border-pink-300 bg-pink-500/20 text-pink-100";
+    if (platform === "facebook") return "border-blue-300 bg-blue-500/20 text-blue-100";
+    if (platform === "x") return "border-slate-300 bg-slate-100/15 text-slate-100";
+    if (platform === "linkedin") return "border-cyan-300 bg-cyan-500/20 text-cyan-100";
+    if (platform === "youtube") return "border-red-300 bg-red-500/20 text-red-100";
+    return "border-slate-400 bg-white/10 text-slate-100";
+  }
+
+  if (platform === "instagram") return "border-pink-200 bg-pink-50 text-pink-700 hover:border-pink-300 hover:bg-pink-100";
+  if (platform === "facebook") return "border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100";
+  if (platform === "x") return "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 hover:bg-slate-200";
+  if (platform === "linkedin") return "border-cyan-200 bg-cyan-50 text-cyan-700 hover:border-cyan-300 hover:bg-cyan-100";
+  if (platform === "youtube") return "border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100";
+  return "border-slate-300 bg-white text-slate-700 hover:border-[#0A2342] hover:text-[#0A2342]";
+}
+
+function SocialIcon({ platform }: { platform: SocialPlatform }) {
+  if (platform === "facebook") {
+    return <span aria-hidden="true" className="font-black">f</span>;
+  }
+
+  if (platform === "x") {
+    return <span aria-hidden="true" className="font-black">X</span>;
+  }
+
+  if (platform === "linkedin") {
+    return <span aria-hidden="true" className="font-black">in</span>;
+  }
+
+  if (platform === "instagram") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+        <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm11.25 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
+      </svg>
+    );
+  }
+
+  if (platform === "youtube") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+        <path d="M23 12s0-3.54-.45-5.24a2.93 2.93 0 0 0-2.06-2.06C18.79 4.25 12 4.25 12 4.25s-6.79 0-8.49.45A2.93 2.93 0 0 0 1.45 6.76C1 8.46 1 12 1 12s0 3.54.45 5.24a2.93 2.93 0 0 0 2.06 2.06c1.7.45 8.49.45 8.49.45s6.79 0 8.49-.45a2.93 2.93 0 0 0 2.06-2.06C23 15.54 23 12 23 12Zm-13.5 3.88V8.12L15.75 12 9.5 15.88Z" />
+      </svg>
+    );
+  }
+
+  return <span aria-hidden="true" className="font-black">•</span>;
+}
+
 type SearchResult = {
   articles: Array<{ id: number; slug: string; title: string }>;
   banks: Array<{ id: number; slug: string; name: string }>;
@@ -400,17 +465,22 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
           {socialLinks.length ? (
             <div className="hidden items-center gap-1 md:flex">
               {socialLinks.map((link) => (
+                (() => {
+                  const platform = detectSocialPlatform(link);
+                  return (
                 <a
                   key={`${link.label}-${link.href}`}
                   href={link.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex h-8 min-w-8 items-center justify-center rounded-full border border-slate-300 px-2 text-xs font-black text-slate-700 transition hover:border-[#0A2342] hover:text-[#0A2342]"
+                  className={`inline-flex h-8 min-w-8 items-center justify-center rounded-full border px-2 text-xs font-black transition ${socialButtonClass(platform)}`}
                   aria-label={link.label}
                   title={link.label}
                 >
-                  {link.label.slice(0, 2).toUpperCase()}
+                  <SocialIcon platform={platform} />
                 </a>
+                  );
+                })()
               ))}
             </div>
           ) : null}
@@ -725,15 +795,21 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
                 </p>
               ) : null}
               {socialLinks.map((link) => (
+                (() => {
+                  const platform = detectSocialPlatform(link);
+                  return (
                 <a
                   key={`${link.label}-${link.href}-mobile`}
                   href={link.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex rounded-md border border-slate-500 px-3 py-1.5 text-sm font-semibold text-slate-100"
+                  className={`inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm font-semibold ${socialButtonClass(platform, true)}`}
                 >
+                  <SocialIcon platform={platform} />
                   {link.label}
                 </a>
+                  );
+                })()
               ))}
             </div>
             {showSearchOverlay && (searchQuery.trim().length >= 2 || searchLoading) ? (

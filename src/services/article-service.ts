@@ -40,6 +40,7 @@ export async function getArticleBySlug(locale: Locale, slug: string) {
     const rows = await dbQuery<any[]>(
       `
         SELECT a.id, a.slug, a.article_type AS articleType, a.featured_image_url AS featuredImageUrl,
+           a.video_url AS videoUrl,
                a.published_at AS publishedAt, a.updated_at AS updatedAt,
            a.source_url AS sourceUrl, a.source_attribution AS sourceAttribution,
                a.reading_time_minutes AS readingTimeMinutes,

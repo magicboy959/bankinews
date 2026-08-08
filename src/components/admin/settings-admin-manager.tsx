@@ -56,7 +56,8 @@ const socialLinksPreset = `{
   "links": [
     { "label": "in", "href": "https://linkedin.com/company/example" },
     { "label": "x", "href": "https://x.com/example" },
-    { "label": "fb", "href": "https://facebook.com/example" }
+    { "label": "fb", "href": "https://facebook.com/example" },
+    { "label": "instagram", "href": "https://instagram.com/example" }
   ]
 }`;
 
