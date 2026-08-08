@@ -1,7 +1,28 @@
+import type { Metadata } from "next";
 import { dictionary } from "@/lib/i18n/dictionary";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { dbQuery } from "@/lib/db/query";
 import Link from "next/link";
+import { buildMetadata } from "@/lib/seo/metadata";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const safeLocale: Locale = isLocale(locale) ? locale : "ar";
+
+  return buildMetadata({
+    locale: safeLocale,
+    title: safeLocale === "ar" ? "أسعار الصرف" : "Exchange Rates",
+    description:
+      safeLocale === "ar"
+        ? "أسعار الصرف الرسمية والسوق الموازية في السودان"
+        : "Official and parallel market exchange rates in Sudan",
+    path: `/${safeLocale}/exchange-rates`,
+  });
+}
 
 export default async function ExchangeRatesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { dictionary } from "@/lib/i18n/dictionary";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { getHomepageData } from "@/services/homepage-service";
@@ -5,6 +6,26 @@ import { ArticleCardView } from "@/components/articles/article-card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { HeroCarousel } from "@/components/home/hero-carousel";
 import { LanguageUnavailableNotice } from "@/components/ui/language-unavailable-notice";
+import { buildMetadata } from "@/lib/seo/metadata";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const safeLocale: Locale = isLocale(locale) ? locale : "ar";
+
+  return buildMetadata({
+    locale: safeLocale,
+    title: safeLocale === "ar" ? "بنكي نيوز السودان" : "BankiNews Sudan",
+    description:
+      safeLocale === "ar"
+        ? "منصة أخبار ومعلومات مصرفية للسودان — تغطي البنوك والخدمات المالية وأسعار الصرف"
+        : "Sudan's banking and financial news platform covering banks, services, and exchange rates",
+    path: `/${safeLocale}`,
+  });
+}
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

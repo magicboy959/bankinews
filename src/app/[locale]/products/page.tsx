@@ -1,7 +1,28 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { dbQuery } from "@/lib/db/query";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { LanguageUnavailableNotice } from "@/components/ui/language-unavailable-notice";
+import { buildMetadata } from "@/lib/seo/metadata";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const safeLocale: Locale = isLocale(locale) ? locale : "ar";
+
+  return buildMetadata({
+    locale: safeLocale,
+    title: safeLocale === "ar" ? "المنتجات والخدمات المصرفية" : "Banking Products & Services",
+    description:
+      safeLocale === "ar"
+        ? "استعرض المنتجات والخدمات المصرفية المتاحة من البنوك السودانية"
+        : "Browse banking products and services available from Sudanese banks",
+    path: `/${safeLocale}/products`,
+  });
+}
 
 export default async function ProductsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

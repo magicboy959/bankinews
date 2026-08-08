@@ -10,7 +10,7 @@ type ArticleCorrectionHistoryItem = {
   metadata: Record<string, unknown> | null;
 };
 
-export async function getPublishedArticles(locale: Locale, limit = 20): Promise<ArticleCard[]> {
+export async function getPublishedArticles(locale: Locale, limit = 20, offset = 0): Promise<ArticleCard[]> {
   try {
     const rows = await dbQuery<any[]>(
       `
@@ -24,14 +24,29 @@ export async function getPublishedArticles(locale: Locale, limit = 20): Promise<
         LEFT JOIN category_translations ct ON ct.category_id = ac.category_id AND ct.locale = ?
         WHERE a.status = 'published' AND a.deleted_at IS NULL
         ORDER BY a.published_at DESC
-        LIMIT ?
+        LIMIT ? OFFSET ?
       `,
-      [locale, locale, limit]
+      [locale, locale, limit, offset]
     );
 
     return rows as ArticleCard[];
   } catch {
     return [];
+  }
+}
+
+export async function getPublishedArticleCount(locale: Locale): Promise<number> {
+  try {
+    const rows = await dbQuery<Array<{ total: number }>>(
+      `SELECT COUNT(*) AS total
+       FROM articles a
+       JOIN article_translations at ON at.article_id = a.id AND at.locale = ?
+       WHERE a.status = 'published' AND a.deleted_at IS NULL`,
+      [locale]
+    );
+    return Number(rows[0]?.total ?? 0);
+  } catch {
+    return 0;
   }
 }
 
