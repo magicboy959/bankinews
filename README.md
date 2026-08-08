@@ -144,6 +144,8 @@ The platform stores media metadata in MySQL and is ready for Cloudinary credenti
 
 - Set OPENAI_API_KEY to enable the admin dashboard writing assistant
 - Optionally set OPENAI_MODEL to override the default model used for draft generation
+- Set GOOGLE_AI_API_KEY to enable Google AI article editing and Image Studio photo generation/editing
+- Optionally set GOOGLE_AI_TEXT_MODEL and GOOGLE_AI_IMAGE_MODEL to override the default Gemini models
 
 ## Recommended Next Enhancements
 

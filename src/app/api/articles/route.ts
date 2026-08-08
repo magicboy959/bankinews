@@ -1,4 +1,4 @@
-import { dbQuery, dbTransaction } from "@/lib/db/query";
+import { dbExecute, dbInsert, dbQuery, dbTransaction } from "@/lib/db/query";
 import type { DbRow } from "@/lib/db/pool";
 import { created, ok, badRequest, forbidden, serverError } from "@/lib/http";
 import { articleCreateSchema } from "@/lib/validation/schemas";
@@ -8,6 +8,10 @@ import { validateEditorialWorkflow } from "@/lib/validation/editorial-workflow";
 
 type CountRow = DbRow & {
   count: number;
+};
+
+type AuthorRow = DbRow & {
+  id: number;
 };
 
 type ArticleListRow = DbRow & {
@@ -25,6 +29,79 @@ type ArticleListRow = DbRow & {
   title: string;
   summary: string;
 };
+
+async function resolveAuthorId(user: { id: number; name: string }): Promise<number> {
+  const rows = await dbQuery<AuthorRow[]>(
+    `SELECT id
+     FROM authors
+     WHERE user_id = ? AND deleted_at IS NULL
+     LIMIT 1`,
+    [user.id]
+  );
+
+  if (rows[0]?.id) {
+    return Number(rows[0].id);
+  }
+
+  return dbInsert(
+    `INSERT INTO authors
+     (user_id, display_name, created_at, updated_at)
+     VALUES (?, ?, NOW(), NOW())`,
+    [user.id, user.name || "BankiNews Editor"]
+  );
+}
+
+function getArticleCreateErrorMessage(error: unknown): string {
+  const candidate = error as { code?: string; message?: string };
+  const code = candidate?.code;
+  const message = candidate?.message ?? "";
+
+  if (code === "ER_DUP_ENTRY") {
+    return "An article with this slug already exists. Change the title or regenerate the slug.";
+  }
+
+  if (code === "ER_NO_REFERENCED_ROW_2" || message.includes("foreign key constraint")) {
+    return "Unable to create article because a selected category, bank, or author record is missing in production.";
+  }
+
+  if (code === "WARN_DATA_TRUNCATED" || code === "ER_TRUNCATED_WRONG_VALUE_FOR_FIELD" || message.includes("Data truncated")) {
+    return "Unable to create article because one field has a value not accepted by the production database. Check article type, status, dates, and URLs.";
+  }
+
+  if (code === "ER_DATA_TOO_LONG") {
+    return "Unable to create article because one field is too long for the production database.";
+  }
+
+  return "Unable to create article. Check required fields, selected category/bank, and image/source URLs.";
+}
+
+function resolveArticleSlug(payload: { slug?: string | null; title: string }) {
+  const requestedSlug = payload.slug?.trim();
+  if (requestedSlug) {
+    return requestedSlug;
+  }
+
+  const generated = slugify(payload.title);
+  if (/^[a-z0-9-]+$/.test(generated)) {
+    return generated;
+  }
+
+  return `article-${Date.now()}`;
+}
+
+async function writeArticleAuditLog(userId: number, articleId: number, status: string, metadata: unknown) {
+  try {
+    await dbExecute(
+      `
+      INSERT INTO audit_logs (user_id, action, entity_type, entity_id, previous_status, new_status, metadata, created_at)
+      VALUES (?, 'article_created', 'article', ?, NULL, ?, ?, NOW())
+      `,
+      [userId, articleId, status, JSON.stringify(metadata)]
+    );
+  } catch (error) {
+    console.error("article_create_audit_failed", error);
+  }
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -74,8 +151,9 @@ export async function POST(request: Request) {
       return badRequest(workflowError);
     }
 
-    const baseSlug = slugify(payload.title);
+    const baseSlug = resolveArticleSlug(payload);
     const promotedFlag = payload.isFeatured || payload.isSponsored;
+    const authorId = await resolveAuthorId(user);
 
     const existing = await dbQuery<CountRow[]>(
       `SELECT COUNT(*) AS count FROM articles WHERE slug = ?`,
@@ -112,7 +190,7 @@ export async function POST(request: Request) {
           payload.sourceUrl ?? null,
           payload.sourceAttribution ?? null,
           payload.relatedBankId ?? null,
-          user.id,
+          authorId,
           estimateReadingTime(payload.contentHtml),
           payload.isBreaking ? 1 : 0,
           promotedFlag ? 1 : 0,
@@ -145,19 +223,14 @@ export async function POST(request: Request) {
         );
       }
 
-      await execute(
-        `
-        INSERT INTO audit_logs (user_id, action, entity_type, entity_id, previous_status, new_status, metadata, created_at)
-        VALUES (?, 'article_created', 'article', ?, NULL, ?, ?, NOW())
-        `,
-        [user.id, nextArticleId, payload.status, JSON.stringify(createMetadata)]
-      );
-
       return nextArticleId;
     });
 
+    await writeArticleAuditLog(user.id, articleId, payload.status, createMetadata);
+
     return created({ articleId, slug });
-  } catch {
-    return serverError("Unable to create article");
+  } catch (error) {
+    console.error("article_create_failed", error);
+    return serverError(getArticleCreateErrorMessage(error));
   }
 }

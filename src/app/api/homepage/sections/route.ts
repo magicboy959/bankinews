@@ -1,4 +1,4 @@
-import { dbQuery, dbTransaction } from "@/lib/db/query";
+import { dbExecute, dbQuery, dbTransaction } from "@/lib/db/query";
 import type { DbRow } from "@/lib/db/pool";
 import { badRequest, created, forbidden, ok, serverError } from "@/lib/http";
 import { requireRole } from "@/lib/auth/guard";
@@ -40,6 +40,18 @@ function normalizeDbJson(value: unknown): unknown {
     }
   }
   return value;
+}
+
+async function writeHomepageSectionAuditLog(userId: number, sectionId: number) {
+  try {
+    await dbExecute(
+      `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, created_at)
+       VALUES (?, 'homepage_section_created', 'homepage_section', ?, NOW())`,
+      [userId, sectionId]
+    );
+  } catch (error) {
+    console.error("homepage_section_create_audit_failed", error);
+  }
 }
 
 export async function GET() {
@@ -97,16 +109,10 @@ export async function POST(request: Request) {
         [sectionKey, enabled, sortOrder, JSON.stringify(configJson), user.id]
       );
 
-      const createdSectionId = insertResult.insertId;
-
-      await execute(
-        `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, created_at)
-         VALUES (?, 'homepage_section_created', 'homepage_section', ?, NOW())`,
-        [user.id, createdSectionId]
-      );
-
-      return createdSectionId;
+      return insertResult.insertId;
     });
+
+    await writeHomepageSectionAuditLog(user.id, sectionId);
 
     return created({ id: sectionId });
   } catch {

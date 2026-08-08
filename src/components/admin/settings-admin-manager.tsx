@@ -47,6 +47,16 @@ type SocialLinkDraft = {
   href: string;
 };
 
+type HeroSlideDraft = {
+  id: string;
+  title: string;
+  summary: string;
+  imageUrl: string;
+  href: string;
+  eyebrow: string;
+  ctaLabel: string;
+};
+
 const socialPlatformOptions: Array<{ value: SocialPlatform; label: string }> = [
   { value: "facebook", label: "Facebook" },
   { value: "x", label: "X" },
@@ -60,6 +70,36 @@ const socialLinksPresetRows: SocialLinkDraft[] = [
   { platform: "x", href: "https://x.com/example" },
   { platform: "facebook", href: "https://facebook.com/example" },
   { platform: "instagram", href: "https://instagram.com/example" },
+];
+
+const heroSlidesPresetRows: HeroSlideDraft[] = [
+  {
+    id: "hero-1",
+    title: "الخطة الاستراتيجية للقطاع المصرفي في السودان",
+    summary: "واجهة رئيسية واضحة لصورة وخبر رئيسي يمكن تعديله من لوحة الإدارة.",
+    imageUrl: "/hero-banking-1.svg",
+    href: "/ar/news",
+    eyebrow: "واجهة الأخبار",
+    ctaLabel: "اقرأ المزيد",
+  },
+  {
+    id: "hero-2",
+    title: "تغطية مصرفية واقتصادية متجددة",
+    summary: "استخدم هذه الشريحة لإبراز الأخبار أو التقارير المهمة على الصفحة الرئيسية.",
+    imageUrl: "/hero-banking-2.svg",
+    href: "/ar",
+    eyebrow: "آخر الأخبار",
+    ctaLabel: "تصفح الأخبار",
+  },
+  {
+    id: "hero-3",
+    title: "مساحة سهلة لتحديث الصور والروابط",
+    summary: "يمكن تغيير الصورة والرابط والنص دون تعديل JSON يدويا.",
+    imageUrl: "/hero-banking-3.svg",
+    href: "/ar/about",
+    eyebrow: "من لوحة الإدارة",
+    ctaLabel: "اكتشف المزيد",
+  },
 ];
 
 const emptySettingForm: SettingForm = {
@@ -80,6 +120,26 @@ function socialDraftToJson(rows: SocialLinkDraft[]): string {
       links: rows
         .filter((item) => item.href.trim())
         .map((item) => ({ label: item.platform, href: item.href.trim() })),
+    },
+    null,
+    2
+  );
+}
+
+function heroSlidesToJson(rows: HeroSlideDraft[]): string {
+  return JSON.stringify(
+    {
+      slides: rows
+        .filter((item) => item.title.trim() && item.summary.trim() && item.imageUrl.trim() && item.href.trim())
+        .map((item, index) => ({
+          id: item.id.trim() || `hero-${index + 1}`,
+          title: item.title.trim(),
+          summary: item.summary.trim(),
+          imageUrl: item.imageUrl.trim(),
+          href: item.href.trim(),
+          eyebrow: item.eyebrow.trim() || undefined,
+          ctaLabel: item.ctaLabel.trim() || undefined,
+        })),
     },
     null,
     2
@@ -116,7 +176,34 @@ function parseSocialRows(value: unknown): SocialLinkDraft[] {
     .filter((item) => item.href.length > 0);
 }
 
+function parseHeroRows(value: unknown): HeroSlideDraft[] {
+  const normalized = typeof value === "string" ? (() => {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  })() : value;
+
+  if (!normalized || typeof normalized !== "object" || !Array.isArray((normalized as { slides?: unknown[] }).slides)) {
+    return [];
+  }
+
+  return (normalized as { slides: Array<Partial<HeroSlideDraft>> }).slides
+    .map((item, index) => ({
+      id: item.id?.trim() || `hero-${index + 1}`,
+      title: item.title?.trim() ?? "",
+      summary: item.summary?.trim() ?? "",
+      imageUrl: item.imageUrl?.trim() ?? "",
+      href: item.href?.trim() ?? "",
+      eyebrow: item.eyebrow?.trim() ?? "",
+      ctaLabel: item.ctaLabel?.trim() ?? "",
+    }))
+    .filter((item) => item.title || item.summary || item.imageUrl || item.href);
+}
+
 const socialLinksPreset = socialDraftToJson(socialLinksPresetRows);
+const heroSlidesPreset = heroSlidesToJson(heroSlidesPresetRows);
 
 function prettyJson(value: unknown): string {
   if (value === null || value === undefined) {
@@ -159,6 +246,7 @@ export function SettingsAdminManager({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [socialLinksDraft, setSocialLinksDraft] = useState<SocialLinkDraft[]>(socialLinksPresetRows);
+  const [heroSlidesDraft, setHeroSlidesDraft] = useState<HeroSlideDraft[]>(heroSlidesPresetRows);
 
   const sortedSettings = useMemo(
     () => [...initialSettings].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
@@ -206,6 +294,61 @@ export function SettingsAdminManager({
     setSocialLinksDraft(rows);
   }
 
+  function setHeroRows(nextRows: HeroSlideDraft[]) {
+    setHeroSlidesDraft(nextRows);
+    setSectionForm((prev) => ({
+      ...prev,
+      sectionKey: "hero_carousel",
+      enabled: true,
+      sortOrder: prev.sortOrder === "0" ? "5" : prev.sortOrder,
+      configJson: heroSlidesToJson(nextRows),
+    }));
+  }
+
+  function useHeroSlidesPreset() {
+    setEditingSectionId(null);
+    setHeroRows(heroSlidesPresetRows);
+    setSectionForm({
+      sectionKey: "hero_carousel",
+      enabled: true,
+      sortOrder: "5",
+      configJson: heroSlidesPreset,
+    });
+  }
+
+  function importHeroRowsFromJson() {
+    const rows = parseHeroRows(sectionForm.configJson);
+    if (!rows.length) {
+      setError("No hero slides found in JSON. Expected { slides: [{ title, summary, imageUrl, href }] }.");
+      return;
+    }
+    setError(null);
+    setHeroRows(rows);
+  }
+
+  function updateHeroSlide(index: number, key: keyof HeroSlideDraft, value: string) {
+    setHeroRows(heroSlidesDraft.map((row, rowIndex) => (rowIndex === index ? { ...row, [key]: value } : row)));
+  }
+
+  function addHeroSlide() {
+    setHeroRows([
+      ...heroSlidesDraft,
+      {
+        id: `hero-${heroSlidesDraft.length + 1}`,
+        title: "",
+        summary: "",
+        imageUrl: "",
+        href: "/ar/news",
+        eyebrow: "",
+        ctaLabel: "اقرأ المزيد",
+      },
+    ]);
+  }
+
+  function removeHeroSlide(index: number) {
+    setHeroRows(heroSlidesDraft.filter((_, rowIndex) => rowIndex !== index));
+  }
+
   useEffect(() => {
     if (settingForm.settingKey.trim() !== "social_links") {
       return;
@@ -218,6 +361,7 @@ export function SettingsAdminManager({
   function resetSectionForm() {
     setEditingSectionId(null);
     setSectionForm(emptySectionForm);
+    setHeroSlidesDraft(heroSlidesPresetRows);
   }
 
   async function submitSetting(event: React.FormEvent<HTMLFormElement>) {
@@ -366,6 +510,10 @@ export function SettingsAdminManager({
     }
 
     setEditingSectionId(id);
+    const heroRows = result.data.sectionKey === "hero_carousel" ? parseHeroRows(result.data.configJson) : [];
+    if (heroRows.length) {
+      setHeroSlidesDraft(heroRows);
+    }
     setSectionForm({
       sectionKey: result.data.sectionKey,
       enabled: truthy(result.data.enabled),
@@ -570,6 +718,96 @@ export function SettingsAdminManager({
                 Cancel edit
               </button>
             )}
+          </div>
+
+          <div className="mt-3 rounded-lg border border-cyan-500/25 bg-cyan-500/10 p-3">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-bold text-[var(--foreground)]">Hero Carousel Builder</p>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
+                  Update homepage hero images, headlines, links, and button text without editing JSON by hand.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={useHeroSlidesPreset}
+                  className="rounded bg-[#0A2342] px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Use Hero Template
+                </button>
+                <button
+                  type="button"
+                  onClick={importHeroRowsFromJson}
+                  className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
+                >
+                  Import From JSON
+                </button>
+                <button
+                  type="button"
+                  onClick={addHeroSlide}
+                  className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
+                >
+                  Add Slide
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-3 space-y-3">
+              {heroSlidesDraft.map((slide, index) => (
+                <div key={`${slide.id}-${index}`} className="rounded-md border border-cyan-500/25 bg-[var(--surface)] p-3">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-xs font-bold uppercase tracking-wide text-[var(--foreground)]">Slide {index + 1}</p>
+                    <button
+                      type="button"
+                      onClick={() => removeHeroSlide(index)}
+                      disabled={heroSlidesDraft.length <= 1}
+                      className="rounded border border-red-400/30 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <input
+                      className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
+                      placeholder="Headline"
+                      value={slide.title}
+                      onChange={(e) => updateHeroSlide(index, "title", e.target.value)}
+                    />
+                    <input
+                      className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
+                      placeholder="Image URL"
+                      value={slide.imageUrl}
+                      onChange={(e) => updateHeroSlide(index, "imageUrl", e.target.value)}
+                    />
+                    <input
+                      className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
+                      placeholder="Link, for example /ar/news"
+                      value={slide.href}
+                      onChange={(e) => updateHeroSlide(index, "href", e.target.value)}
+                    />
+                    <input
+                      className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
+                      placeholder="Eyebrow label"
+                      value={slide.eyebrow}
+                      onChange={(e) => updateHeroSlide(index, "eyebrow", e.target.value)}
+                    />
+                    <input
+                      className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
+                      placeholder="Button label"
+                      value={slide.ctaLabel}
+                      onChange={(e) => updateHeroSlide(index, "ctaLabel", e.target.value)}
+                    />
+                    <textarea
+                      className="min-h-20 rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)] md:col-span-2"
+                      placeholder="Short summary"
+                      value={slide.summary}
+                      onChange={(e) => updateHeroSlide(index, "summary", e.target.value)}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <form onSubmit={submitSection} className="mt-3">

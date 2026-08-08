@@ -1,4 +1,4 @@
-import { dbQuery, dbTransaction } from "@/lib/db/query";
+import { dbExecute, dbQuery, dbTransaction } from "@/lib/db/query";
 import type { DbRow } from "@/lib/db/pool";
 import { badRequest, forbidden, notFound, ok, serverError } from "@/lib/http";
 import { requireRole } from "@/lib/auth/guard";
@@ -40,6 +40,18 @@ function normalizeDbJson(value: unknown): unknown {
     }
   }
   return value;
+}
+
+async function writeHomepageSectionAuditLog(userId: number, action: string, sectionId: string) {
+  try {
+    await dbExecute(
+      `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, created_at)
+       VALUES (?, ?, 'homepage_section', ?, NOW())`,
+      [userId, action, Number(sectionId)]
+    );
+  } catch (error) {
+    console.error(`${action}_audit_failed`, error);
+  }
 }
 
 export async function GET(
@@ -115,18 +127,14 @@ export async function PUT(
         return false;
       }
 
-      await execute(
-        `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, created_at)
-         VALUES (?, 'homepage_section_updated', 'homepage_section', ?, NOW())`,
-        [user.id, id]
-      );
-
       return true;
     });
 
     if (!updated) {
       return notFound("Homepage section not found");
     }
+
+    await writeHomepageSectionAuditLog(user.id, "homepage_section_updated", id);
 
     return ok({ id: Number(id) });
   } catch {
@@ -153,18 +161,14 @@ export async function DELETE(
         return false;
       }
 
-      await execute(
-        `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, created_at)
-         VALUES (?, 'homepage_section_deleted', 'homepage_section', ?, NOW())`,
-        [user.id, id]
-      );
-
       return true;
     });
 
     if (!deleted) {
       return notFound("Homepage section not found");
     }
+
+    await writeHomepageSectionAuditLog(user.id, "homepage_section_deleted", id);
 
     return ok({ id: Number(id), deleted: true });
   } catch {

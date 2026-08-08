@@ -106,6 +106,11 @@ type MediaItem = {
   createdAt: string;
 };
 
+type StudioFormat = "image/webp" | "image/jpeg" | "image/png";
+type StudioFitMode = "none" | "contain" | "cover";
+type StudioAspectRatio = "free" | "16:9" | "4:3" | "1:1";
+type AiProvider = "openai" | "google";
+
 type MarketingOverview = {
   campaignCount: number;
   sentTotal: number;
@@ -195,6 +200,23 @@ const emptyComposer: ComposerState = {
   },
 };
 
+const articleTypeOptions = [
+  { value: "news", label: "News" },
+  { value: "breaking_news", label: "Breaking news" },
+  { value: "product_announcement", label: "Product announcement" },
+  { value: "bank_update", label: "Bank update" },
+  { value: "central_bank_announcement", label: "Central bank announcement" },
+  { value: "guide", label: "Guide" },
+  { value: "analysis", label: "Analysis" },
+  { value: "report", label: "Report" },
+  { value: "interview", label: "Interview" },
+  { value: "opinion", label: "Opinion" },
+  { value: "press_release", label: "Press release" },
+  { value: "sponsored_content", label: "Sponsored content" },
+  { value: "job_listing", label: "Job listing" },
+  { value: "security_alert", label: "Security alert" },
+];
+
 function truthyFlag(value: number | boolean): boolean {
   return value === true || value === 1;
 }
@@ -225,8 +247,175 @@ function toIsoDateTime(value: string): string | null {
   return date.toISOString();
 }
 
+function formatBytes(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) {
+    return "0 KB";
+  }
+
+  const units = ["B", "KB", "MB", "GB"];
+  let size = value;
+  let unitIndex = 0;
+
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+
+  return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+async function readFileAsDataUrl(file: File): Promise<string> {
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(new Error("Unable to read image file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function dataUrlToInlineImage(dataUrl: string): { mimeType: string; data: string } | null {
+  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  if (!match) {
+    return null;
+  }
+
+  return { mimeType: match[1], data: match[2] };
+}
+
+function dataUrlToFile(dataUrl: string, fileName: string): File {
+  const inlineImage = dataUrlToInlineImage(dataUrl);
+  if (!inlineImage) {
+    throw new Error("Invalid image data");
+  }
+
+  const binary = atob(inlineImage.data);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new File([bytes], fileName, { type: inlineImage.mimeType, lastModified: Date.now() });
+}
+
+async function imageUrlToInlineImage(url: string): Promise<{ mimeType: string; data: string }> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Unable to load selected image");
+  }
+
+  const blob = await response.blob();
+  const dataUrl = await readFileAsDataUrl(new File([blob], "selected-image", { type: blob.type || "image/jpeg" }));
+  const inlineImage = dataUrlToInlineImage(dataUrl);
+  if (!inlineImage) {
+    throw new Error("Selected image is not a supported image");
+  }
+
+  return inlineImage;
+}
+
+async function loadImageElement(source: string): Promise<HTMLImageElement> {
+  return await new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Unable to decode image"));
+    image.src = source;
+  });
+}
+
+async function optimizeImageFile(file: File, format: StudioFormat, quality: number, fitMode: StudioFitMode, aspectRatio: StudioAspectRatio): Promise<File> {
+  const dataUrl = await readFileAsDataUrl(file);
+  const image = await loadImageElement(dataUrl);
+  const width = image.naturalWidth || image.width || 0;
+  const height = image.naturalHeight || image.height || 0;
+  const maxDimension = 1600;
+  const targetWidth = 1600;
+  let targetHeight = 900;
+
+  if (aspectRatio === "4:3") {
+    targetHeight = 1200;
+  } else if (aspectRatio === "1:1") {
+    targetHeight = 1600;
+  } else if (aspectRatio === "free") {
+    targetHeight = Math.round(targetWidth * (height / width || 1));
+  }
+
+  const scale = Math.min(1, maxDimension / Math.max(width, height));
+  const nextWidth = Math.max(1, Math.round(width * scale));
+  const nextHeight = Math.max(1, Math.round(height * scale));
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Canvas is unavailable");
+  }
+
+  if (fitMode === "cover") {
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const targetRatio = targetWidth / targetHeight;
+    const sourceRatio = width / height;
+    let sourceX = 0;
+    let sourceY = 0;
+    let sourceWidth = width;
+    let sourceHeight = height;
+
+    if (sourceRatio > targetRatio) {
+      sourceWidth = height * targetRatio;
+      sourceX = (width - sourceWidth) / 2;
+    } else if (sourceRatio < targetRatio) {
+      sourceHeight = width / targetRatio;
+      sourceY = (height - sourceHeight) / 2;
+    }
+
+    context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
+  } else if (fitMode === "contain") {
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const drawWidth = Math.max(1, Math.round(nextWidth * 0.9));
+    const drawHeight = Math.max(1, Math.round(nextHeight * 0.9));
+    const destX = Math.round((targetWidth - drawWidth) / 2);
+    const destY = Math.round((targetHeight - drawHeight) / 2);
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, targetWidth, targetHeight);
+    context.drawImage(image, 0, 0, width, height, destX, destY, drawWidth, drawHeight);
+  } else {
+    canvas.width = nextWidth;
+    canvas.height = nextHeight;
+    context.drawImage(image, 0, 0, nextWidth, nextHeight);
+  }
+
+  const mimeType = format;
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (candidate) => {
+        if (candidate) {
+          resolve(candidate);
+        } else {
+          reject(new Error("Unable to encode optimized image"));
+        }
+      },
+      mimeType,
+      mimeType === "image/png" ? undefined : quality / 100
+    );
+  });
+
+  const baseName = (file.name || "image").replace(/\.[^.]+$/, "") || "image";
+  const extension = format === "image/png" ? ".png" : format === "image/jpeg" ? ".jpg" : ".webp";
+  return new File([blob], `${baseName}${extension}`, { type: mimeType, lastModified: Date.now() });
+}
+
 function hasCompleteTranslation(value: DraftLocaleContent): boolean {
   return value.title.trim().length >= 5 && value.summary.trim().length >= 20 && hasRichTextContent(value.contentHtml);
+}
+
+function normalizeArticleSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 async function parseResponse<T>(response: Response): Promise<ApiSuccess<T> | ApiFailure> {
@@ -286,6 +475,7 @@ export function DashboardAdminManager({
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
+  const [aiProvider, setAiProvider] = useState<AiProvider>("openai");
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -295,6 +485,28 @@ export function DashboardAdminManager({
   const [subscribers, setSubscribers] = useState<SubscriberItem[]>(initialSubscribers);
   const [savingSubscriberId, setSavingSubscriberId] = useState<number | null>(null);
   const [imagePreviewState, setImagePreviewState] = useState<"idle" | "ok" | "error">("idle");
+  const [studioPreviewUrl, setStudioPreviewUrl] = useState<string | null>(null);
+  const [studioFileName, setStudioFileName] = useState<string>("");
+  const [studioFileSize, setStudioFileSize] = useState<number | null>(null);
+  const [studioPreviewError, setStudioPreviewError] = useState<string | null>(null);
+  const [studioFormat, setStudioFormat] = useState<StudioFormat>("image/webp");
+  const [studioQuality, setStudioQuality] = useState(82);
+  const [studioScale, setStudioScale] = useState(1);
+  const [studioFitMode, setStudioFitMode] = useState<StudioFitMode>("contain");
+  const [studioAspectRatio, setStudioAspectRatio] = useState<StudioAspectRatio>("free");
+  const [studioPreviewMode, setStudioPreviewMode] = useState<"before" | "after">("before");
+  const [studioMetadataSaved, setStudioMetadataSaved] = useState(false);
+  const [studioAttachConfirmed, setStudioAttachConfirmed] = useState(false);
+  const [studioSelectedMediaId, setStudioSelectedMediaId] = useState<number | null>(null);
+  const [studioAltText, setStudioAltText] = useState("");
+  const [studioCaption, setStudioCaption] = useState("");
+  const [studioCredit, setStudioCredit] = useState("");
+  const [studioSourceUrl, setStudioSourceUrl] = useState("");
+  const [studioAttachMode, setStudioAttachMode] = useState<"auto" | "manual">("auto");
+  const [studioOpen, setStudioOpen] = useState(false);
+  const [googleImagePrompt, setGoogleImagePrompt] = useState("");
+  const [googleImageBusy, setGoogleImageBusy] = useState<"generate" | "edit" | null>(null);
+  const [googleImageError, setGoogleImageError] = useState<string | null>(null);
   const activeSubscriberCount = useMemo(
     () => subscribers.filter((subscriber) => subscriber.status === "active").length,
     [subscribers]
@@ -303,14 +515,42 @@ export function DashboardAdminManager({
   const previewTitle = composer.translations[previewLocale].title.trim();
   const previewSummary = composer.translations[previewLocale].summary.trim();
   const previewEmbedUrl = getYouTubeEmbedUrl(composer.videoUrl);
+  const selectionStatusLabel = studioAttachConfirmed
+    ? "Attached to article"
+    : studioSelectedMediaId
+      ? "Recent media selected"
+      : studioPreviewUrl || composer.featuredImageUrl.trim()
+        ? "Selection ready"
+        : "No selection yet";
   const campaignOpenRate = marketingOverview.sentTotal > 0 ? Math.round((marketingOverview.openTotal / marketingOverview.sentTotal) * 1000) / 10 : 0;
   const campaignClickRate = marketingOverview.sentTotal > 0 ? Math.round((marketingOverview.clickTotal / marketingOverview.sentTotal) * 1000) / 10 : 0;
   const avgDwellMinutes = Math.max(0, Math.round((engagementOverview.avgDwellSeconds / 60) * 10) / 10);
   const engagementRangeLabel = engagementRange === "7d" ? "7 Days" : engagementRange === "90d" ? "90 Days" : "30 Days";
 
   useEffect(() => {
+    return () => {
+      if (studioPreviewUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(studioPreviewUrl);
+      }
+    };
+  }, [studioPreviewUrl]);
+
+  function attachStudioSelection(nextUrl: string, nextFileName: string, nextFileSize: number | null, nextPreviewUrl?: string | null, selectedMediaId?: number | null) {
+    setComposer((prev) => ({ ...prev, featuredImageUrl: nextUrl }));
+    setStudioPreviewUrl(nextPreviewUrl ?? nextUrl);
+    setStudioFileName(nextFileName);
+    setStudioFileSize(nextFileSize);
+    setStudioPreviewError(null);
     setImagePreviewState("idle");
-  }, [composer.featuredImageUrl]);
+    setStudioAttachConfirmed(false);
+    setStudioSelectedMediaId(selectedMediaId ?? null);
+  }
+
+  function updateFeaturedImageUrl(value: string) {
+    updateComposer("featuredImageUrl", value);
+    setImagePreviewState("idle");
+    setStudioPreviewError(null);
+  }
 
   function focusQaTarget(target: QAFocusAction["target"]) {
     const scheduleFocus = (focusTarget: HTMLElement | null) => {
@@ -632,9 +872,27 @@ export function DashboardAdminManager({
     }
 
     setUploadingImage(true);
+    setStudioPreviewError(null);
+    setStudioAttachMode("auto");
+
+    let uploadFile = file;
+    let previewUrl: string | null = null;
+
+    try {
+      uploadFile = await optimizeImageFile(file, studioFormat, studioQuality, studioFitMode, studioAspectRatio);
+      previewUrl = URL.createObjectURL(uploadFile);
+      setStudioPreviewUrl(previewUrl);
+      setStudioFileName(uploadFile.name);
+      setStudioFileSize(uploadFile.size);
+      setStudioPreviewError(null);
+    } catch {
+      setStudioPreviewError("Optimization preview is unavailable, but the original file will still be uploaded.");
+      setStudioFileName(file.name);
+      setStudioFileSize(file.size);
+    }
 
     const form = new FormData();
-    form.set("file", file);
+    form.set("file", uploadFile, uploadFile.name);
 
     const response = await fetch("/api/media/upload", {
       method: "POST",
@@ -649,17 +907,32 @@ export function DashboardAdminManager({
     }>(response);
     setUploadingImage(false);
 
+    if (previewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
     if (!response.ok || !result.ok || !result.data.url) {
       setError(result.ok ? "Image upload failed" : result.error?.message ?? "Image upload failed");
       return;
     }
 
     const uploadedUrl = result.data.url;
+    const nextFileName = result.data.media?.fileName ?? uploadFile.name;
 
-    // Set featured image URL first, before any refresh, to prevent state loss.
-    setComposer((prev) => ({ ...prev, featuredImageUrl: uploadedUrl }));
+    if (studioAttachMode === "auto") {
+      attachStudioSelection(uploadedUrl, nextFileName, uploadFile.size, uploadedUrl);
+      setStudioAttachConfirmed(true);
+      setStudioAltText((prev) => prev || "");
+      setStudioCaption((prev) => prev || "");
+      setStudioCredit((prev) => prev || "");
+      setStudioSourceUrl((prev) => prev || "");
+    } else {
+      setStudioPreviewUrl(uploadedUrl);
+      setStudioFileName(nextFileName);
+      setStudioFileSize(uploadFile.size);
+      setStudioPreviewError(null);
+    }
 
-    // Prepend new item to the local media list without triggering a full page refresh.
     if (result.data.media) {
       setMediaItems((prev) => [result.data.media as MediaItem, ...prev]);
     }
@@ -668,9 +941,115 @@ export function DashboardAdminManager({
       setMediaWarning("FTP upload failed — image stored as blob. Update MEDIA_FTP_* env vars in Vercel to use media.bankinews.com.");
     }
 
-    // Clear the file input.
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  }
+
+  async function uploadGeneratedStudioImage(file: File, sourceUrl: string) {
+    const form = new FormData();
+    form.set("file", file, file.name);
+    if (studioAltText.trim()) form.set("altText", studioAltText.trim());
+    if (studioCaption.trim()) form.set("caption", studioCaption.trim());
+    if (studioCredit.trim()) form.set("credit", studioCredit.trim());
+    if (studioSourceUrl.trim()) form.set("sourceUrl", studioSourceUrl.trim());
+
+    const response = await fetch("/api/media/upload", {
+      method: "POST",
+      body: form,
+    });
+
+    const result = await parseResponse<{
+      url?: string;
+      driver?: string;
+      warning?: string | null;
+      media?: { id: number; fileName: string; url: string; createdAt: string } | null;
+    }>(response);
+
+    if (!response.ok || !result.ok || !result.data.url) {
+      throw new Error(result.ok ? "Google AI image generated, but upload failed." : result.error?.message ?? "Google AI image generated, but upload failed.");
+    }
+
+    const uploadedUrl = result.data.url;
+    const nextFileName = result.data.media?.fileName ?? file.name;
+    attachStudioSelection(uploadedUrl, nextFileName, file.size, sourceUrl, result.data.media?.id ?? null);
+    setStudioAttachConfirmed(true);
+
+    if (result.data.media) {
+      setMediaItems((prev) => [result.data.media as MediaItem, ...prev]);
+    }
+
+    if (result.data.driver === "database_blob_fallback") {
+      setMediaWarning("FTP upload failed — image stored as blob. Update MEDIA_FTP_* env vars in Vercel to use media.bankinews.com.");
+    }
+  }
+
+  async function generateGoogleImage(mode: "generate" | "edit") {
+    setGoogleImageError(null);
+    setError(null);
+
+    const prompt = googleImagePrompt.trim();
+    if (prompt.length < 12) {
+      setGoogleImageError("Describe the photo you want Google AI to generate or edit.");
+      return;
+    }
+
+    setGoogleImageBusy(mode);
+
+    try {
+      let image: { mimeType: string; data: string } | null = null;
+
+      if (mode === "edit") {
+        const selectedFile = fileInputRef.current?.files?.[0] ?? null;
+        if (selectedFile) {
+          const dataUrl = await readFileAsDataUrl(selectedFile);
+          image = dataUrlToInlineImage(dataUrl);
+        } else {
+          const selectedUrl = studioPreviewUrl || composer.featuredImageUrl.trim();
+          if (selectedUrl.startsWith("data:")) {
+            image = dataUrlToInlineImage(selectedUrl);
+          } else if (selectedUrl) {
+            image = await imageUrlToInlineImage(selectedUrl);
+          }
+        }
+
+        if (!image) {
+          setGoogleImageError("Choose or upload an image before asking Google AI to edit it.");
+          return;
+        }
+      }
+
+      const response = await fetch("/api/admin/ai/image-studio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt,
+          mode,
+          image,
+          aspectRatio: studioAspectRatio === "free" ? "16:9" : studioAspectRatio,
+        }),
+      });
+
+      const result = await parseResponse<{ mimeType: string; data: string; dataUrl: string; text?: string }>(response);
+
+      if (!response.ok || !result.ok) {
+        setGoogleImageError(result.ok ? "Google AI image request failed" : result.error?.message ?? "Google AI image request failed");
+        return;
+      }
+
+      const extension = result.data.mimeType === "image/jpeg" ? "jpg" : result.data.mimeType.split("/")[1] || "png";
+      const file = dataUrlToFile(result.data.dataUrl, `google-ai-${mode}-${Date.now()}.${extension}`);
+      setStudioPreviewUrl(result.data.dataUrl);
+      setStudioFileName(file.name);
+      setStudioFileSize(file.size);
+      setStudioPreviewError(null);
+      setStudioOpen(true);
+      await uploadGeneratedStudioImage(file, result.data.dataUrl);
+      setGoogleImagePrompt("");
+    } catch (error) {
+      setGoogleImageError(error instanceof Error ? error.message : "Google AI image request failed");
+    } finally {
+      setGoogleImageBusy(null);
     }
   }
 
@@ -693,6 +1072,7 @@ export function DashboardAdminManager({
         body: JSON.stringify({
           prompt,
           mode,
+          provider: aiProvider,
           locale: activeLocale,
           articleType: composer.articleType,
           title: draft.title,
@@ -962,6 +1342,15 @@ export function DashboardAdminManager({
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
+                <select
+                  value={aiProvider}
+                  onChange={(event) => setAiProvider(event.target.value as AiProvider)}
+                  disabled={aiGenerating}
+                  className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] disabled:opacity-60"
+                >
+                  <option value="openai">OpenAI</option>
+                  <option value="google">Google AI</option>
+                </select>
                 <button
                   type="button"
                   onClick={() => generateAiDraft("single")}
@@ -987,7 +1376,7 @@ export function DashboardAdminManager({
               onChange={(e) => setAiPrompt(e.target.value)}
             />
             <p className="mt-2 text-xs text-[var(--text-subtle)]">
-              The assistant will fill the current locale's title, summary, and content without switching away from the article editor.
+              The assistant will fill the active locale title, summary, and content without switching away from the article editor.
             </p>
             {aiError && <p className="mt-2 text-sm text-red-700">{aiError}</p>}
           </section>
@@ -1000,7 +1389,11 @@ export function DashboardAdminManager({
               <option value="published">Published</option>
               <option value="archived">Archived</option>
             </select>
-            <input className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Article type" value={composer.articleType} onChange={(e) => updateComposer("articleType", e.target.value)} required />
+            <select className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)]" value={composer.articleType} onChange={(e) => updateComposer("articleType", e.target.value)}>
+              {articleTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
             <select className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)]" value={composer.categoryId} onChange={(e) => updateComposer("categoryId", e.target.value)}>
               <option value="">Select category</option>
               {categoryOptions.map((item) => (
@@ -1031,11 +1424,14 @@ export function DashboardAdminManager({
                 className="flex-1 rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 font-mono text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
                 placeholder="article-url-slug"
                 value={composer.slug}
-                onChange={(e) => updateComposer("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-"))}
+                onChange={(e) => updateComposer("slug", normalizeArticleSlug(e.target.value))}
               />
               <button
                 type="button"
-                onClick={() => updateComposer("slug", slugify(composer.translations.ar.title || composer.translations.en.title))}
+                onClick={() => {
+                  const generated = normalizeArticleSlug(slugify(composer.translations.en.title || composer.translations.ar.title));
+                  updateComposer("slug", generated || `article-${Date.now()}`);
+                }}
                 className="rounded border border-[var(--border)] px-2 py-2 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface)]"
               >
                 Re-generate
@@ -1043,39 +1439,313 @@ export function DashboardAdminManager({
             </div>
           </div>
 
-          <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
-            <input ref={featuredImageInputRef} className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Featured image URL" value={composer.featuredImageUrl} onChange={(e) => updateComposer("featuredImageUrl", e.target.value)} />
-            <div className="flex gap-2">
-              <input ref={fileInputRef} type="file" accept="image/*" className="max-w-44 rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-2 text-xs text-[var(--foreground)]" />
-              <button type="button" onClick={uploadImage} disabled={uploadingImage} className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface)] disabled:opacity-60">
-                {uploadingImage ? "Uploading..." : "Upload"}
-              </button>
-            </div>
-          </div>
-
-          {mediaItems.length ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {mediaItems.slice(0, 6).map((media) => (
-                <div key={media.id} className="inline-flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs text-[var(--text-muted)]">
+          <div className={studioOpen ? "fixed inset-0 z-50 flex justify-end bg-black/45 p-3 backdrop-blur-sm sm:p-4" : ""} onClick={() => setStudioOpen(false)}>
+            <div className={studioOpen ? "h-full w-full max-w-3xl overflow-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-2xl transition-all duration-200" : "mt-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3"} onClick={(event) => event.stopPropagation()}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Image Studio</h3>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">Optimize locally, generate or edit with Google AI, preview before attach, and pick from recent media.</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <input ref={fileInputRef} type="file" accept="image/*" className="max-w-44 rounded border border-[var(--border)] bg-[var(--surface-strong)] px-2 py-2 text-xs text-[var(--foreground)]" />
+                <button type="button" onClick={() => { setStudioOpen(true); void uploadImage(); }} disabled={uploadingImage} className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-strong)] disabled:opacity-60">
+                  {uploadingImage ? "Optimizing..." : "Upload image"}
+                </button>
+                <button type="button" onClick={() => setStudioOpen((prev) => !prev)} className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-strong)]">
+                  {studioOpen ? "Close" : "Open studio"}
+                </button>
+                <button type="button" onClick={() => setStudioAttachMode((prev) => (prev === "auto" ? "manual" : "auto"))} className={`rounded border px-3 py-2 text-sm font-semibold ${studioAttachMode === "auto" ? "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-strong)]" : "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400"}`}>
+                  {studioAttachMode === "auto" ? "Auto attach" : "Manual attach"}
+                </button>
+                {studioAttachMode === "manual" ? (
                   <button
                     type="button"
-                    onClick={() => updateComposer("featuredImageUrl", media.url)}
-                    className="font-semibold hover:text-[var(--primary)]"
+                    onClick={() => {
+                      if (studioPreviewUrl || composer.featuredImageUrl.trim()) {
+                        attachStudioSelection(studioPreviewUrl || composer.featuredImageUrl, studioFileName || "selected-image", studioFileSize, studioPreviewUrl || composer.featuredImageUrl, studioSelectedMediaId);
+                        setStudioAttachConfirmed(true);
+                      }
+                    }}
+                    disabled={!studioPreviewUrl && !composer.featuredImageUrl.trim()}
+                    className="rounded border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-sm font-semibold text-cyan-700 disabled:cursor-not-allowed disabled:opacity-60 dark:text-cyan-400"
                   >
-                    {media.fileName}
+                    {studioAttachConfirmed ? "Re-attach image" : "Attach selected image"}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            {studioOpen ? (
+              <>
+            <div className="mt-3 rounded border border-cyan-500/25 bg-cyan-500/10 p-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Google AI photo tools</p>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">Generate a new editorial photo or edit the selected image, then upload and attach the result.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => generateGoogleImage("generate")}
+                    disabled={googleImageBusy !== null}
+                    className="rounded bg-[#0A2342] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    {googleImageBusy === "generate" ? "Generating..." : "Generate photo"}
                   </button>
                   <button
                     type="button"
-                    onClick={() => deleteMediaItem(media.id)}
-                    disabled={deletingMediaId === media.id}
-                    className="rounded border border-red-400/30 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 hover:bg-red-500/10 disabled:opacity-60"
+                    onClick={() => generateGoogleImage("edit")}
+                    disabled={googleImageBusy !== null}
+                    className="rounded border border-[#0A2342] px-3 py-2 text-sm font-semibold text-[#0A2342] disabled:opacity-60"
                   >
-                    {deletingMediaId === media.id ? "..." : "Delete"}
+                    {googleImageBusy === "edit" ? "Editing..." : "Edit selected"}
                   </button>
                 </div>
-              ))}
+              </div>
+              <textarea
+                className="mt-3 min-h-20 w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
+                placeholder="Describe the photo, crop, lighting, style, or edit you want..."
+                value={googleImagePrompt}
+                onChange={(event) => setGoogleImagePrompt(event.target.value)}
+              />
+              {googleImageError ? <p className="mt-2 text-sm text-red-700">{googleImageError}</p> : null}
             </div>
-          ) : null}
+
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-muted)]">
+              <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${studioAttachConfirmed ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : (studioPreviewUrl || composer.featuredImageUrl.trim()) ? "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400" : "bg-[var(--surface-elevated)] text-[var(--text-subtle)]"}`}>
+                {studioAttachConfirmed ? "Attached" : (studioPreviewUrl || composer.featuredImageUrl.trim()) ? "Selection ready" : "No selection yet"}
+              </span>
+              <span>
+                {studioFileName ? `Selected: ${studioFileName}` : "Pick an image or recent media item to begin."}
+              </span>
+            </div>
+
+            <div className="mt-3 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="rounded border border-[var(--border)] bg-[var(--surface-strong)] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Preview</p>
+                  <div className="flex items-center gap-2">
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${studioAttachConfirmed ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : studioSelectedMediaId ? "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400" : "bg-[var(--surface)] text-[var(--text-muted)]"}`}>
+                      {selectionStatusLabel}
+                    </span>
+                    <span className="rounded bg-[var(--surface)] px-2 py-1 text-[11px] font-semibold text-[var(--text-muted)]">{studioFileName || "No file selected"}</span>
+                  </div>
+                </div>
+
+                {(studioPreviewUrl || composer.featuredImageUrl.trim()) ? (
+                  <div className="mt-3 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+                    <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-subtle)]">
+                      <span>{studioPreviewMode === "before" ? "Before upload" : "After optimization"}</span>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => setStudioPreviewMode("before")} className={`rounded px-2 py-1 ${studioPreviewMode === "before" ? "bg-[var(--primary)] text-white" : "bg-[var(--surface)] text-[var(--text-muted)]"}`}>
+                          Before
+                        </button>
+                        <button type="button" onClick={() => setStudioPreviewMode("after")} className={`rounded px-2 py-1 ${studioPreviewMode === "after" ? "bg-[var(--primary)] text-white" : "bg-[var(--surface)] text-[var(--text-muted)]"}`}>
+                          After
+                        </button>
+                      </div>
+                    </div>
+                    <div className="relative p-3">
+                      <img
+                        key={`${studioPreviewMode}-${studioPreviewUrl || composer.featuredImageUrl}`}
+                        src={studioPreviewMode === "before" ? (studioPreviewUrl || composer.featuredImageUrl) : (studioPreviewUrl || composer.featuredImageUrl)}
+                        alt="Featured image preview"
+                        className="h-72 w-full rounded object-cover"
+                        style={{ transform: `scale(${studioScale})`, transformOrigin: "center center" }}
+                        onLoad={() => {
+                          setImagePreviewState("ok");
+                        }}
+                        onError={() => {
+                          setImagePreviewState("error");
+                          setStudioPreviewError("This preview could not be loaded. Choose another image or verify the URL.");
+                        }}
+                      />
+                      {(studioPreviewUrl || composer.featuredImageUrl.trim()) ? (
+                        <div className="absolute left-6 top-6 rounded-full border border-white/60 bg-black/55 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow-lg backdrop-blur">
+                          {selectionStatusLabel}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 flex h-72 items-center justify-center rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-subtle)]">
+                    Select an image to preview it here.
+                  </div>
+                )}
+
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-muted)]">
+                  <div>
+                    {studioFileSize ? <span>{formatBytes(studioFileSize)}</span> : null}
+                    {studioFileSize && composer.featuredImageUrl.trim() ? <span className="mx-2">•</span> : null}
+                    {composer.featuredImageUrl.trim() ? <span>Attached to current article</span> : null}
+                  </div>
+                  {studioPreviewError ? <span className="text-amber-700">{studioPreviewError}</span> : null}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="rounded border border-[var(--border)] bg-[var(--surface-strong)] p-3">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Featured image URL</label>
+                  <input ref={featuredImageInputRef} className="w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Featured image URL" value={composer.featuredImageUrl} onChange={(e) => updateFeaturedImageUrl(e.target.value)} />
+                  <p className="mt-2 text-xs text-[var(--text-subtle)]">Paste a URL or use a recently uploaded media item below.</p>
+                  <div className="mt-3 rounded border border-[var(--border)] bg-[var(--surface)] p-2 text-xs text-[var(--text-muted)]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Metadata ready</span>
+                      <span className={`rounded px-2 py-0.5 ${studioMetadataSaved ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-[var(--surface-elevated)] text-[var(--text-subtle)]"}`}>
+                        {studioMetadataSaved ? "Saved for this article" : "Pending"}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-[11px] leading-5 text-[var(--text-subtle)]">
+                      {studioAltText || studioCaption || studioCredit || studioSourceUrl ? "Alt text, caption, credit, and source URL are prepared for the selected media." : "Add alt text, caption, credit, or a source link to enrich the featured image."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded border border-[var(--border)] bg-[var(--surface-strong)] p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Image details</p>
+                    <span className={`rounded px-2 py-1 text-[11px] font-semibold ${studioAttachConfirmed ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-[var(--surface)] text-[var(--text-subtle)]"}`}>
+                      {studioAttachConfirmed ? "Attached" : "Ready"}
+                    </span>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    <input className="w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Alt text" value={studioAltText} onChange={(e) => setStudioAltText(e.target.value)} />
+                    <input className="w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Caption" value={studioCaption} onChange={(e) => setStudioCaption(e.target.value)} />
+                    <input className="w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Credit" value={studioCredit} onChange={(e) => setStudioCredit(e.target.value)} />
+                    <input className="w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Source URL" value={studioSourceUrl} onChange={(e) => setStudioSourceUrl(e.target.value)} />
+                  </div>
+                </div>
+
+                <div className="rounded border border-[var(--border)] bg-[var(--surface-strong)] p-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">
+                      <span className="mb-1 block">Output format</span>
+                      <select className="mt-1 w-full rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-2 text-sm text-[var(--foreground)]" value={studioFormat} onChange={(e) => setStudioFormat(e.target.value as StudioFormat)}>
+                        <option value="image/webp">WebP</option>
+                        <option value="image/jpeg">JPEG</option>
+                        <option value="image/png">PNG</option>
+                      </select>
+                    </label>
+                    <label className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">
+                      <span className="mb-1 block">Quality {studioQuality}%</span>
+                      <input type="range" min="60" max="100" step="1" value={studioQuality} onChange={(e) => setStudioQuality(Number(e.target.value))} className="mt-2 w-full accent-[var(--primary)]" />
+                    </label>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">
+                      <span className="mb-1 block">Crop / fit</span>
+                      <select className="mt-1 w-full rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-2 text-sm text-[var(--foreground)]" value={studioFitMode} onChange={(e) => setStudioFitMode(e.target.value as StudioFitMode)}>
+                        <option value="none">Original fit</option>
+                        <option value="contain">Contain</option>
+                        <option value="cover">Cover</option>
+                      </select>
+                    </label>
+
+                    <label className="block text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">
+                      <span className="mb-1 block">Preview zoom {Math.round(studioScale * 100)}%</span>
+                      <input type="range" min="100" max="180" step="10" value={Math.round(studioScale * 100)} onChange={(e) => setStudioScale(Number(e.target.value) / 100)} className="mt-2 w-full accent-[var(--primary)]" />
+                    </label>
+                  </div>
+
+                  <div className="mt-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Aspect ratio</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(["free", "16:9", "4:3", "1:1"] as StudioAspectRatio[]).map((ratio) => (
+                        <button
+                          key={ratio}
+                          type="button"
+                          onClick={() => setStudioAspectRatio(ratio)}
+                          className={`rounded border px-2.5 py-1.5 text-xs font-semibold ${studioAspectRatio === ratio ? "border-[var(--primary)] bg-[var(--surface-elevated)] text-[var(--foreground)]" : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface)]"}`}
+                        >
+                          {ratio === "free" ? "Free" : ratio}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => setStudioScale(1)} className="rounded border border-[var(--border)] px-2 py-1.5 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface)]">
+                      Reset zoom
+                    </button>
+                    <button type="button" onClick={() => {
+                      setStudioPreviewUrl(null);
+                      setStudioFileName("");
+                      setStudioFileSize(null);
+                      setStudioPreviewError(null);
+                    }} className="rounded border border-[var(--border)] px-2 py-1.5 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface)]">
+                      Clear preview
+                    </button>
+                    <button type="button" onClick={() => {
+                      if (composer.featuredImageUrl.trim()) {
+                        setStudioMetadataSaved(true);
+                        setError(null);
+                      }
+                    }} className="rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-1.5 text-xs font-semibold text-cyan-700 dark:text-cyan-400">
+                      Save metadata
+                    </button>
+                  </div>
+                </div>
+
+                {mediaItems.length ? (
+                  <div className="rounded border border-[var(--border)] bg-[var(--surface-strong)] p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Recent media library</p>
+                      <span className="text-[11px] text-[var(--text-subtle)]">Click to attach</span>
+                    </div>
+                    <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                      {mediaItems.slice(0, 6).map((media) => (
+                        <div
+                          key={media.id}
+                          className={`min-w-[108px] rounded border p-2 text-xs ${studioSelectedMediaId === media.id ? "border-[var(--primary)] bg-[var(--surface-elevated)] text-[var(--foreground)]" : "border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]"}`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (studioAttachMode === "auto") {
+                                attachStudioSelection(media.url, media.fileName, null, media.url, media.id);
+                                setStudioAttachConfirmed(true);
+                              } else {
+                                setStudioPreviewUrl(media.url);
+                                setStudioFileName(media.fileName);
+                                setStudioFileSize(null);
+                                setStudioPreviewError(null);
+                                setImagePreviewState("idle");
+                                setStudioAttachConfirmed(false);
+                              }
+                              setStudioSelectedMediaId(media.id);
+                            }}
+                            className="block w-full text-left hover:text-[var(--primary)]"
+                          >
+                            <img src={media.url} alt={media.fileName} className="mb-2 h-16 w-full rounded object-cover" />
+                            <span className="line-clamp-1 font-semibold">{media.fileName}</span>
+                          </button>
+                          <div className="mt-2 flex items-center justify-between gap-2">
+                            <span className="text-[10px] text-[var(--text-subtle)]">Pick</span>
+                            <button
+                              type="button"
+                              onClick={() => deleteMediaItem(media.id)}
+                              disabled={deletingMediaId === media.id}
+                              className="rounded border border-red-400/30 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 hover:bg-red-500/10 disabled:opacity-60"
+                            >
+                              {deletingMediaId === media.id ? "..." : "Delete"}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+              </>
+            ) : (
+              <div className="mt-3 rounded border border-dashed border-[var(--border)] bg-[var(--surface)] px-3 py-3 text-sm text-[var(--text-subtle)]">
+                Open the studio to upload an image, preview it, or pick a recent media item.
+              </div>
+            )}
+            </div>
+          </div>
 
           <div className="mt-4 flex gap-2">
             <button
