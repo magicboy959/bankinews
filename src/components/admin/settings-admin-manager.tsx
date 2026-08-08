@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type SettingItem = {
@@ -40,6 +40,28 @@ type ApiFailure = {
   error?: { message?: string };
 };
 
+type SocialPlatform = "facebook" | "x" | "linkedin" | "instagram" | "youtube";
+
+type SocialLinkDraft = {
+  platform: SocialPlatform;
+  href: string;
+};
+
+const socialPlatformOptions: Array<{ value: SocialPlatform; label: string }> = [
+  { value: "facebook", label: "Facebook" },
+  { value: "x", label: "X" },
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "instagram", label: "Instagram" },
+  { value: "youtube", label: "YouTube" },
+];
+
+const socialLinksPresetRows: SocialLinkDraft[] = [
+  { platform: "linkedin", href: "https://linkedin.com/company/example" },
+  { platform: "x", href: "https://x.com/example" },
+  { platform: "facebook", href: "https://facebook.com/example" },
+  { platform: "instagram", href: "https://instagram.com/example" },
+];
+
 const emptySettingForm: SettingForm = {
   settingKey: "",
   settingValue: "{}",
@@ -52,14 +74,49 @@ const emptySectionForm: SectionForm = {
   configJson: "{}",
 };
 
-const socialLinksPreset = `{
-  "links": [
-    { "label": "in", "href": "https://linkedin.com/company/example" },
-    { "label": "x", "href": "https://x.com/example" },
-    { "label": "fb", "href": "https://facebook.com/example" },
-    { "label": "instagram", "href": "https://instagram.com/example" }
-  ]
-}`;
+function socialDraftToJson(rows: SocialLinkDraft[]): string {
+  return JSON.stringify(
+    {
+      links: rows
+        .filter((item) => item.href.trim())
+        .map((item) => ({ label: item.platform, href: item.href.trim() })),
+    },
+    null,
+    2
+  );
+}
+
+function toPlatformLabel(value: string): SocialPlatform {
+  const lower = value.trim().toLowerCase();
+  if (lower === "fb" || lower.includes("facebook")) return "facebook";
+  if (lower === "x" || lower.includes("twitter")) return "x";
+  if (lower === "in" || lower.includes("linkedin")) return "linkedin";
+  if (lower === "ig" || lower.includes("instagram")) return "instagram";
+  return "youtube";
+}
+
+function parseSocialRows(value: unknown): SocialLinkDraft[] {
+  const normalized = typeof value === "string" ? (() => {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  })() : value;
+
+  if (!normalized || typeof normalized !== "object" || !Array.isArray((normalized as { links?: unknown[] }).links)) {
+    return [];
+  }
+
+  return (normalized as { links: Array<{ label?: string; href?: string }> }).links
+    .map((item) => ({
+      platform: toPlatformLabel(item.label ?? ""),
+      href: item.href?.trim() ?? "",
+    }))
+    .filter((item) => item.href.length > 0);
+}
+
+const socialLinksPreset = socialDraftToJson(socialLinksPresetRows);
 
 function prettyJson(value: unknown): string {
   if (value === null || value === undefined) {
@@ -101,6 +158,7 @@ export function SettingsAdminManager({
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [socialLinksDraft, setSocialLinksDraft] = useState<SocialLinkDraft[]>(socialLinksPresetRows);
 
   const sortedSettings = useMemo(
     () => [...initialSettings].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
@@ -120,15 +178,42 @@ export function SettingsAdminManager({
   function resetSettingForm() {
     setEditingSettingId(null);
     setSettingForm(emptySettingForm);
+    setSocialLinksDraft(socialLinksPresetRows);
   }
 
   function useSocialLinksPreset() {
     setEditingSettingId(null);
+    setSocialLinksDraft(socialLinksPresetRows);
     setSettingForm({
       settingKey: "social_links",
       settingValue: socialLinksPreset,
     });
   }
+
+  function addSocialLinkRow() {
+    setSettingForm((prev) => ({ ...prev, settingKey: "social_links" }));
+    setSocialLinksDraft((prev) => [...prev, { platform: "instagram", href: "" }]);
+  }
+
+  function importSocialRowsFromJson() {
+    const rows = parseSocialRows(settingForm.settingValue);
+    if (!rows.length) {
+      setError("No social links found in JSON. Expected { links: [{ label, href }] }.");
+      return;
+    }
+    setError(null);
+    setSettingForm((prev) => ({ ...prev, settingKey: "social_links" }));
+    setSocialLinksDraft(rows);
+  }
+
+  useEffect(() => {
+    if (settingForm.settingKey.trim() !== "social_links") {
+      return;
+    }
+
+    const nextValue = socialDraftToJson(socialLinksDraft);
+    setSettingForm((prev) => ({ ...prev, settingValue: nextValue }));
+  }, [settingForm.settingKey, socialLinksDraft]);
 
   function resetSectionForm() {
     setEditingSectionId(null);
@@ -192,6 +277,13 @@ export function SettingsAdminManager({
       settingKey: result.data.settingKey,
       settingValue: prettyJson(result.data.settingValue),
     });
+
+    if (result.data.settingKey === "social_links") {
+      const rows = parseSocialRows(result.data.settingValue);
+      if (rows.length) {
+        setSocialLinksDraft(rows);
+      }
+    }
   }
 
   async function deleteSetting(id: number) {
@@ -340,6 +432,69 @@ export function SettingsAdminManager({
               >
                 Use Social Links Template
               </button>
+            </div>
+
+            <div className="mt-3 rounded-md border border-cyan-300 bg-white p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-700">Visual Social Links Builder</p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={addSocialLinkRow}
+                    className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    Add Row
+                  </button>
+                  <button
+                    type="button"
+                    onClick={importSocialRowsFromJson}
+                    className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    Import From JSON
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {socialLinksDraft.map((item, index) => (
+                  <div key={`social-row-${index}`} className="grid gap-2 md:grid-cols-[170px_1fr_auto]">
+                    <select
+                      className="rounded border border-slate-300 bg-white px-2 py-2 text-sm"
+                      value={item.platform}
+                      onChange={(e) =>
+                        setSocialLinksDraft((prev) =>
+                          prev.map((row, rowIndex) =>
+                            rowIndex === index ? { ...row, platform: e.target.value as SocialPlatform } : row
+                          )
+                        )
+                      }
+                    >
+                      {socialPlatformOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      className="rounded border border-slate-300 px-3 py-2 text-sm"
+                      placeholder="https://..."
+                      value={item.href}
+                      onChange={(e) =>
+                        setSocialLinksDraft((prev) =>
+                          prev.map((row, rowIndex) =>
+                            rowIndex === index ? { ...row, href: e.target.value } : row
+                          )
+                        )
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSocialLinksDraft((prev) => prev.filter((_, rowIndex) => rowIndex !== index))}
+                      className="rounded border border-red-300 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
