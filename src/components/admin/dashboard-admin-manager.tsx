@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RichTextEditor, hasRichTextContent } from "./rich-text-editor";
 import { getYouTubeEmbedUrl, looksLikeImageUrl } from "@/lib/media";
+import { slugify } from "@/lib/utils";
 
 type ArticleStatus = "draft" | "review" | "scheduled" | "published" | "archived";
 type Locale = "ar" | "en";
@@ -154,6 +155,7 @@ type ApiFailure = {
 };
 
 type ComposerState = {
+  slug: string;
   status: ArticleStatus;
   articleType: string;
   featuredImageUrl: string;
@@ -172,6 +174,7 @@ type ComposerState = {
 };
 
 const emptyComposer: ComposerState = {
+  slug: "",
   status: "draft",
   articleType: "news",
   featuredImageUrl: "",
@@ -452,6 +455,7 @@ export function DashboardAdminManager({
   function buildPayload(locale: Locale) {
     return {
       locale,
+      slug: composer.slug.trim() || null,
       title: composer.translations[locale].title.trim(),
       summary: composer.translations[locale].summary.trim(),
       contentHtml: composer.translations[locale].contentHtml.trim(),
@@ -596,6 +600,7 @@ export function DashboardAdminManager({
 
     setEditingId(id);
     setComposer({
+      slug: base.slug,
       status: base.status,
       articleType: base.articleType,
       featuredImageUrl: base.featuredImageUrl ?? "",
@@ -1016,6 +1021,26 @@ export function DashboardAdminManager({
             <input ref={videoUrlInputRef} className="rounded border border-slate-300 px-3 py-2" placeholder="YouTube video URL (optional)" value={composer.videoUrl} onChange={(e) => updateComposer("videoUrl", e.target.value)} />
             <input ref={sourceUrlInputRef} className="rounded border border-slate-300 px-3 py-2" placeholder="Original source URL" value={composer.sourceUrl} onChange={(e) => updateComposer("sourceUrl", e.target.value)} />
             <input className="rounded border border-slate-300 px-3 py-2" placeholder="Source attribution" value={composer.sourceAttribution} onChange={(e) => updateComposer("sourceAttribution", e.target.value)} />
+          </div>
+
+          <div className="mt-3">
+            <label className="mb-1 block text-xs font-semibold text-slate-600">URL Slug (auto-generated · editable)</label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">/ar/news/</span>
+              <input
+                className="flex-1 rounded border border-slate-300 px-3 py-2 font-mono text-sm"
+                placeholder="article-url-slug"
+                value={composer.slug}
+                onChange={(e) => updateComposer("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-"))}
+              />
+              <button
+                type="button"
+                onClick={() => updateComposer("slug", slugify(composer.translations.ar.title || composer.translations.en.title))}
+                className="rounded border border-slate-300 px-2 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                Re-generate
+              </button>
+            </div>
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">

@@ -12,6 +12,7 @@ export const articleCreateSchema = z.object({
   contentHtml: z.string().min(50),
   articleType: z.string().min(2),
   status: z.enum(["draft", "review", "scheduled", "published", "archived"]).default("draft"),
+  slug: z.string().min(2).max(190).regex(/^[a-z0-9-]+$/, "Slug may only contain lowercase letters, digits, and hyphens").optional().nullable(),
   featuredImageUrl: z.url().optional().nullable(),
   videoUrl: z.url().optional().nullable(),
   sourceUrl: z.url().optional().nullable(),

@@ -4,6 +4,7 @@ import { badRequest, forbidden, notFound, ok, serverError } from "@/lib/http";
 import { requireRole } from "@/lib/auth/guard";
 import { articleCreateSchema } from "@/lib/validation/schemas";
 import { validateEditorialWorkflow } from "@/lib/validation/editorial-workflow";
+import { slugify } from "@/lib/utils";
 
 type ArticleDetailRow = DbRow & {
   id: number;
@@ -119,6 +120,18 @@ export async function PUT(
 
     const promotedFlag = payload.isFeatured || payload.isSponsored;
 
+    // Derive slug from payload or auto-generate from title; validate uniqueness.
+    const requestedSlug = payload.slug?.trim() ? payload.slug.trim() : slugify(payload.title);
+
+    // Check slug uniqueness before opening transaction.
+    const slugConflict = await dbQuery<Array<{ id: number }>>(
+      `SELECT id FROM articles WHERE slug = ? AND id <> ? AND deleted_at IS NULL LIMIT 1`,
+      [requestedSlug, Number(id)]
+    );
+    if (slugConflict.length) {
+      return badRequest(`The slug "${requestedSlug}" is already used by another article.`);
+    }
+
     const updated = await dbTransaction(async ({ query, execute }) => {
       const previousRows = await query<ArticlePreviousRow[]>(
         `SELECT a.status, a.article_type AS articleType, a.featured_image_url AS featuredImageUrl,
@@ -138,7 +151,7 @@ export async function PUT(
       const previous = previousRows[0] ?? null;
       const articleResult = await execute(
         `UPDATE articles
-         SET status = ?, article_type = ?, featured_image_url = ?,
+         SET slug = ?, status = ?, article_type = ?, featured_image_url = ?,
            video_url = ?,
              source_url = ?, source_attribution = ?, related_bank_id = ?,
              is_breaking = ?, is_sponsored = ?, is_opinion = ?, is_press_release = ?,
@@ -147,6 +160,7 @@ export async function PUT(
              published_at = IF(? = 'published', IFNULL(published_at, NOW()), NULL)
          WHERE id = ? AND deleted_at IS NULL`,
         [
+          requestedSlug,
           payload.status,
           payload.articleType,
           payload.featuredImageUrl ?? null,
