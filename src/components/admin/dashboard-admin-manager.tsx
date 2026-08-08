@@ -635,7 +635,12 @@ export function DashboardAdminManager({
       body: form,
     });
 
-    const result = await parseResponse<{ url?: string; driver?: string; warning?: string | null }>(response);
+    const result = await parseResponse<{
+      url?: string;
+      driver?: string;
+      warning?: string | null;
+      media?: { id: number; fileName: string; url: string; createdAt: string } | null;
+    }>(response);
     setUploadingImage(false);
 
     if (!response.ok || !result.ok || !result.data.url) {
@@ -643,11 +648,24 @@ export function DashboardAdminManager({
       return;
     }
 
-    setComposer((prev) => ({ ...prev, featuredImageUrl: result.data.url ?? prev.featuredImageUrl }));
-    if (result.data.driver === "database_blob_fallback") {
-      setMediaWarning("FTP upload failed, so this image was stored as a database blob URL instead of media.bankinews.com. Check MEDIA_FTP_* connectivity or permissions.");
+    const uploadedUrl = result.data.url;
+
+    // Set featured image URL first, before any refresh, to prevent state loss.
+    setComposer((prev) => ({ ...prev, featuredImageUrl: uploadedUrl }));
+
+    // Prepend new item to the local media list without triggering a full page refresh.
+    if (result.data.media) {
+      setMediaItems((prev) => [result.data.media as MediaItem, ...prev]);
     }
-    router.refresh();
+
+    if (result.data.driver === "database_blob_fallback") {
+      setMediaWarning("FTP upload failed — image stored as blob. Update MEDIA_FTP_* env vars in Vercel to use media.bankinews.com.");
+    }
+
+    // Clear the file input.
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   async function generateAiDraft(mode: "single" | "dual") {
