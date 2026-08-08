@@ -71,7 +71,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <SectionHeading title={t.labels.mostRead} />
           <div className="space-y-3">
             {data.mostRead.map((article) => (
-              <ArticleCardView key={`most-${article.id}`} locale={safeLocale} article={article} />
+              <ArticleCardView key={`most-${article.id}`} locale={safeLocale} article={article} compact />
             ))}
           </div>
         </div>
@@ -79,7 +79,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <SectionHeading title={t.labels.editorsPicks} />
           <div className="space-y-3">
             {data.editorsPicks.map((article) => (
-              <ArticleCardView key={`pick-${article.id}`} locale={safeLocale} article={article} />
+              <ArticleCardView key={`pick-${article.id}`} locale={safeLocale} article={article} compact />
             ))}
           </div>
         </div>

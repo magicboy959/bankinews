@@ -292,7 +292,7 @@ export default async function ArticlePage({
         <h2 className="mb-4 text-xl font-black text-[#0A2342]">{t.labels.mostRead}</h2>
         <div className="space-y-3">
           {related.map((card) => (
-            <ArticleCardView key={card.id} locale={safeLocale} article={card} />
+            <ArticleCardView key={card.id} locale={safeLocale} article={card} compact />
           ))}
         </div>
       </aside>
