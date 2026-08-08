@@ -288,6 +288,7 @@ export function DashboardAdminManager({
   const [error, setError] = useState<string | null>(null);
   const [mediaWarning, setMediaWarning] = useState<string | null>(null);
   const [deletingMediaId, setDeletingMediaId] = useState<number | null>(null);
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>(recentMedia);
   const [subscribers, setSubscribers] = useState<SubscriberItem[]>(initialSubscribers);
   const [savingSubscriberId, setSavingSubscriberId] = useState<number | null>(null);
   const [imagePreviewState, setImagePreviewState] = useState<"idle" | "ok" | "error">("idle");
@@ -741,7 +742,7 @@ export function DashboardAdminManager({
       method: "DELETE",
     });
 
-    const result = await parseResponse<{ deleted: boolean; id: number }>(response);
+    const result = await parseResponse<{ deleted: boolean; id: number; warning?: string | null }>(response);
     setDeletingMediaId(null);
 
     if (!response.ok || !result.ok) {
@@ -749,8 +750,15 @@ export function DashboardAdminManager({
       return;
     }
 
-    if (String(composer.featuredImageUrl).includes(`/api/media/blob/${id}`)) {
+    const deletedItem = mediaItems.find((item) => item.id === id);
+    if (deletedItem && composer.featuredImageUrl === deletedItem.url) {
       setComposer((prev) => ({ ...prev, featuredImageUrl: "" }));
+    }
+
+    setMediaItems((prev) => prev.filter((item) => item.id !== id));
+
+    if (result.data.warning) {
+      setMediaWarning(result.data.warning);
     }
 
     router.refresh();
@@ -981,9 +989,9 @@ export function DashboardAdminManager({
             </div>
           </div>
 
-          {recentMedia.length ? (
+          {mediaItems.length ? (
             <div className="mt-3 flex flex-wrap gap-2">
-              {recentMedia.slice(0, 6).map((media) => (
+              {mediaItems.slice(0, 6).map((media) => (
                 <div key={media.id} className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700">
                   <button
                     type="button"

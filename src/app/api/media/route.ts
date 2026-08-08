@@ -1,6 +1,47 @@
 import { badRequest, created, forbidden, ok, serverError } from "@/lib/http";
 import { requireRole } from "@/lib/auth/guard";
 import { dbExecute, dbQuery } from "@/lib/db/query";
+import { Client } from "basic-ftp";
+
+type MediaDeleteRow = {
+  id: number;
+  fileName: string;
+  url: string;
+};
+
+async function deleteFromFtp(fileName: string): Promise<string | null> {
+  const host = process.env.MEDIA_FTP_HOST?.trim();
+  const user = process.env.MEDIA_FTP_USER?.trim();
+  const password = process.env.MEDIA_FTP_PASSWORD?.trim();
+  const baseDir = process.env.MEDIA_FTP_BASE_DIR?.trim() || "uploads/media";
+  const secure = (process.env.MEDIA_FTP_SECURE ?? "false").trim().toLowerCase() === "true";
+  const port = Number(process.env.MEDIA_FTP_PORT ?? 21);
+
+  if (!host || !user || !password) {
+    return "FTP credentials are missing; storage file was not removed.";
+  }
+
+  const client = new Client(10_000);
+  client.ftp.verbose = false;
+
+  try {
+    await client.access({
+      host,
+      user,
+      password,
+      port,
+      secure,
+      secureOptions: secure ? { rejectUnauthorized: false } : undefined,
+    });
+    await client.ensureDir(baseDir);
+    await client.remove(fileName);
+    return null;
+  } catch (error) {
+    return error instanceof Error ? `FTP file delete failed: ${error.message}` : "FTP file delete failed.";
+  } finally {
+    client.close();
+  }
+}
 
 export async function GET() {
   const user = await requireRole("author");
@@ -77,6 +118,33 @@ export async function DELETE(request: Request) {
       return badRequest("A valid media id is required");
     }
 
+    const mediaRows = await dbQuery<MediaDeleteRow[]>(
+      `SELECT id, file_name AS fileName, url
+       FROM media
+       WHERE id = ? AND deleted_at IS NULL
+       LIMIT 1`,
+      [id]
+    );
+
+    const target = mediaRows[0];
+    if (!target) {
+      return ok({ deleted: false, id, warning: "Media item was already deleted or not found." });
+    }
+
+    let storageWarning: string | null = null;
+    const blobMatch = target.url.match(/^\/api\/media\/blob\/(\d+)$/);
+    if (blobMatch) {
+      const blobId = Number(blobMatch[1]);
+      if (Number.isInteger(blobId) && blobId > 0) {
+        await dbExecute(`DELETE FROM media_blob_files WHERE id = ?`, [blobId]);
+      }
+    } else {
+      const publicBase = (process.env.MEDIA_FTP_PUBLIC_BASE_URL ?? "").trim().replace(/\/$/, "");
+      if (publicBase && target.url.startsWith(`${publicBase}/`)) {
+        storageWarning = await deleteFromFtp(target.fileName);
+      }
+    }
+
     await dbExecute(
       `UPDATE media
        SET deleted_at = NOW(), updated_at = NOW()
@@ -84,7 +152,7 @@ export async function DELETE(request: Request) {
       [id]
     );
 
-    return ok({ deleted: true, id });
+    return ok({ deleted: true, id, warning: storageWarning });
   } catch {
     return serverError("Unable to delete media");
   }
