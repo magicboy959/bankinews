@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { articleCreateSchema } from "./schemas.ts";
+import { articleCreateSchema } from "./schemas";
 
 test("articleCreateSchema accepts local media paths for image and source URLs", () => {
   const result = articleCreateSchema.safeParse({
