@@ -4,12 +4,25 @@ import { getHomepageData } from "@/services/homepage-service";
 import { ArticleCardView } from "@/components/articles/article-card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { HeroCarousel } from "@/components/home/hero-carousel";
+import { LanguageUnavailableNotice } from "@/components/ui/language-unavailable-notice";
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const safeLocale: Locale = isLocale(locale) ? locale : "ar";
   const t = dictionary[safeLocale];
   const data = await getHomepageData(safeLocale);
+
+  if (safeLocale === "en") {
+    const hasEnglishHomepageContent = data.latest.length > 0 || data.fintech.length > 0 || data.mostRead.length > 0 || data.editorsPicks.length > 0;
+    if (!hasEnglishHomepageContent) {
+      const arabicData = await getHomepageData("ar");
+      const hasArabicHomepageContent = arabicData.latest.length > 0 || arabicData.fintech.length > 0 || arabicData.mostRead.length > 0 || arabicData.editorsPicks.length > 0;
+
+      if (hasArabicHomepageContent) {
+        return <LanguageUnavailableNotice arabicHref="/ar" contextLabel="homepage" />;
+      }
+    }
+  }
 
   const marketNotes =
     safeLocale === "ar"

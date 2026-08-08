@@ -50,7 +50,54 @@ a {
   box-sizing: border-box;
 }
 
+@keyframes search-settings-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.search-settings-pop {
+  animation: search-settings-pop-in 140ms ease-out;
+}
+
+.article-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  z-index: 70;
+  background: linear-gradient(90deg, #0a2342, #0ea5a8);
+  transition: width 120ms linear;
+}
+
+.article-reader-surface {
+  max-width: 72ch;
+  margin-inline: auto;
+}
+
+.article-reader-comfort {
+  line-height: 1.95;
+}
+
+.article-reader-large {
+  font-size: 1.075rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .search-settings-pop {
+    animation: none;
+  }
+
+  .article-progress-bar {
+    transition: none;
+  }
+
   * {
     animation: none !important;
     transition: none !important;

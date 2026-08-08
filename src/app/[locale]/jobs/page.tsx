@@ -1,11 +1,13 @@
 import { dbQuery } from "@/lib/db/query";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { LanguageUnavailableNotice } from "@/components/ui/language-unavailable-notice";
 
 export default async function JobsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const safeLocale: Locale = isLocale(locale) ? locale : "ar";
 
   let jobs: any[] = [];
+  let arabicJobCount = 0;
   try {
     jobs = await dbQuery<any[]>(
       `SELECT j.organization, j.location, j.employment_type AS employmentType,
@@ -17,8 +19,22 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
        ORDER BY j.application_deadline ASC`,
       [safeLocale]
     );
+
+    if (safeLocale === "en") {
+      const arabicRows = await dbQuery<Array<{ count: number }>>(
+        `SELECT COUNT(*) AS count
+         FROM jobs j
+         JOIN job_translations jt ON jt.job_id = j.id AND jt.locale = 'ar'
+         WHERE j.status = 'published' AND j.deleted_at IS NULL`
+      );
+      arabicJobCount = Number(arabicRows[0]?.count ?? 0);
+    }
   } catch {
     jobs = [];
+  }
+
+  if (safeLocale === "en" && jobs.length === 0 && arabicJobCount > 0) {
+    return <LanguageUnavailableNotice arabicHref="/ar/jobs" contextLabel="job listings" />;
   }
 
   return (

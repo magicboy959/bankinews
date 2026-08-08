@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { dbQuery } from "@/lib/db/query";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { LanguageUnavailableNotice } from "@/components/ui/language-unavailable-notice";
 
 export default async function BanksPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const safeLocale: Locale = isLocale(locale) ? locale : "ar";
 
   let banks: any[] = [];
+  let arabicBankCount = 0;
   try {
     banks = await dbQuery<any[]>(
       `SELECT b.slug, bt.name, bt.short_description AS shortDescription
@@ -16,8 +18,22 @@ export default async function BanksPage({ params }: { params: Promise<{ locale: 
        ORDER BY bt.name ASC`,
       [safeLocale]
     );
+
+    if (safeLocale === "en") {
+      const arabicRows = await dbQuery<Array<{ count: number }>>(
+        `SELECT COUNT(*) AS count
+         FROM banks b
+         JOIN bank_translations bt ON bt.bank_id = b.id AND bt.locale = 'ar'
+         WHERE b.deleted_at IS NULL AND b.show_on_website = 1`
+      );
+      arabicBankCount = Number(arabicRows[0]?.count ?? 0);
+    }
   } catch {
     banks = [];
+  }
+
+  if (safeLocale === "en" && banks.length === 0 && arabicBankCount > 0) {
+    return <LanguageUnavailableNotice arabicHref="/ar/banks" contextLabel="bank listings" />;
   }
 
   return (

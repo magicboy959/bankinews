@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RichTextEditor, hasRichTextContent } from "./rich-text-editor";
 
@@ -100,6 +101,39 @@ type MediaItem = {
   fileName: string;
   url: string;
   createdAt: string;
+};
+
+type MarketingOverview = {
+  campaignCount: number;
+  sentTotal: number;
+  openTotal: number;
+  clickTotal: number;
+  sentCampaigns: number;
+};
+
+type EngagementOverview = {
+  avgScrollPercent: number;
+  completionRate: number;
+  avgDwellSeconds: number;
+  eventCount: number;
+};
+
+type EngagedArticle = {
+  id: number;
+  title: string;
+  maxScroll: number;
+  maxDwellSeconds: number;
+  events: number;
+};
+
+type EngagementRange = "7d" | "30d" | "90d";
+
+type QANote = {
+  tone: "warning" | "info";
+  message: string;
+  action?:
+    | { type: "focus"; target: "featuredImage" | "sourceUrl" | "publishAt" | "title" | "summary" | "content" }
+    | { type: "switchLocale"; locale: Locale };
 };
 
 type ApiSuccess<T> = {
@@ -203,6 +237,10 @@ export function DashboardAdminManager({
   categoryOptions,
   initialSubscribers,
   recentMedia,
+  marketingOverview,
+  engagementOverview,
+  engagementRange,
+  topEngagedArticles,
 }: {
   summary: DashboardSummary;
   articleRows: ArticleListItem[];
@@ -216,9 +254,19 @@ export function DashboardAdminManager({
   categoryOptions: OptionItem[];
   initialSubscribers: SubscriberItem[];
   recentMedia: MediaItem[];
+  marketingOverview: MarketingOverview;
+  engagementOverview: EngagementOverview;
+  engagementRange: EngagementRange;
+  topEngagedArticles: EngagedArticle[];
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const featuredImageInputRef = useRef<HTMLInputElement | null>(null);
+  const sourceUrlInputRef = useRef<HTMLInputElement | null>(null);
+  const publishAtInputRef = useRef<HTMLInputElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const summaryInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const contentSectionRef = useRef<HTMLDivElement | null>(null);
 
   const [composer, setComposer] = useState<ComposerState>(emptyComposer);
   const [activeLocale, setActiveLocale] = useState<Locale>("ar");
@@ -226,9 +274,114 @@ export function DashboardAdminManager({
   const [loadingArticleId, setLoadingArticleId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [subscribers, setSubscribers] = useState<SubscriberItem[]>(initialSubscribers);
   const [savingSubscriberId, setSavingSubscriberId] = useState<number | null>(null);
+  const activeSubscriberCount = useMemo(
+    () => subscribers.filter((subscriber) => subscriber.status === "active").length,
+    [subscribers]
+  );
+  const campaignOpenRate = marketingOverview.sentTotal > 0 ? Math.round((marketingOverview.openTotal / marketingOverview.sentTotal) * 1000) / 10 : 0;
+  const campaignClickRate = marketingOverview.sentTotal > 0 ? Math.round((marketingOverview.clickTotal / marketingOverview.sentTotal) * 1000) / 10 : 0;
+  const avgDwellMinutes = Math.max(0, Math.round((engagementOverview.avgDwellSeconds / 60) * 10) / 10);
+  const engagementRangeLabel = engagementRange === "7d" ? "7 Days" : engagementRange === "90d" ? "90 Days" : "30 Days";
+  function focusQaTarget(target: NonNullable<QANote["action"]>["target"]) {
+    const scheduleFocus = (focusTarget: HTMLElement | null) => {
+      focusTarget?.focus();
+      focusTarget?.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+
+    if (target === "featuredImage") {
+      scheduleFocus(featuredImageInputRef.current);
+      return;
+    }
+
+    if (target === "sourceUrl") {
+      scheduleFocus(sourceUrlInputRef.current);
+      return;
+    }
+
+    if (target === "publishAt") {
+      scheduleFocus(publishAtInputRef.current);
+      return;
+    }
+
+    if (target === "title") {
+      scheduleFocus(titleInputRef.current);
+      return;
+    }
+
+    if (target === "summary") {
+      scheduleFocus(summaryInputRef.current);
+      return;
+    }
+
+    contentSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function handleQaAction(action: NonNullable<QANote["action"]>) {
+    if (action.type === "switchLocale") {
+      setActiveLocale(action.locale);
+      requestAnimationFrame(() => {
+        if (action.locale === "ar") {
+          titleInputRef.current?.focus();
+          titleInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else {
+          summaryInputRef.current?.focus();
+          summaryInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      });
+      return;
+    }
+
+    focusQaTarget(action.target);
+  }
+  const qaNotes = useMemo<QANote[]>(() => {
+    const notes: QANote[] = [];
+    const arComplete = hasCompleteTranslation(composer.translations.ar);
+    const enComplete = hasCompleteTranslation(composer.translations.en);
+
+    if (!composer.featuredImageUrl.trim()) {
+      notes.push({ tone: "warning", message: "Featured image is missing.", action: { type: "focus", target: "featuredImage" } });
+    }
+
+    if (!composer.sourceUrl.trim()) {
+      notes.push({ tone: "warning", message: "Source URL is missing.", action: { type: "focus", target: "sourceUrl" } });
+    }
+
+    if (composer.status === "scheduled" && !composer.publishAt.trim()) {
+      notes.push({ tone: "warning", message: "Scheduled articles need a publish date and time.", action: { type: "focus", target: "publishAt" } });
+    }
+
+    if (!arComplete || !enComplete) {
+      notes.push({
+        tone: "info",
+        message: `Bilingual parity check: Arabic is ${arComplete ? "complete" : "still incomplete"} and English is ${enComplete ? "complete" : "still incomplete"}.`,
+        action: { type: "switchLocale", locale: arComplete ? "en" : "ar" },
+      });
+    }
+
+    const currentDraft = composer.translations[activeLocale];
+    if (currentDraft.title.trim().length < 5) {
+      notes.push({ tone: "warning", message: `${activeLocale.toUpperCase()} title is too short.`, action: { type: "focus", target: "title" } });
+    }
+
+    if (currentDraft.summary.trim().length < 20) {
+      notes.push({ tone: "warning", message: `${activeLocale.toUpperCase()} summary should be at least 20 characters.`, action: { type: "focus", target: "summary" } });
+    }
+
+    if (!hasRichTextContent(currentDraft.contentHtml)) {
+      notes.push({ tone: "warning", message: `${activeLocale.toUpperCase()} content is empty.`, action: { type: "focus", target: "content" } });
+    }
+
+    return notes;
+  }, [activeLocale, composer.featuredImageUrl, composer.publishAt, composer.sourceUrl, composer.status, composer.translations]);
+  const requiresStrictQa = composer.status === "review" || composer.status === "scheduled" || composer.status === "published";
+  const blockingQaNotes = qaNotes.filter((note) => note.tone === "warning");
+  const submitBlockedByQa = requiresStrictQa && blockingQaNotes.length > 0;
 
   const sortedArticles = useMemo(
     () => [...articleRows].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
@@ -256,6 +409,8 @@ export function DashboardAdminManager({
     setComposer(emptyComposer);
     setEditingId(null);
     setActiveLocale("ar");
+    setAiPrompt("");
+    setAiError(null);
   }
 
   function buildPayload(locale: Locale) {
@@ -284,6 +439,15 @@ export function DashboardAdminManager({
   async function createOrUpdateArticle(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    if (submitBlockedByQa) {
+      setError(`Resolve ${blockingQaNotes.length} QA warning${blockingQaNotes.length === 1 ? "" : "s"} before moving this article to ${composer.status}.`);
+      const firstAction = blockingQaNotes[0]?.action;
+      if (firstAction) {
+        handleQaAction(firstAction);
+      }
+      return;
+    }
 
     if (composer.status === "scheduled" && !composer.publishAt) {
       setError("Scheduled posts require a publication date and time.");
@@ -445,6 +609,65 @@ export function DashboardAdminManager({
     router.refresh();
   }
 
+  async function generateAiDraft(mode: "single" | "dual") {
+    setAiError(null);
+
+    const prompt = aiPrompt.trim();
+    if (prompt.length < 20) {
+      setAiError("Describe the story angle or facts first.");
+      return;
+    }
+
+    setAiGenerating(true);
+
+    try {
+      const draft = composer.translations[activeLocale];
+      const response = await fetch("/api/admin/ai/article-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt,
+          mode,
+          locale: activeLocale,
+          articleType: composer.articleType,
+          title: draft.title,
+          summary: draft.summary,
+          contentHtml: draft.contentHtml,
+        }),
+      });
+
+      const result = await parseResponse<
+        { title: string; summary: string; contentHtml: string } | { ar: { title: string; summary: string; contentHtml: string }; en: { title: string; summary: string; contentHtml: string } }
+      >(response);
+
+      if (!response.ok || !result.ok) {
+        setAiError(result.ok ? "Unable to generate AI draft" : result.error?.message ?? "Unable to generate AI draft");
+        return;
+      }
+
+      const nextTranslations =
+        mode === "dual" && "ar" in result.data && "en" in result.data
+          ? {
+              ar: result.data.ar,
+              en: result.data.en,
+            }
+          : {
+              ...composer.translations,
+              [activeLocale]: result.data as { title: string; summary: string; contentHtml: string },
+            };
+
+      setComposer((prev) => ({
+        ...prev,
+        translations: nextTranslations,
+      }));
+      setAiPrompt("");
+    } catch {
+      setAiError("Unable to generate AI draft");
+    } finally {
+      setAiGenerating(false);
+    }
+  }
+
   async function updateSubscriberStatus(id: number, status: SubscriberItem["status"]) {
     setSavingSubscriberId(id);
 
@@ -474,6 +697,116 @@ export function DashboardAdminManager({
 
       {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
+      <section className="rounded-xl border border-slate-200 bg-gradient-to-r from-[#0A2342] to-[#123A63] p-5 text-white">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-wide text-cyan-100">Marketing Snapshot</h2>
+            <p className="mt-1 text-sm text-slate-200">
+              Campaign health at a glance, with subscriber count and delivery performance.
+            </p>
+          </div>
+          <Link href="/admin/marketing" className="rounded bg-white px-3 py-2 text-sm font-semibold text-[#0A2342] hover:bg-slate-100">
+            Open Marketing Dashboard
+          </Link>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <SummaryCard label="Active Subscribers" value={activeSubscriberCount} />
+          <SummaryCard label="Campaigns" value={marketingOverview.campaignCount} />
+          <SummaryCard label="Sent Campaigns" value={marketingOverview.sentCampaigns} />
+          <SummaryCard label="Open Rate" value={`${campaignOpenRate}%`} />
+          <SummaryCard label="Click Rate" value={`${campaignClickRate}%`} />
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-wide text-slate-800">Homepage Hero Carousel</h2>
+            <p className="mt-1 text-sm text-slate-700">
+              Update hero images and slide content from Homepage Sections using section key <span className="font-mono">hero_carousel</span>.
+            </p>
+          </div>
+          <Link
+            href="/admin/settings"
+            className="rounded bg-[#0A2342] px-3 py-2 text-sm font-semibold text-white hover:bg-[#091b35]"
+          >
+            Open Hero Settings
+          </Link>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-wide text-emerald-900">Reader Engagement ({engagementRangeLabel})</h2>
+            <p className="mt-1 text-sm text-emerald-800">
+              Measures real reading behavior: depth, completion, dwell time, and interaction volume.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-900">
+              {engagementOverview.eventCount} events tracked
+            </span>
+            <Link
+              href="/admin?engagementRange=7d"
+              className={`rounded border px-2 py-1 text-xs font-semibold ${engagementRange === "7d" ? "border-emerald-700 bg-emerald-700 text-white" : "border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"}`}
+            >
+              7d
+            </Link>
+            <Link
+              href="/admin?engagementRange=30d"
+              className={`rounded border px-2 py-1 text-xs font-semibold ${engagementRange === "30d" ? "border-emerald-700 bg-emerald-700 text-white" : "border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"}`}
+            >
+              30d
+            </Link>
+            <Link
+              href="/admin?engagementRange=90d"
+              className={`rounded border px-2 py-1 text-xs font-semibold ${engagementRange === "90d" ? "border-emerald-700 bg-emerald-700 text-white" : "border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"}`}
+            >
+              90d
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard label="Avg Scroll Depth" value={`${Math.round(engagementOverview.avgScrollPercent)}%`} />
+          <SummaryCard label="Completion Rate" value={`${Math.round(engagementOverview.completionRate)}%`} />
+          <SummaryCard label="Avg Dwell Time" value={`${avgDwellMinutes} min`} />
+          <SummaryCard label="Engaged Articles" value={topEngagedArticles.length} />
+        </div>
+
+        <div className="mt-4 rounded-lg border border-emerald-200 bg-white p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-black uppercase tracking-wide text-slate-700">Top Engaged Articles</h3>
+            <span className="text-xs font-semibold text-slate-500">Depth + dwell signal</span>
+          </div>
+          {topEngagedArticles.length ? (
+            <div className="space-y-2">
+              {topEngagedArticles.slice(0, 6).map((item) => (
+                <div key={item.id} className="grid grid-cols-[1fr_auto] items-center gap-3 rounded border border-slate-100 p-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">{item.title}</p>
+                    <p className="text-xs text-slate-500">
+                      Max depth {Math.round(item.maxScroll)}% • Max dwell {Math.round(item.maxDwellSeconds)}s • {item.events} events
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(item.id)}
+                    disabled={loadingArticleId === item.id}
+                    className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    {loadingArticleId === item.id ? "..." : "Edit"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">No engagement signals yet. Published articles will appear here as readers interact.</p>
+          )}
+        </div>
+      </section>
+
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
         <SummaryCard label="Published Today" value={summary.publishedToday} />
         <SummaryCard label="Drafts For Review" value={summary.draftsWaitingReview} />
@@ -499,6 +832,45 @@ export function DashboardAdminManager({
             ) : null}
           </div>
 
+          <section className="mt-4 rounded-lg border border-cyan-200 bg-cyan-50 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-wide text-slate-800">AI Writing Helper</h3>
+                <p className="mt-1 text-sm text-slate-700">
+                  Draft or rewrite the {activeLocale === "ar" ? "Arabic" : "English"} version, or generate both locales together from one prompt.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => generateAiDraft("single")}
+                  disabled={aiGenerating}
+                  className="rounded bg-[#0A2342] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {aiGenerating ? "Generating..." : `Generate ${activeLocale.toUpperCase()}`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => generateAiDraft("dual")}
+                  disabled={aiGenerating}
+                  className="rounded border border-[#0A2342] px-3 py-2 text-sm font-semibold text-[#0A2342] disabled:opacity-60"
+                >
+                  {aiGenerating ? "Generating..." : "Generate Arabic + English"}
+                </button>
+              </div>
+            </div>
+            <textarea
+              className="mt-3 min-h-24 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              placeholder="Describe the angle, facts, or message you want AI to turn into a draft..."
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+            />
+            <p className="mt-2 text-xs text-slate-600">
+              The assistant will fill the current locale's title, summary, and content without switching away from the article editor.
+            </p>
+            {aiError && <p className="mt-2 text-sm text-red-700">{aiError}</p>}
+          </section>
+
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <select className="rounded border border-slate-300 bg-white px-3 py-2" value={composer.status} onChange={(e) => updateComposer("status", e.target.value as ArticleStatus)}>
               <option value="draft">Draft</option>
@@ -520,17 +892,17 @@ export function DashboardAdminManager({
                 <option key={item.id} value={item.id}>{item.name}</option>
               ))}
             </select>
-            <input type="datetime-local" className="rounded border border-slate-300 px-3 py-2" value={composer.publishAt} onChange={(e) => updateComposer("publishAt", e.target.value)} />
+            <input ref={publishAtInputRef} type="datetime-local" className="rounded border border-slate-300 px-3 py-2" value={composer.publishAt} onChange={(e) => updateComposer("publishAt", e.target.value)} />
             <input type="datetime-local" className="rounded border border-slate-300 px-3 py-2" value={composer.expiresAt} onChange={(e) => updateComposer("expiresAt", e.target.value)} />
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <input className="rounded border border-slate-300 px-3 py-2" placeholder="Original source URL" value={composer.sourceUrl} onChange={(e) => updateComposer("sourceUrl", e.target.value)} />
+            <input ref={sourceUrlInputRef} className="rounded border border-slate-300 px-3 py-2" placeholder="Original source URL" value={composer.sourceUrl} onChange={(e) => updateComposer("sourceUrl", e.target.value)} />
             <input className="rounded border border-slate-300 px-3 py-2" placeholder="Source attribution" value={composer.sourceAttribution} onChange={(e) => updateComposer("sourceAttribution", e.target.value)} />
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
-            <input className="rounded border border-slate-300 px-3 py-2" placeholder="Featured image URL" value={composer.featuredImageUrl} onChange={(e) => updateComposer("featuredImageUrl", e.target.value)} />
+            <input ref={featuredImageInputRef} className="rounded border border-slate-300 px-3 py-2" placeholder="Featured image URL" value={composer.featuredImageUrl} onChange={(e) => updateComposer("featuredImageUrl", e.target.value)} />
             <div className="flex gap-2">
               <input ref={fileInputRef} type="file" accept="image/*" className="max-w-44 rounded border border-slate-300 px-2 py-2 text-xs" />
               <button type="button" onClick={uploadImage} disabled={uploadingImage} className="rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60">
@@ -572,9 +944,9 @@ export function DashboardAdminManager({
           </div>
 
           <div className="mt-3 space-y-3">
-            <input className="w-full rounded border border-slate-300 px-3 py-2" placeholder={`${activeLocale.toUpperCase()} title`} value={composer.translations[activeLocale].title} onChange={(e) => updateLocaleDraft(activeLocale, "title", e.target.value)} required={activeLocale === "ar"} />
-            <textarea className="min-h-20 w-full rounded border border-slate-300 px-3 py-2" placeholder={`${activeLocale.toUpperCase()} summary`} value={composer.translations[activeLocale].summary} onChange={(e) => updateLocaleDraft(activeLocale, "summary", e.target.value)} required={activeLocale === "ar"} />
-            <div>
+            <input ref={titleInputRef} className="w-full rounded border border-slate-300 px-3 py-2" placeholder={`${activeLocale.toUpperCase()} title`} value={composer.translations[activeLocale].title} onChange={(e) => updateLocaleDraft(activeLocale, "title", e.target.value)} required={activeLocale === "ar"} />
+            <textarea ref={summaryInputRef} className="min-h-20 w-full rounded border border-slate-300 px-3 py-2" placeholder={`${activeLocale.toUpperCase()} summary`} value={composer.translations[activeLocale].summary} onChange={(e) => updateLocaleDraft(activeLocale, "summary", e.target.value)} required={activeLocale === "ar"} />
+            <div ref={contentSectionRef}>
               <label className="mb-2 block text-sm font-semibold text-slate-700">{activeLocale.toUpperCase()} content</label>
               <RichTextEditor
                 value={composer.translations[activeLocale].contentHtml}
@@ -584,6 +956,43 @@ export function DashboardAdminManager({
             </div>
           </div>
 
+          <section className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-black uppercase tracking-wide text-slate-800">Content QA</h3>
+              <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{qaNotes.length} checks</span>
+            </div>
+            <p className="mt-1 text-sm text-slate-600">
+              Quick editorial checks before publish, including bilingual completeness and required story metadata.
+            </p>
+            <div className="mt-3 space-y-2">
+              {qaNotes.length === 0 ? (
+                <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                  The current article looks ready for review.
+                </div>
+              ) : (
+                qaNotes.map((note, index) => (
+                  <div
+                    key={`${note.message}-${index}`}
+                    className={`rounded border px-3 py-2 text-sm ${note.tone === "warning" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-700"}`}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <p>{note.message}</p>
+                      {note.action ? (
+                        <button
+                          type="button"
+                          onClick={() => handleQaAction(note.action)}
+                          className="rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                        >
+                          {note.action.type === "switchLocale" ? `Go to ${note.action.locale.toUpperCase()}` : "Fix"}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
           <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-700">
             <label><input type="checkbox" checked={composer.isFeatured} onChange={(e) => updateComposer("isFeatured", e.target.checked)} /> <span className="ml-1">Featured</span></label>
             <label><input type="checkbox" checked={composer.isBreaking} onChange={(e) => updateComposer("isBreaking", e.target.checked)} /> <span className="ml-1">Breaking</span></label>
@@ -591,7 +1000,13 @@ export function DashboardAdminManager({
             <label><input type="checkbox" checked={composer.isPressRelease} onChange={(e) => updateComposer("isPressRelease", e.target.checked)} /> <span className="ml-1">Press Release</span></label>
           </div>
 
-          <button type="submit" disabled={submitting} className="mt-4 rounded bg-[#0A2342] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+          {submitBlockedByQa ? (
+            <p className="mt-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Resolve QA warnings before saving with status <span className="font-semibold">{composer.status}</span>. Switch to <span className="font-semibold">draft</span> to save work in progress.
+            </p>
+          ) : null}
+
+          <button type="submit" disabled={submitting || submitBlockedByQa} className="mt-4 rounded bg-[#0A2342] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
             {submitting ? "Saving..." : editingId ? `Save Article #${editingId}` : "Create Article"}
           </button>
         </form>
@@ -728,9 +1143,9 @@ export function DashboardAdminManager({
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: number }) {
+function SummaryCard({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
+    <div className="rounded-lg border border-slate-200 bg-white p-3 text-slate-900">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-2 text-2xl font-black text-[#0A2342]">{value}</p>
     </div>

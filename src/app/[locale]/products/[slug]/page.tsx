@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { dbQuery } from "@/lib/db/query";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { LanguageUnavailableNotice } from "@/components/ui/language-unavailable-notice";
 
 export default async function ProductPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
@@ -28,6 +29,25 @@ export default async function ProductPage({ params }: { params: Promise<{ locale
   }
 
   if (!product) {
+    if (safeLocale === "en") {
+      try {
+        const fallbackRows = await dbQuery<Array<{ slug: string }>>(
+          `SELECT p.slug
+           FROM products p
+           JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = 'ar'
+           WHERE p.slug = ? AND p.deleted_at IS NULL
+           LIMIT 1`,
+          [slug]
+        );
+
+        if (fallbackRows.length) {
+          return <LanguageUnavailableNotice arabicHref={`/ar/products/${slug}`} contextLabel="product" />;
+        }
+      } catch {
+        // Keep default notFound behavior if fallback check fails.
+      }
+    }
+
     notFound();
   }
 

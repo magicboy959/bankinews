@@ -138,6 +138,11 @@ The platform stores media metadata in MySQL and is ready for Cloudinary credenti
 - Set NEXT_PUBLIC_GA4_ID for Google Analytics 4
 - Set NEXT_PUBLIC_CLARITY_ID for Microsoft Clarity
 
+## AI Writing Helper
+
+- Set OPENAI_API_KEY to enable the admin dashboard writing assistant
+- Optionally set OPENAI_MODEL to override the default model used for draft generation
+
 ## Recommended Next Enhancements
 
 - Add full TipTap admin editor UX

@@ -66,7 +66,48 @@ type MediaRow = DbRow & {
   createdAt: string;
 };
 
-export default async function AdminOverviewPage() {
+type MarketingOverviewRow = DbRow & {
+  campaignCount: number;
+  sentTotal: number;
+  openTotal: number;
+  clickTotal: number;
+  sentCampaigns: number;
+};
+
+type EngagementOverviewRow = DbRow & {
+  avgScrollPercent: number;
+  completionRate: number;
+  avgDwellSeconds: number;
+  eventCount: number;
+};
+
+type TopEngagedArticleRow = DbRow & {
+  id: number;
+  title: string;
+  maxScroll: number;
+  maxDwellSeconds: number;
+  events: number;
+};
+
+type EngagementRange = "7d" | "30d" | "90d";
+
+function normalizeEngagementRange(value: string | undefined): EngagementRange {
+  if (value === "7d" || value === "90d") {
+    return value;
+  }
+
+  return "30d";
+}
+
+export default async function AdminOverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ engagementRange?: string }>;
+}) {
+  const params = await searchParams;
+  const engagementRange = normalizeEngagementRange(params.engagementRange);
+  const engagementRangeDays = engagementRange === "7d" ? 7 : engagementRange === "90d" ? 90 : 30;
+
   const user = await requireAdminUser();
 
   if (!user) {
@@ -91,6 +132,9 @@ export default async function AdminOverviewPage() {
     categoryOptions,
     subscribers,
     recentMedia,
+    marketingOverview,
+    engagementOverview,
+    topEngagedArticles,
   ] = await Promise.all([
     dbQuery<CountRow[]>(
       `SELECT COUNT(*) AS count
@@ -226,6 +270,44 @@ export default async function AdminOverviewPage() {
        ORDER BY created_at DESC
        LIMIT 30`
     ),
+    dbQuery<MarketingOverviewRow[]>(
+      `SELECT COUNT(*) AS campaignCount,
+              COALESCE(SUM(sent_count), 0) AS sentTotal,
+              COALESCE(SUM(open_count), 0) AS openTotal,
+              COALESCE(SUM(click_count), 0) AS clickTotal,
+              COALESCE(SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END), 0) AS sentCampaigns
+       FROM marketing_campaigns`
+    ),
+    dbQuery<EngagementOverviewRow[]>(
+      `SELECT
+          COALESCE(AVG(CASE WHEN event_name LIKE 'scroll_%' THEN progress_percent END), 0) AS avgScrollPercent,
+          COALESCE(
+            100 * SUM(CASE WHEN event_name = 'scroll_100' THEN 1 ELSE 0 END) /
+            NULLIF(SUM(CASE WHEN event_name = 'scroll_25' THEN 1 ELSE 0 END), 0),
+            0
+          ) AS completionRate,
+          COALESCE(AVG(CASE WHEN event_name LIKE 'dwell_%' THEN seconds_on_page END), 0) AS avgDwellSeconds,
+          COUNT(*) AS eventCount
+       FROM article_engagement_events
+       WHERE created_at >= DATE_SUB(NOW(), INTERVAL ${engagementRangeDays} DAY)`
+    ),
+    dbQuery<TopEngagedArticleRow[]>(
+      `SELECT
+          a.id,
+          COALESCE(at.title, a.slug) AS title,
+          COALESCE(MAX(CASE WHEN aee.event_name LIKE 'scroll_%' THEN aee.progress_percent END), 0) AS maxScroll,
+          COALESCE(MAX(CASE WHEN aee.event_name LIKE 'dwell_%' THEN aee.seconds_on_page END), 0) AS maxDwellSeconds,
+          COUNT(*) AS events
+       FROM article_engagement_events aee
+       JOIN articles a ON a.id = aee.article_id AND a.deleted_at IS NULL
+       LEFT JOIN article_translations at ON at.article_id = a.id AND at.locale = 'ar'
+       WHERE aee.created_at >= DATE_SUB(NOW(), INTERVAL ${engagementRangeDays} DAY)
+       GROUP BY a.id, title
+       ORDER BY (COALESCE(MAX(CASE WHEN aee.event_name LIKE 'scroll_%' THEN aee.progress_percent END), 0)
+         + LEAST(COALESCE(MAX(CASE WHEN aee.event_name LIKE 'dwell_%' THEN aee.seconds_on_page END), 0) / 3, 100)) DESC,
+         events DESC
+       LIMIT 8`
+    ),
   ]);
 
   return (
@@ -249,6 +331,27 @@ export default async function AdminOverviewPage() {
       categoryOptions={categoryOptions}
       initialSubscribers={subscribers}
       recentMedia={recentMedia}
+      marketingOverview={{
+        campaignCount: Number(marketingOverview[0]?.campaignCount ?? 0),
+        sentTotal: Number(marketingOverview[0]?.sentTotal ?? 0),
+        openTotal: Number(marketingOverview[0]?.openTotal ?? 0),
+        clickTotal: Number(marketingOverview[0]?.clickTotal ?? 0),
+        sentCampaigns: Number(marketingOverview[0]?.sentCampaigns ?? 0),
+      }}
+      engagementOverview={{
+        avgScrollPercent: Number(engagementOverview[0]?.avgScrollPercent ?? 0),
+        completionRate: Number(engagementOverview[0]?.completionRate ?? 0),
+        avgDwellSeconds: Number(engagementOverview[0]?.avgDwellSeconds ?? 0),
+        eventCount: Number(engagementOverview[0]?.eventCount ?? 0),
+      }}
+      engagementRange={engagementRange}
+      topEngagedArticles={topEngagedArticles.map((row) => ({
+        id: Number(row.id),
+        title: row.title,
+        maxScroll: Number(row.maxScroll ?? 0),
+        maxDwellSeconds: Number(row.maxDwellSeconds ?? 0),
+        events: Number(row.events ?? 0),
+      }))}
     />
   );
 }

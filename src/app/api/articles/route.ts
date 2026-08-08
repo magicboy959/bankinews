@@ -4,6 +4,7 @@ import { created, ok, badRequest, forbidden, serverError } from "@/lib/http";
 import { articleCreateSchema } from "@/lib/validation/schemas";
 import { requireRole } from "@/lib/auth/guard";
 import { estimateReadingTime, slugify } from "@/lib/utils";
+import { validateEditorialWorkflow } from "@/lib/validation/editorial-workflow";
 
 type CountRow = DbRow & {
   count: number;
@@ -67,6 +68,11 @@ export async function POST(request: Request) {
     }
 
     const payload = parsed.data;
+    const workflowError = validateEditorialWorkflow(payload);
+    if (workflowError) {
+      return badRequest(workflowError);
+    }
+
     const baseSlug = slugify(payload.title);
     const promotedFlag = payload.isFeatured || payload.isSponsored;
 

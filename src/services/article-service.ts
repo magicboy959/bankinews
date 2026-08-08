@@ -65,6 +65,26 @@ export async function getArticleBySlug(locale: Locale, slug: string) {
   }
 }
 
+export async function getPublishedArticleLocalesBySlug(slug: string): Promise<Locale[]> {
+  try {
+    const rows = await dbQuery<Array<{ locale: string }>>(
+      `
+        SELECT at.locale
+        FROM articles a
+        JOIN article_translations at ON at.article_id = a.id
+        WHERE a.slug = ? AND a.status = 'published' AND a.deleted_at IS NULL
+      `,
+      [slug]
+    );
+
+    return rows
+      .map((row) => row.locale)
+      .filter((locale): locale is Locale => locale === "ar" || locale === "en");
+  } catch {
+    return [];
+  }
+}
+
 export async function getArticleCorrectionHistory(articleId: number): Promise<ArticleCorrectionHistoryItem[]> {
   try {
     const rows = await dbQuery<any[]>(

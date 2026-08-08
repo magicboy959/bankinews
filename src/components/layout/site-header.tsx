@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { dictionary } from "@/lib/i18n/dictionary";
 import type { Locale } from "@/lib/i18n/config";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 type NavKey = keyof (typeof dictionary)["ar"]["nav"];
 type NavItem = readonly [NavKey, string];
@@ -16,9 +17,36 @@ type SocialLink = {
   href: string;
 };
 
+type SearchResult = {
+  articles: Array<{ id: number; slug: string; title: string }>;
+  banks: Array<{ id: number; slug: string; name: string }>;
+};
+
+type SearchSuggestion = {
+  id: string;
+  label: string;
+  href: string;
+  kind: "article" | "bank" | "viewAll" | "arabicFallback";
+};
+
+const SEARCH_HINT_STORAGE_KEY = "bankinews.searchShortcutsHintHidden";
+
 export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLinks: SocialLink[] }) {
+  const router = useRouter();
+  const desktopSearchRef = useRef<HTMLDivElement | null>(null);
+  const mobileSearchRef = useRef<HTMLDivElement | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
+  const [showSearchOverlay, setShowSearchOverlay] = useState(false);
+  const [showArabicCoverageHint, setShowArabicCoverageHint] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  const [showShortcutHint, setShowShortcutHint] = useState(true);
+  const [showSearchSettingsMenu, setShowSearchSettingsMenu] = useState(false);
   const t = dictionary[locale];
+  const desktopListboxId = `header-search-listbox-desktop-${locale}`;
+  const mobileListboxId = `header-search-listbox-mobile-${locale}`;
 
   useEffect(() => {
     if (!menuOpen) {
@@ -31,6 +59,294 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
       document.body.style.overflow = "";
     };
   }, [menuOpen]);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(SEARCH_HINT_STORAGE_KEY);
+      setShowShortcutHint(saved !== "1");
+    } catch {
+      setShowShortcutHint(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (query.length < 2) {
+      setSearchResult(null);
+      setSearchLoading(false);
+      setShowArabicCoverageHint(false);
+      return;
+    }
+
+    let active = true;
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&locale=${locale}`);
+        const json = await response.json();
+        const nextResult = (json?.data ?? null) as SearchResult | null;
+        if (!active) {
+          return;
+        }
+
+        setSearchResult(nextResult);
+        setShowArabicCoverageHint(false);
+
+        if (locale === "en" && nextResult && nextResult.articles.length === 0 && nextResult.banks.length === 0) {
+          const arabicResponse = await fetch(`/api/search?q=${encodeURIComponent(query)}&locale=ar`);
+          const arabicJson = await arabicResponse.json();
+          const arabicResult = (arabicJson?.data ?? null) as SearchResult | null;
+          if (!active) {
+            return;
+          }
+          if (arabicResult && (arabicResult.articles.length > 0 || arabicResult.banks.length > 0)) {
+            setShowArabicCoverageHint(true);
+          }
+        }
+      } catch {
+        if (active) {
+          setSearchResult(null);
+          setShowArabicCoverageHint(false);
+        }
+      } finally {
+        if (active) {
+          setSearchLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [locale, searchQuery]);
+
+  useEffect(() => {
+    setActiveSuggestionIndex(-1);
+  }, [searchQuery, locale, searchResult, showArabicCoverageHint]);
+
+  useEffect(() => {
+    if (!showSearchOverlay) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node;
+      const insideDesktop = desktopSearchRef.current?.contains(target) ?? false;
+      const insideMobile = mobileSearchRef.current?.contains(target) ?? false;
+
+      if (!insideDesktop && !insideMobile) {
+        setShowSearchOverlay(false);
+        setActiveSuggestionIndex(-1);
+        setShowSearchSettingsMenu(false);
+      }
+    }
+
+    function handleFocusTrap(event: KeyboardEvent) {
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const activeContainer = menuOpen ? mobileSearchRef.current : desktopSearchRef.current;
+      if (!activeContainer) {
+        return;
+      }
+
+      const focusable = Array.from(
+        activeContainer.querySelectorAll<HTMLElement>("input, button, a[href], [tabindex]:not([tabindex='-1'])")
+      ).filter((element) => !element.hasAttribute("disabled") && element.tabIndex !== -1 && element.offsetParent !== null);
+
+      if (!focusable.length) {
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const activeElement = document.activeElement as HTMLElement | null;
+
+      if (!activeContainer.contains(activeElement)) {
+        first.focus();
+        event.preventDefault();
+        return;
+      }
+
+      if (event.shiftKey && activeElement === first) {
+        last.focus();
+        event.preventDefault();
+        return;
+      }
+
+      if (!event.shiftKey && activeElement === last) {
+        first.focus();
+        event.preventDefault();
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleFocusTrap);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleFocusTrap);
+    };
+  }, [menuOpen, showSearchOverlay]);
+
+  const searchSuggestions = useMemo<SearchSuggestion[]>(() => {
+    const query = searchQuery.trim();
+    if (!query || !searchResult) {
+      return [];
+    }
+
+    const suggestions: SearchSuggestion[] = [];
+
+    if (locale === "en" && showArabicCoverageHint) {
+      suggestions.push({
+        id: "arabic-fallback",
+        label: "Open Arabic Search",
+        href: "/ar/search",
+        kind: "arabicFallback",
+      });
+    }
+
+    for (const article of searchResult.articles.slice(0, 4)) {
+      suggestions.push({
+        id: `article-${article.id}`,
+        label: article.title,
+        href: `/${locale}/news/${article.slug}`,
+        kind: "article",
+      });
+    }
+
+    for (const bank of searchResult.banks.slice(0, 4)) {
+      suggestions.push({
+        id: `bank-${bank.id}`,
+        label: bank.name,
+        href: `/${locale}/banks/${bank.slug}`,
+        kind: "bank",
+      });
+    }
+
+    suggestions.push({
+      id: "view-all",
+      label: locale === "ar" ? "عرض كل النتائج" : "View all results",
+      href: `/${locale}/search?q=${encodeURIComponent(query)}`,
+      kind: "viewAll",
+    });
+
+    return suggestions;
+  }, [locale, searchQuery, searchResult, showArabicCoverageHint]);
+  const activeSuggestion = activeSuggestionIndex >= 0 ? searchSuggestions[activeSuggestionIndex] : null;
+
+  function getOptionId(prefix: "desktop" | "mobile", suggestionId: string) {
+    return `header-search-option-${prefix}-${suggestionId}`;
+  }
+
+  function getSuggestionAriaLabel(suggestion: SearchSuggestion) {
+    if (suggestion.kind === "article") {
+      return locale === "ar" ? `مقالة: ${suggestion.label}` : `Article: ${suggestion.label}`;
+    }
+
+    if (suggestion.kind === "bank") {
+      return locale === "ar" ? `بنك: ${suggestion.label}` : `Bank: ${suggestion.label}`;
+    }
+
+    if (suggestion.kind === "arabicFallback") {
+      return locale === "ar" ? "فتح البحث العربي" : "Open Arabic search";
+    }
+
+    return locale === "ar" ? "عرض كل نتائج البحث" : "View all search results";
+  }
+
+  function submitSearch(event: React.FormEvent) {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (query.length < 2) {
+      return;
+    }
+
+    setShowSearchOverlay(false);
+    setShowSearchSettingsMenu(false);
+    setMenuOpen(false);
+    router.push(`/${locale}/search?q=${encodeURIComponent(query)}`);
+  }
+
+  function dismissShortcutHint() {
+    setShowShortcutHint(false);
+    try {
+      window.localStorage.setItem(SEARCH_HINT_STORAGE_KEY, "1");
+    } catch {
+      // Ignore storage errors and keep UI functional.
+    }
+  }
+
+  function restoreShortcutHint() {
+    setShowShortcutHint(true);
+    try {
+      window.localStorage.removeItem(SEARCH_HINT_STORAGE_KEY);
+    } catch {
+      // Ignore storage errors and keep UI functional.
+    }
+  }
+
+  function resetSearchState() {
+    setSearchQuery("");
+    setSearchResult(null);
+    setShowSearchOverlay(false);
+    setShowArabicCoverageHint(false);
+    setActiveSuggestionIndex(-1);
+    setSearchLoading(false);
+    setShowSearchSettingsMenu(false);
+  }
+
+  function openSuggestion(href: string) {
+    clearSearchState();
+    setShowSearchSettingsMenu(false);
+    setMenuOpen(false);
+    router.push(href);
+  }
+
+  function onDesktopSearchKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Escape") {
+      setShowSearchOverlay(false);
+      setActiveSuggestionIndex(-1);
+      setShowSearchSettingsMenu(false);
+      return;
+    }
+
+    if (!showSearchOverlay) {
+      setShowSearchOverlay(true);
+    }
+
+    if (!searchSuggestions.length) {
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveSuggestionIndex((prev) => (prev + 1 >= searchSuggestions.length ? 0 : prev + 1));
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveSuggestionIndex((prev) => (prev - 1 < 0 ? searchSuggestions.length - 1 : prev - 1));
+      return;
+    }
+
+    if (event.key === "Enter" && activeSuggestionIndex >= 0) {
+      event.preventDefault();
+      openSuggestion(searchSuggestions[activeSuggestionIndex].href);
+    }
+  }
+
+  function clearSearchState() {
+    setShowSearchOverlay(false);
+    setSearchResult(null);
+    setShowArabicCoverageHint(false);
+    setActiveSuggestionIndex(-1);
+    setShowSearchSettingsMenu(false);
+  }
 
   const websiteItems: NavItem[] = [
     ["home", ""],
@@ -98,12 +414,205 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
               ))}
             </div>
           ) : null}
-          <Link
-            href={`/${locale}/search`}
-            className="hidden rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 md:inline-flex"
-          >
-            {locale === "ar" ? "بحث" : "Search"}
-          </Link>
+          <div ref={desktopSearchRef} className="relative hidden md:block">
+            <div className="flex items-center gap-1">
+              <form onSubmit={submitSearch}>
+                <input
+                  className="w-56 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-800 focus:border-[#0A2342] focus:outline-none"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onFocus={() => setShowSearchOverlay(true)}
+                  onKeyDown={onDesktopSearchKeyDown}
+                  placeholder={locale === "ar" ? "ابحث..." : "Search..."}
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={showSearchOverlay}
+                  aria-controls={desktopListboxId}
+                  aria-activedescendant={activeSuggestion ? getOptionId("desktop", activeSuggestion.id) : undefined}
+                  aria-label={locale === "ar" ? "بحث الموقع" : "Site search"}
+                />
+              </form>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowSearchSettingsMenu((value) => !value)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-100"
+                  aria-label={locale === "ar" ? "إعدادات البحث" : "Search settings"}
+                  aria-expanded={showSearchSettingsMenu && !menuOpen}
+                >
+                  ⚙
+                </button>
+                {showSearchSettingsMenu && !menuOpen ? (
+                  <div className="search-settings-pop absolute end-0 z-50 mt-1 w-44 origin-top-right rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
+                    <button
+                      type="button"
+                      onClick={showShortcutHint ? dismissShortcutHint : restoreShortcutHint}
+                      className="w-full rounded px-2 py-1 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                      {showShortcutHint
+                        ? locale === "ar"
+                          ? "إخفاء الاختصارات"
+                          : "Hide shortcuts"
+                        : locale === "ar"
+                          ? "إظهار الاختصارات"
+                          : "Show shortcuts"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetSearchState}
+                      className="mt-1 w-full rounded px-2 py-1 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                      {locale === "ar" ? "إعادة ضبط البحث" : "Reset search state"}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+            {showShortcutHint ? (
+              <p className="mt-1 text-[11px] font-medium text-slate-500">
+                {locale === "ar" ? "الاختصارات: ↑ ↓ للتنقل • Enter للاختيار • Esc للإغلاق" : "Shortcuts: Arrow Up/Down to navigate • Enter to open • Esc to close"}
+              </p>
+            ) : null}
+            {showSearchOverlay && (searchQuery.trim().length >= 2 || searchLoading) ? (
+              <div id={desktopListboxId} role="listbox" aria-label={locale === "ar" ? "اقتراحات البحث" : "Search suggestions"} className="absolute end-0 z-50 mt-2 w-[26rem] rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                <p className="sr-only" aria-live="polite">
+                  {searchLoading
+                    ? locale === "ar"
+                      ? "جاري تحديث نتائج البحث"
+                      : "Updating search results"
+                    : locale === "ar"
+                      ? `${searchSuggestions.length} عناصر متاحة في الاقتراحات`
+                      : `${searchSuggestions.length} suggestion items available`}
+                </p>
+                {searchLoading ? <p className="text-sm text-slate-500">{locale === "ar" ? "جاري البحث..." : "Searching..."}</p> : null}
+
+                {!searchLoading && showArabicCoverageHint ? (
+                  <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    {locale === "ar"
+                      ? "المحتوى العربي هو المصدر الرئيسي حاليا لبعض المواضيع."
+                      : "Arabic is currently the primary source for some topics."}
+                    <div className="mt-2">
+                      <Link
+                        href="/ar/search"
+                        id={getOptionId("desktop", "arabic-fallback")}
+                        role="option"
+                        aria-selected={searchSuggestions[activeSuggestionIndex]?.id === "arabic-fallback"}
+                        aria-label={getSuggestionAriaLabel({ id: "arabic-fallback", label: "Open Arabic Search", href: "/ar/search", kind: "arabicFallback" })}
+                        className="font-semibold text-[#0A2342] underline"
+                        onMouseEnter={() => {
+                          const hintIndex = searchSuggestions.findIndex((item) => item.kind === "arabicFallback");
+                          if (hintIndex >= 0) {
+                            setActiveSuggestionIndex(hintIndex);
+                          }
+                        }}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          openSuggestion("/ar/search");
+                        }}
+                      >
+                        {locale === "ar" ? "فتح البحث العربي" : "Open Arabic Search"}
+                      </Link>
+                    </div>
+                  </div>
+                ) : null}
+
+                {!searchLoading && searchResult ? (
+                  <div className="space-y-3">
+                    <div>
+                      <p className="mb-1 text-xs font-black uppercase tracking-wide text-slate-500">{locale === "ar" ? "المقالات" : "Articles"}</p>
+                      <div className="space-y-1">
+                        {searchResult.articles.slice(0, 4).map((article) => (
+                          <Link
+                            key={`article-${article.id}`}
+                            href={`/${locale}/news/${article.slug}`}
+                            id={getOptionId("desktop", `article-${article.id}`)}
+                            role="option"
+                            aria-selected={searchSuggestions[activeSuggestionIndex]?.id === `article-${article.id}`}
+                            aria-label={getSuggestionAriaLabel({ id: `article-${article.id}`, label: article.title, href: `/${locale}/news/${article.slug}`, kind: "article" })}
+                            onMouseEnter={() => {
+                              const index = searchSuggestions.findIndex((item) => item.id === `article-${article.id}`);
+                              if (index >= 0) {
+                                setActiveSuggestionIndex(index);
+                              }
+                            }}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              openSuggestion(`/${locale}/news/${article.slug}`);
+                            }}
+                            className={`block rounded-md border px-2 py-1.5 text-sm hover:bg-slate-50 ${
+                              searchSuggestions[activeSuggestionIndex]?.id === `article-${article.id}`
+                                ? "border-[#0A2342] bg-slate-100 text-slate-900"
+                                : "border-slate-200 text-slate-700"
+                            }`}
+                          >
+                            {article.title}
+                          </Link>
+                        ))}
+                        {searchResult.articles.length === 0 ? <p className="text-xs text-slate-500">{locale === "ar" ? "لا توجد نتائج." : "No results."}</p> : null}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-1 text-xs font-black uppercase tracking-wide text-slate-500">{locale === "ar" ? "البنوك" : "Banks"}</p>
+                      <div className="space-y-1">
+                        {searchResult.banks.slice(0, 4).map((bank) => (
+                          <Link
+                            key={`bank-${bank.id}`}
+                            href={`/${locale}/banks/${bank.slug}`}
+                            id={getOptionId("desktop", `bank-${bank.id}`)}
+                            role="option"
+                            aria-selected={searchSuggestions[activeSuggestionIndex]?.id === `bank-${bank.id}`}
+                            aria-label={getSuggestionAriaLabel({ id: `bank-${bank.id}`, label: bank.name, href: `/${locale}/banks/${bank.slug}`, kind: "bank" })}
+                            onMouseEnter={() => {
+                              const index = searchSuggestions.findIndex((item) => item.id === `bank-${bank.id}`);
+                              if (index >= 0) {
+                                setActiveSuggestionIndex(index);
+                              }
+                            }}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              openSuggestion(`/${locale}/banks/${bank.slug}`);
+                            }}
+                            className={`block rounded-md border px-2 py-1.5 text-sm hover:bg-slate-50 ${
+                              searchSuggestions[activeSuggestionIndex]?.id === `bank-${bank.id}`
+                                ? "border-[#0A2342] bg-slate-100 text-slate-900"
+                                : "border-slate-200 text-slate-700"
+                            }`}
+                          >
+                            {bank.name}
+                          </Link>
+                        ))}
+                        {searchResult.banks.length === 0 ? <p className="text-xs text-slate-500">{locale === "ar" ? "لا توجد نتائج." : "No results."}</p> : null}
+                      </div>
+                    </div>
+
+                    <Link
+                      href={`/${locale}/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                      id={getOptionId("desktop", "view-all")}
+                      role="option"
+                      aria-selected={searchSuggestions[activeSuggestionIndex]?.kind === "viewAll"}
+                      aria-label={getSuggestionAriaLabel({ id: "view-all", label: locale === "ar" ? "عرض كل النتائج" : "View all results", href: `/${locale}/search?q=${encodeURIComponent(searchQuery.trim())}`, kind: "viewAll" })}
+                      onMouseEnter={() => {
+                        const viewAllIndex = searchSuggestions.findIndex((item) => item.kind === "viewAll");
+                        if (viewAllIndex >= 0) {
+                          setActiveSuggestionIndex(viewAllIndex);
+                        }
+                      }}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        openSuggestion(`/${locale}/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                      }}
+                      className={`inline-flex text-xs font-semibold underline ${
+                        searchSuggestions[activeSuggestionIndex]?.kind === "viewAll" ? "text-[#0A2342]" : "text-slate-700"
+                      }`}
+                    >
+                      {locale === "ar" ? "عرض كل النتائج" : "View all results"}
+                    </Link>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
           <LanguageSwitcher locale={locale} />
         </div>
       </div>
@@ -154,26 +663,236 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
         aria-label="Mobile navigation"
       >
         <div className="overflow-y-auto">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Link
-              href={`/${locale}/search`}
-              className="inline-flex rounded-md border border-slate-500 px-3 py-1.5 text-sm font-semibold text-slate-100"
-              onClick={() => setMenuOpen(false)}
-            >
-              {locale === "ar" ? "بحث" : "Search"}
-            </Link>
-            {socialLinks.map((link) => (
-              <a
-                key={`${link.label}-${link.href}-mobile`}
-                href={link.href}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex rounded-md border border-slate-500 px-3 py-1.5 text-sm font-semibold text-slate-100"
-              >
-                {link.label}
-              </a>
-            ))}
+          <div ref={mobileSearchRef}>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <form onSubmit={submitSearch} className="flex w-full gap-2">
+                <input
+                  className="w-full rounded-md border border-slate-500 bg-white/10 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-300"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onFocus={() => setShowSearchOverlay(true)}
+                  onKeyDown={onDesktopSearchKeyDown}
+                  placeholder={locale === "ar" ? "ابحث..." : "Search..."}
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={showSearchOverlay}
+                  aria-controls={mobileListboxId}
+                  aria-activedescendant={activeSuggestion ? getOptionId("mobile", activeSuggestion.id) : undefined}
+                  aria-label={locale === "ar" ? "بحث الموقع" : "Site search"}
+                />
+                <button type="submit" className="rounded-md border border-slate-500 px-3 py-2 text-sm font-semibold text-slate-100">
+                  {locale === "ar" ? "بحث" : "Search"}
+                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowSearchSettingsMenu((value) => !value)}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-500 text-sm text-slate-100 hover:bg-white/10"
+                    aria-label={locale === "ar" ? "إعدادات البحث" : "Search settings"}
+                    aria-expanded={showSearchSettingsMenu && menuOpen}
+                  >
+                    ⚙
+                  </button>
+                  {showSearchSettingsMenu && menuOpen ? (
+                    <div className="search-settings-pop absolute end-0 z-50 mt-1 w-44 origin-top-right rounded-lg border border-slate-600 bg-[#213155] p-2 shadow-lg">
+                      <button
+                        type="button"
+                        onClick={showShortcutHint ? dismissShortcutHint : restoreShortcutHint}
+                        className="w-full rounded px-2 py-1 text-left text-xs font-semibold text-slate-100 hover:bg-white/10"
+                      >
+                        {showShortcutHint
+                          ? locale === "ar"
+                            ? "إخفاء الاختصارات"
+                            : "Hide shortcuts"
+                          : locale === "ar"
+                            ? "إظهار الاختصارات"
+                            : "Show shortcuts"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={resetSearchState}
+                        className="mt-1 w-full rounded px-2 py-1 text-left text-xs font-semibold text-slate-100 hover:bg-white/10"
+                      >
+                        {locale === "ar" ? "إعادة ضبط البحث" : "Reset search state"}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </form>
+              {showShortcutHint ? (
+                <p className="w-full text-[11px] font-medium text-slate-300">
+                  {locale === "ar" ? "الاختصارات: ↑ ↓ للتنقل • Enter للاختيار • Esc للإغلاق" : "Shortcuts: Arrow Up/Down to navigate • Enter to open • Esc to close"}
+                </p>
+              ) : null}
+              {socialLinks.map((link) => (
+                <a
+                  key={`${link.label}-${link.href}-mobile`}
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex rounded-md border border-slate-500 px-3 py-1.5 text-sm font-semibold text-slate-100"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+            {showSearchOverlay && (searchQuery.trim().length >= 2 || searchLoading) ? (
+              <div id={mobileListboxId} role="listbox" aria-label={locale === "ar" ? "اقتراحات البحث" : "Search suggestions"} className="mb-3 rounded-xl border border-slate-600 bg-[#213155] p-3">
+              <p className="sr-only" aria-live="polite">
+                {searchLoading
+                  ? locale === "ar"
+                    ? "جاري تحديث نتائج البحث"
+                    : "Updating search results"
+                  : locale === "ar"
+                    ? `${searchSuggestions.length} عناصر متاحة في الاقتراحات`
+                    : `${searchSuggestions.length} suggestion items available`}
+              </p>
+              {searchLoading ? <p className="text-sm text-slate-200">{locale === "ar" ? "جاري البحث..." : "Searching..."}</p> : null}
+
+              {!searchLoading && showArabicCoverageHint ? (
+                <div className="mb-3 rounded-lg border border-amber-400/40 bg-amber-100/10 px-3 py-2 text-xs text-amber-100">
+                  {locale === "ar"
+                    ? "المحتوى العربي هو المصدر الرئيسي حاليا لبعض المواضيع."
+                    : "Arabic is currently the primary source for some topics."}
+                  <div className="mt-2">
+                    <Link
+                      href="/ar/search"
+                      id={getOptionId("mobile", "arabic-fallback")}
+                      role="option"
+                      aria-selected={searchSuggestions[activeSuggestionIndex]?.id === "arabic-fallback"}
+                      aria-label={getSuggestionAriaLabel({ id: "arabic-fallback", label: "Open Arabic Search", href: "/ar/search", kind: "arabicFallback" })}
+                      className="font-semibold underline"
+                      onMouseEnter={() => {
+                        const hintIndex = searchSuggestions.findIndex((item) => item.kind === "arabicFallback");
+                        if (hintIndex >= 0) {
+                          setActiveSuggestionIndex(hintIndex);
+                        }
+                      }}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        openSuggestion("/ar/search");
+                      }}
+                    >
+                      {locale === "ar" ? "فتح البحث العربي" : "Open Arabic Search"}
+                    </Link>
+                  </div>
+                </div>
+              ) : null}
+
+              {!searchLoading && searchResult ? (
+                <div className="space-y-3">
+                  <div>
+                    <p className="mb-1 text-xs font-black uppercase tracking-wide text-slate-300">{locale === "ar" ? "المقالات" : "Articles"}</p>
+                    <div className="space-y-1">
+                      {searchResult.articles.slice(0, 4).map((article) => (
+                        <Link
+                          key={`mobile-article-${article.id}`}
+                          href={`/${locale}/news/${article.slug}`}
+                          id={getOptionId("mobile", `article-${article.id}`)}
+                          role="option"
+                          aria-selected={searchSuggestions[activeSuggestionIndex]?.id === `article-${article.id}`}
+                          aria-label={getSuggestionAriaLabel({ id: `article-${article.id}`, label: article.title, href: `/${locale}/news/${article.slug}`, kind: "article" })}
+                          onMouseEnter={() => {
+                            const index = searchSuggestions.findIndex((item) => item.id === `article-${article.id}`);
+                            if (index >= 0) {
+                              setActiveSuggestionIndex(index);
+                            }
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            openSuggestion(`/${locale}/news/${article.slug}`);
+                          }}
+                          className={`block rounded-md border px-2 py-1.5 text-sm ${
+                            searchSuggestions[activeSuggestionIndex]?.id === `article-${article.id}`
+                              ? "border-cyan-300 bg-white/20 text-white"
+                              : "border-slate-500 text-slate-100"
+                          }`}
+                        >
+                          {article.title}
+                        </Link>
+                      ))}
+                      {searchResult.articles.length === 0 ? <p className="text-xs text-slate-300">{locale === "ar" ? "لا توجد نتائج." : "No results."}</p> : null}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="mb-1 text-xs font-black uppercase tracking-wide text-slate-300">{locale === "ar" ? "البنوك" : "Banks"}</p>
+                    <div className="space-y-1">
+                      {searchResult.banks.slice(0, 4).map((bank) => (
+                        <Link
+                          key={`mobile-bank-${bank.id}`}
+                          href={`/${locale}/banks/${bank.slug}`}
+                          id={getOptionId("mobile", `bank-${bank.id}`)}
+                          role="option"
+                          aria-selected={searchSuggestions[activeSuggestionIndex]?.id === `bank-${bank.id}`}
+                          aria-label={getSuggestionAriaLabel({ id: `bank-${bank.id}`, label: bank.name, href: `/${locale}/banks/${bank.slug}`, kind: "bank" })}
+                          onMouseEnter={() => {
+                            const index = searchSuggestions.findIndex((item) => item.id === `bank-${bank.id}`);
+                            if (index >= 0) {
+                              setActiveSuggestionIndex(index);
+                            }
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            openSuggestion(`/${locale}/banks/${bank.slug}`);
+                          }}
+                          className={`block rounded-md border px-2 py-1.5 text-sm ${
+                            searchSuggestions[activeSuggestionIndex]?.id === `bank-${bank.id}`
+                              ? "border-cyan-300 bg-white/20 text-white"
+                              : "border-slate-500 text-slate-100"
+                          }`}
+                        >
+                          {bank.name}
+                        </Link>
+                      ))}
+                      {searchResult.banks.length === 0 ? <p className="text-xs text-slate-300">{locale === "ar" ? "لا توجد نتائج." : "No results."}</p> : null}
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/${locale}/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                    id={getOptionId("mobile", "view-all")}
+                    role="option"
+                    aria-selected={searchSuggestions[activeSuggestionIndex]?.kind === "viewAll"}
+                    aria-label={getSuggestionAriaLabel({ id: "view-all", label: locale === "ar" ? "عرض كل النتائج" : "View all results", href: `/${locale}/search?q=${encodeURIComponent(searchQuery.trim())}`, kind: "viewAll" })}
+                    onMouseEnter={() => {
+                      const viewAllIndex = searchSuggestions.findIndex((item) => item.kind === "viewAll");
+                      if (viewAllIndex >= 0) {
+                        setActiveSuggestionIndex(viewAllIndex);
+                      }
+                    }}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      openSuggestion(`/${locale}/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                    }}
+                    className={`inline-flex text-xs font-semibold underline ${
+                      searchSuggestions[activeSuggestionIndex]?.kind === "viewAll" ? "text-cyan-200" : "text-slate-100"
+                    }`}
+                  >
+                    {locale === "ar" ? "عرض كل النتائج" : "View all results"}
+                  </Link>
+                </div>
+              ) : null}
+              </div>
+            ) : null}
           </div>
+          {locale === "en" && showArabicCoverageHint ? (
+            <div className="mb-3 rounded-lg border border-amber-400/40 bg-amber-100/10 px-3 py-2 text-xs text-amber-100">
+              Arabic is currently the primary source for some topics.
+              <div className="mt-1">
+                <Link
+                  href="/ar/search"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    openSuggestion("/ar/search");
+                  }}
+                  className="font-semibold underline"
+                >
+                  Open Arabic Search
+                </Link>
+              </div>
+            </div>
+          ) : null}
           <div className="space-y-5">
             {navGroups.map((group) => (
               <section

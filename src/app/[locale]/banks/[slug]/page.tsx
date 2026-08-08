@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { dbQuery } from "@/lib/db/query";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { LanguageUnavailableNotice } from "@/components/ui/language-unavailable-notice";
 
 export default async function BankProfilePage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
@@ -24,6 +25,25 @@ export default async function BankProfilePage({ params }: { params: Promise<{ lo
   }
 
   if (!bank) {
+    if (safeLocale === "en") {
+      try {
+        const fallbackRows = await dbQuery<Array<{ slug: string }>>(
+          `SELECT b.slug
+           FROM banks b
+           JOIN bank_translations bt ON bt.bank_id = b.id AND bt.locale = 'ar'
+           WHERE b.slug = ? AND b.deleted_at IS NULL
+           LIMIT 1`,
+          [slug]
+        );
+
+        if (fallbackRows.length) {
+          return <LanguageUnavailableNotice arabicHref={`/ar/banks/${slug}`} contextLabel="bank profile" />;
+        }
+      } catch {
+        // Keep default notFound behavior if fallback check fails.
+      }
+    }
+
     notFound();
   }
 

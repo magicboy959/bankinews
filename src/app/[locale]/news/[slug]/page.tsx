@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { dictionary } from "@/lib/i18n/dictionary";
-import { getArticleBySlug, getArticleCorrectionHistory, getPublishedArticles } from "@/services/article-service";
+import { getArticleBySlug, getArticleCorrectionHistory, getPublishedArticleLocalesBySlug, getPublishedArticles } from "@/services/article-service";
 import { ArticleContent } from "@/components/articles/article-content";
 import { ArticleCardView } from "@/components/articles/article-card";
+import { ArticleReaderExperience } from "@/components/articles/article-reader-experience";
 import { formatDate } from "@/lib/utils";
 
 export default async function ArticlePage({
@@ -18,6 +19,42 @@ export default async function ArticlePage({
   const article = await getArticleBySlug(safeLocale, slug);
 
   if (!article) {
+    if (safeLocale === "en") {
+      const availableLocales = await getPublishedArticleLocalesBySlug(slug);
+      if (availableLocales.includes("ar")) {
+        const relatedArabic = await getPublishedArticles("ar", 6);
+
+        return (
+          <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+            <article className="rounded-xl border border-slate-200 bg-white p-6">
+              <h1 className="text-2xl font-black text-slate-900">Arabic Is Our Main Language</h1>
+              <p className="mt-3 text-base leading-7 text-slate-700">
+                This content is not available in this language right now.
+              </p>
+              <p className="mt-2 text-sm text-slate-600">
+                For the full story, please switch to the Arabic version.
+              </p>
+              <Link
+                href={`/ar/news/${slug}`}
+                className="mt-5 inline-flex rounded bg-[#0A2342] px-4 py-2 text-sm font-semibold text-white hover:bg-[#091b35]"
+              >
+                Open Arabic Version
+              </Link>
+            </article>
+
+            <aside>
+              <h2 className="mb-4 text-xl font-black text-[#0A2342]">Latest In Arabic</h2>
+              <div className="space-y-3">
+                {relatedArabic.map((card) => (
+                  <ArticleCardView key={card.id} locale="ar" article={card} />
+                ))}
+              </div>
+            </aside>
+          </div>
+        );
+      }
+    }
+
     notFound();
   }
 
@@ -76,7 +113,15 @@ export default async function ArticlePage({
         </div>
 
         <div className="mt-8">
-          <ArticleContent html={article.contentHtml} />
+          <ArticleReaderExperience
+            articleId={article.id}
+            locale={safeLocale}
+            slug={slug}
+            title={article.title}
+            readingTimeMinutes={article.readingTimeMinutes}
+          >
+            <ArticleContent html={article.contentHtml} />
+          </ArticleReaderExperience>
         </div>
 
         <section className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4">

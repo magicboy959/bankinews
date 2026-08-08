@@ -3,6 +3,7 @@ import type { DbRow } from "@/lib/db/pool";
 import { badRequest, forbidden, notFound, ok, serverError } from "@/lib/http";
 import { requireRole } from "@/lib/auth/guard";
 import { articleCreateSchema } from "@/lib/validation/schemas";
+import { validateEditorialWorkflow } from "@/lib/validation/editorial-workflow";
 
 type ArticleDetailRow = DbRow & {
   id: number;
@@ -108,6 +109,11 @@ export async function PUT(
     }
 
     const payload = parsed.data;
+    const workflowError = validateEditorialWorkflow(payload);
+    if (workflowError) {
+      return badRequest(workflowError);
+    }
+
     const promotedFlag = payload.isFeatured || payload.isSponsored;
 
     const updated = await dbTransaction(async ({ query, execute }) => {

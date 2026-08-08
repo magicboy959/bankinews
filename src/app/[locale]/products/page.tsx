@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { dbQuery } from "@/lib/db/query";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { LanguageUnavailableNotice } from "@/components/ui/language-unavailable-notice";
 
 export default async function ProductsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const safeLocale: Locale = isLocale(locale) ? locale : "ar";
 
   let products: any[] = [];
+  let arabicProductCount = 0;
   try {
     products = await dbQuery<any[]>(
       `SELECT p.slug, p.product_category AS category, bt.name AS bankName,
@@ -19,8 +21,22 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
        ORDER BY p.updated_at DESC`,
       [safeLocale, safeLocale]
     );
+
+    if (safeLocale === "en") {
+      const arabicRows = await dbQuery<Array<{ count: number }>>(
+        `SELECT COUNT(*) AS count
+         FROM products p
+         JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = 'ar'
+         WHERE p.deleted_at IS NULL`
+      );
+      arabicProductCount = Number(arabicRows[0]?.count ?? 0);
+    }
   } catch {
     products = [];
+  }
+
+  if (safeLocale === "en" && products.length === 0 && arabicProductCount > 0) {
+    return <LanguageUnavailableNotice arabicHref="/ar/products" contextLabel="product listings" />;
   }
 
   return (
