@@ -65,6 +65,8 @@ cp .env.example .env
 npm run db:migrate
 ```
 
+The migrator now tracks applied SQL files in a `schema_migrations` table and only applies new files once. On an existing database that predates migration tracking, the first run records a baseline instead of replaying all historical SQL files.
+
 5. Seed demonstration data:
 
 ```bash
