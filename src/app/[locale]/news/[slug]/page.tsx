@@ -95,6 +95,9 @@ export default async function ArticlePage({
   const related = (await getPublishedArticles(safeLocale, 6)).filter((a) => a.slug !== slug);
   const correctionHistory = await getArticleCorrectionHistory(article.id);
   const youtubeEmbedUrl = getYouTubeEmbedUrl((article as { videoUrl?: string | null }).videoUrl);
+  const isSponsored = article.isSponsored === true || article.isSponsored === 1;
+  const isOpinion = article.isOpinion === true || article.isOpinion === 1;
+  const isPressRelease = article.isPressRelease === true || article.isPressRelease === 1;
 
   function historyLabel(action: string): string {
     if (safeLocale === "ar") {
@@ -133,9 +136,9 @@ export default async function ArticlePage({
     <div className="article-page-grid grid gap-8 lg:grid-cols-[1fr_320px]">
       <article className="article-shell rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
         <div className="mb-4 flex flex-wrap gap-2 text-xs font-bold uppercase">
-          {article.isSponsored && <span className="rounded bg-amber-100 px-2 py-1 text-amber-700">{t.labels.sponsored}</span>}
-          {article.isOpinion && <span className="rounded bg-cyan-100 px-2 py-1 text-cyan-700">{t.labels.opinion}</span>}
-          {article.isPressRelease && <span className="rounded bg-slate-200 px-2 py-1 text-slate-700">{t.labels.pressRelease}</span>}
+          {isSponsored ? <span className="rounded bg-amber-100 px-2 py-1 text-amber-700">{t.labels.sponsored}</span> : null}
+          {isOpinion ? <span className="rounded bg-cyan-100 px-2 py-1 text-cyan-700">{t.labels.opinion}</span> : null}
+          {isPressRelease ? <span className="rounded bg-slate-200 px-2 py-1 text-slate-700">{t.labels.pressRelease}</span> : null}
         </div>
 
         <h1 className="article-headline text-3xl font-black text-[var(--foreground)]">{article.title}</h1>
