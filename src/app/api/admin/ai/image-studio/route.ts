@@ -108,8 +108,8 @@ export async function POST(request: Request) {
       {
         text:
           mode === "edit"
-            ? `Edit this image for a banking news article. ${prompt}`
-            : `Generate a realistic editorial photo for a banking news article. ${prompt}`,
+            ? `Edit this image for a banking news article. Prefer a ${aspectRatio} composition when possible. ${prompt}`
+            : `Generate a realistic editorial photo for a banking news article. Prefer a ${aspectRatio} composition. ${prompt}`,
       },
     ];
 
@@ -133,9 +133,6 @@ export async function POST(request: Request) {
         contents: [{ role: "user", parts }],
         generationConfig: {
           responseModalities: ["TEXT", "IMAGE"],
-          responseFormat: {
-            image: { aspectRatio },
-          },
         },
       }),
     });

@@ -132,12 +132,9 @@ export async function POST(request: Request) {
         "x-goog-api-key": getGoogleApiKey(),
       },
       body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: "Generate a simple realistic editorial photo of a bank building exterior, no text." }] }],
+        contents: [{ role: "user", parts: [{ text: "Generate a simple realistic editorial photo of a bank building exterior, no text. Prefer a 16:9 composition." }] }],
         generationConfig: {
           responseModalities: ["TEXT", "IMAGE"],
-          responseFormat: {
-            image: { aspectRatio: "16:9" },
-          },
         },
       }),
     });
