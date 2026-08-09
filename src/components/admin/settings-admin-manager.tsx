@@ -54,6 +54,12 @@ type AiTestResult = {
   receivedImage?: boolean;
 };
 
+type EmailTestResult = {
+  sent: boolean;
+  to: string;
+  locale: "ar" | "en";
+};
+
 type SocialPlatform = "facebook" | "x" | "linkedin" | "instagram" | "youtube";
 
 type SocialLinkDraft = {
@@ -266,6 +272,9 @@ export function SettingsAdminManager({
   const [aiTestingTarget, setAiTestingTarget] = useState<"text" | "image" | null>(null);
   const [aiTestResult, setAiTestResult] = useState<string | null>(null);
   const [aiTestError, setAiTestError] = useState<string | null>(null);
+  const [emailTestingLocale, setEmailTestingLocale] = useState<"ar" | "en" | null>(null);
+  const [emailTestResult, setEmailTestResult] = useState<string | null>(null);
+  const [emailTestError, setEmailTestError] = useState<string | null>(null);
 
   const sortedSettings = useMemo(
     () => [...initialSettings].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
@@ -303,6 +312,28 @@ export function SettingsAdminManager({
 
     const received = target === "image" ? result.data.receivedImage : result.data.receivedContent;
     setAiTestResult(`${target === "image" ? "Image" : "Text"} test reached ${result.data.model}${received ? " and returned content." : ", but no usable content was returned."}`);
+  }
+
+  async function testWelcomeEmail(locale: "ar" | "en") {
+    setEmailTestError(null);
+    setEmailTestResult(null);
+    setEmailTestingLocale(locale);
+
+    const response = await fetch("/api/admin/email/test-welcome", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ locale }),
+    });
+
+    const result = await parseResponse<EmailTestResult>(response);
+    setEmailTestingLocale(null);
+
+    if (!response.ok || !result.ok) {
+      setEmailTestError(result.ok ? "Welcome email test failed" : result.error?.message ?? "Welcome email test failed");
+      return;
+    }
+
+    setEmailTestResult(`Sent ${result.data.locale.toUpperCase()} welcome email test to ${result.data.to}.`);
   }
 
   function resetSettingForm() {
@@ -655,6 +686,42 @@ export function SettingsAdminManager({
 
         {aiTestResult && <p className="mt-3 rounded border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">{aiTestResult}</p>}
         {aiTestError && <p className="mt-3 rounded border border-red-500/25 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{aiTestError}</p>}
+      </section>
+
+      <section className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Email Delivery Diagnostics</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              Send the newsletter welcome template to your admin email to verify SMTP, sender settings, and inbox delivery.
+            </p>
+          </div>
+          <span className="w-fit rounded bg-cyan-500/10 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-cyan-700 dark:text-cyan-300">
+            SMTP test
+          </span>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => testWelcomeEmail("ar")}
+            disabled={emailTestingLocale !== null}
+            className="rounded bg-[#0A2342] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {emailTestingLocale === "ar" ? "Sending..." : "Test Arabic Welcome"}
+          </button>
+          <button
+            type="button"
+            onClick={() => testWelcomeEmail("en")}
+            disabled={emailTestingLocale !== null}
+            className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--surface-elevated)] disabled:opacity-60"
+          >
+            {emailTestingLocale === "en" ? "Sending..." : "Test English Welcome"}
+          </button>
+        </div>
+
+        {emailTestResult && <p className="mt-3 rounded border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">{emailTestResult}</p>}
+        {emailTestError && <p className="mt-3 rounded border border-red-500/25 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{emailTestError}</p>}
       </section>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
