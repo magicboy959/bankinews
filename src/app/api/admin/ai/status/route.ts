@@ -11,8 +11,24 @@ type GeminiPart = {
   inline_data?: { mime_type?: string | null; data?: string | null } | null;
 };
 
+const DEFAULT_GOOGLE_TEXT_MODEL = "gemini-3.5-flash";
+const DEFAULT_GOOGLE_IMAGE_MODEL = "gemini-3.1-flash-image";
+
 function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeGeminiModel(value: string, fallback: string) {
+  const model = value.trim().replace(/^models\//, "");
+  if (!model) {
+    return fallback;
+  }
+
+  if (model.startsWith("emini-")) {
+    return `g${model}`;
+  }
+
+  return model;
 }
 
 function getGoogleApiKey() {
@@ -26,8 +42,8 @@ function getGoogleStatus() {
   return {
     configured,
     keyStatus: configured ? "configured" : "missing",
-    textModel: process.env.GOOGLE_AI_TEXT_MODEL?.trim() || "gemini-3.6-flash",
-    imageModel: process.env.GOOGLE_AI_IMAGE_MODEL?.trim() || "gemini-3.1-flash-image",
+    textModel: normalizeGeminiModel(process.env.GOOGLE_AI_TEXT_MODEL ?? "", DEFAULT_GOOGLE_TEXT_MODEL),
+    imageModel: normalizeGeminiModel(process.env.GOOGLE_AI_IMAGE_MODEL ?? "", DEFAULT_GOOGLE_IMAGE_MODEL),
   };
 }
 

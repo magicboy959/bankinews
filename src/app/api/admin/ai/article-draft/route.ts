@@ -22,8 +22,23 @@ type DualDraftResponse = {
   en: DraftResponse;
 };
 
+const DEFAULT_GOOGLE_TEXT_MODEL = "gemini-3.5-flash";
+
 function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeGeminiModel(value: string, fallback: string) {
+  const model = value.trim().replace(/^models\//, "");
+  if (!model) {
+    return fallback;
+  }
+
+  if (model.startsWith("emini-")) {
+    return `g${model}`;
+  }
+
+  return model;
 }
 
 function isLocale(value: string): value is "ar" | "en" {
@@ -140,7 +155,7 @@ export async function POST(request: Request) {
       return badRequest("Google AI writing is not configured. Set GOOGLE_AI_API_KEY to your paid Google API key.");
     }
 
-    const model = process.env.GOOGLE_AI_TEXT_MODEL?.trim() || "gemini-3.6-flash";
+    const model = normalizeGeminiModel(process.env.GOOGLE_AI_TEXT_MODEL ?? "", DEFAULT_GOOGLE_TEXT_MODEL);
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: {
