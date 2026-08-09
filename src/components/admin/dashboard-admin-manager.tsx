@@ -1224,14 +1224,14 @@ export function DashboardAdminManager({
           <div>
             <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Homepage Hero Carousel</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Update hero images and slide content from Homepage Sections using section key <span className="font-mono">hero_carousel</span>.
+              Update hero images, headlines, links, and slide content from the focused Hero workspace.
             </p>
           </div>
           <Link
-            href="/admin/settings"
+            href="/admin/hero"
             className="rounded bg-[#0A2342] px-3 py-2 text-sm font-semibold text-white hover:bg-[#091b35]"
           >
-            Open Hero Settings
+            Open Hero Editor
           </Link>
         </div>
       </section>

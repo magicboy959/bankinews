@@ -14,6 +14,10 @@ type AuthorRow = DbRow & {
   id: number;
 };
 
+type ExistsRow = DbRow & {
+  found: number;
+};
+
 type ArticleListRow = DbRow & {
   id: number;
   slug: string;
@@ -72,7 +76,18 @@ function getArticleCreateErrorMessage(error: unknown): string {
     return "Unable to create article because one field is too long for the production database.";
   }
 
-  return "Unable to create article. Check required fields, selected category/bank, and image/source URLs.";
+  if (code === "ER_BAD_FIELD_ERROR") {
+    return "Unable to create article because production database columns do not match the app code. Run the latest migrations.";
+  }
+
+  if (code === "ER_NO_DEFAULT_FOR_FIELD") {
+    return "Unable to create article because production requires a database field the app is not sending.";
+  }
+
+  const diagnostic = [code, message].filter(Boolean).join(": ").slice(0, 220);
+  return diagnostic
+    ? `Unable to create article. Database said: ${diagnostic}`
+    : "Unable to create article. Check required fields, selected category/bank, and image/source URLs.";
 }
 
 function resolveArticleSlug(payload: { slug?: string | null; title: string }) {
@@ -101,6 +116,18 @@ async function writeArticleAuditLog(userId: number, articleId: number, status: s
   } catch (error) {
     console.error("article_create_audit_failed", error);
   }
+}
+
+async function relatedRecordExists(tableName: "banks" | "categories", id: number): Promise<boolean> {
+  const rows = await dbQuery<ExistsRow[]>(
+    `SELECT 1 AS found
+     FROM ${tableName}
+     WHERE id = ? AND deleted_at IS NULL
+     LIMIT 1`,
+    [id]
+  );
+
+  return rows.length > 0;
 }
 
 export async function GET(request: Request) {
@@ -149,6 +176,14 @@ export async function POST(request: Request) {
     const workflowError = validateEditorialWorkflow(payload);
     if (workflowError) {
       return badRequest(workflowError);
+    }
+
+    if (payload.categoryId && !(await relatedRecordExists("categories", payload.categoryId))) {
+      return badRequest("Selected category no longer exists. Choose another category or leave it blank.");
+    }
+
+    if (payload.relatedBankId && !(await relatedRecordExists("banks", payload.relatedBankId))) {
+      return badRequest("Selected related bank no longer exists. Choose another bank or leave it blank.");
     }
 
     const baseSlug = resolveArticleSlug(payload);

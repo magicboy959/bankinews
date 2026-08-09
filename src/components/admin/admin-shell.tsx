@@ -7,13 +7,14 @@ import type { SessionUser } from "@/types";
 const links = [
   ["Dashboard", "/admin"],
   ["Articles", "/admin/articles"],
+  ["Hero", "/admin/hero"],
   ["Marketing", "/admin/marketing"],
   ["Comments", "/admin/comments"],
   ["Banks", "/admin/banks"],
   ["Products", "/admin/products"],
   ["Jobs", "/admin/jobs"],
   ["Exchange Rates", "/admin/exchange-rates"],
-  ["Homepage & Settings", "/admin/settings"],
+  ["Settings", "/admin/settings"],
 ];
 
 export function AdminShell({ children, user }: { children: React.ReactNode; user: SessionUser }) {
