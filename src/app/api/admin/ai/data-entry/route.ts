@@ -7,7 +7,7 @@ type DataEntryRequest = {
   prompt?: unknown;
 };
 
-type Target = "bank" | "product" | "job" | "rate" | "campaign";
+type Target = "bank" | "product" | "job" | "rate" | "campaign" | "articleMetadata";
 
 type DraftValue = Record<string, unknown>;
 
@@ -19,6 +19,7 @@ const targetFields: Record<Target, string[]> = {
   job: ["slug", "title", "organization", "location", "employmentType", "applicationDeadline", "description", "officialApplicationUrl"],
   rate: ["currencyName", "currencyCode", "officialBuy", "officialSell", "parallelBuy", "parallelSell", "rateDate", "source", "notes"],
   campaign: ["subject", "htmlContent", "textContent"],
+  articleMetadata: ["slug", "articleType", "sourceUrl", "sourceAttribution", "imagePrompt", "altText", "caption", "credit"],
 };
 
 function cleanText(value: unknown) {
@@ -39,7 +40,7 @@ function normalizeGeminiModel(value: string, fallback: string) {
 }
 
 function isTarget(value: string): value is Target {
-  return value === "bank" || value === "product" || value === "job" || value === "rate" || value === "campaign";
+  return value === "bank" || value === "product" || value === "job" || value === "rate" || value === "campaign" || value === "articleMetadata";
 }
 
 function getGoogleErrorMessage(value: unknown) {
@@ -75,6 +76,14 @@ function sanitizeDraft(target: Target, value: unknown) {
     return next;
   }
 
+  if (target === "articleMetadata") {
+    next.slug = slugify(cleanText(next.slug));
+    if (!cleanText(next.slug)) {
+      next.slug = `article-${Date.now()}`;
+    }
+    return next;
+  }
+
   if (!cleanText(next.slug)) {
     const title = cleanText(next.name) || cleanText(next.title) || cleanText(next.organization);
     next.slug = slugify(title) || `${target}-${Date.now()}`;
@@ -101,7 +110,7 @@ export async function POST(request: Request) {
     const prompt = cleanText(body.prompt);
 
     if (!isTarget(targetValue)) {
-      return badRequest("target must be 'bank', 'product', 'job', 'rate', or 'campaign'");
+      return badRequest("target must be 'bank', 'product', 'job', 'rate', 'campaign', or 'articleMetadata'");
     }
 
     if (prompt.length < 12) {
@@ -131,6 +140,8 @@ export async function POST(request: Request) {
                 `Target: ${targetValue}. Required keys: ${targetFields[targetValue].join(", ")}.`,
                 "Dates must be YYYY-MM-DD. Slugs must be lowercase ASCII letters, digits, and hyphens.",
                 "For campaign htmlContent, return simple semantic HTML using paragraphs, headings, and lists only.",
+                "For articleMetadata, choose articleType from: news, breaking_news, product_announcement, bank_update, central_bank_announcement, guide, analysis, report, interview, opinion, press_release, sponsored_content, job_listing, security_alert.",
+                "For articleMetadata imagePrompt, write a concise realistic editorial photo prompt with no text and no logos.",
               ].join(" "),
             },
           ],

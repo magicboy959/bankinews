@@ -159,6 +159,17 @@ type ApiFailure = {
   };
 };
 
+type ArticleMetadataDraft = {
+  slug?: string;
+  articleType?: string;
+  sourceUrl?: string;
+  sourceAttribution?: string;
+  imagePrompt?: string;
+  altText?: string;
+  caption?: string;
+  credit?: string;
+};
+
 type ComposerState = {
   slug: string;
   status: ArticleStatus;
@@ -264,6 +275,10 @@ function normalizeOptionalUrlOrLocalPath(value: string): string | null {
   } catch {
     return null;
   }
+}
+
+function stripHtml(value: string): string {
+  return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function formatBytes(value: number): string {
@@ -511,6 +526,7 @@ export function DashboardAdminManager({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiMetadataGenerating, setAiMetadataGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mediaWarning, setMediaWarning] = useState<string | null>(null);
@@ -723,6 +739,7 @@ export function DashboardAdminManager({
     setEditingId(null);
     setActiveLocale("ar");
     setAiPrompt("");
+    setAiMetadataGenerating(false);
     setAiError(null);
     setMediaWarning(null);
   }
@@ -1163,6 +1180,79 @@ export function DashboardAdminManager({
     }
   }
 
+  async function generateArticleMetadata() {
+    setAiError(null);
+
+    const arDraft = composer.translations.ar;
+    const enDraft = composer.translations.en;
+    const arContent = stripHtml(arDraft.contentHtml).slice(0, 1200);
+    const enContent = stripHtml(enDraft.contentHtml).slice(0, 1200);
+    const facts = [
+      aiPrompt,
+      arDraft.title,
+      arDraft.summary,
+      arContent,
+      enDraft.title,
+      enDraft.summary,
+      enContent,
+      composer.sourceUrl,
+      composer.sourceAttribution,
+    ].join(" ").trim();
+
+    if (facts.length < 40) {
+      setAiError("Add an article draft or story facts before generating metadata.");
+      return;
+    }
+
+    const prompt = [
+      aiPrompt.trim() ? `Editor prompt: ${aiPrompt.trim()}` : "",
+      `Arabic title: ${arDraft.title}`,
+      `Arabic summary: ${arDraft.summary}`,
+      `Arabic content: ${arContent}`,
+      `English title: ${enDraft.title}`,
+      `English summary: ${enDraft.summary}`,
+      `English content: ${enContent}`,
+      `Existing source URL: ${composer.sourceUrl}`,
+      `Existing attribution: ${composer.sourceAttribution}`,
+    ].filter(Boolean).join("\n");
+
+    setAiMetadataGenerating(true);
+
+    try {
+      const response = await fetch("/api/admin/ai/data-entry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target: "articleMetadata", prompt }),
+      });
+      const result = await parseResponse<ArticleMetadataDraft>(response);
+
+      if (!response.ok || !result.ok) {
+        setAiError(result.ok ? "Unable to generate article metadata" : result.error?.message ?? "Unable to generate article metadata");
+        return;
+      }
+
+      const nextArticleType = result.data.articleType?.trim() ?? "";
+      const nextSlug = normalizeArticleSlug(result.data.slug ?? "");
+      const nextSourceUrl = normalizeOptionalUrlOrLocalPath(result.data.sourceUrl ?? "");
+
+      setComposer((prev) => ({
+        ...prev,
+        slug: nextSlug || prev.slug,
+        articleType: articleTypeValues.has(nextArticleType) ? nextArticleType : prev.articleType,
+        sourceUrl: nextSourceUrl ?? prev.sourceUrl,
+        sourceAttribution: result.data.sourceAttribution?.trim() || prev.sourceAttribution,
+      }));
+      setGoogleImagePrompt(result.data.imagePrompt?.trim() || googleImagePrompt);
+      setStudioAltText(result.data.altText?.trim() || studioAltText);
+      setStudioCaption(result.data.caption?.trim() || studioCaption);
+      setStudioCredit(result.data.credit?.trim() || studioCredit);
+    } catch {
+      setAiError("Unable to generate article metadata");
+    } finally {
+      setAiMetadataGenerating(false);
+    }
+  }
+
   async function deleteArticle(id: number) {
     if (!window.confirm("Permanently delete this article? This cannot be undone.")) {
       return;
@@ -1411,6 +1501,14 @@ export function DashboardAdminManager({
                 >
                   {aiGenerating ? "Generating..." : "Generate Arabic + English"}
                 </button>
+                <button
+                  type="button"
+                  onClick={generateArticleMetadata}
+                  disabled={aiGenerating || aiMetadataGenerating}
+                  className="rounded border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-500/15 disabled:opacity-60 dark:text-emerald-300"
+                >
+                  {aiMetadataGenerating ? "Filling metadata..." : "Fill metadata"}
+                </button>
               </div>
             </div>
             <textarea
@@ -1437,7 +1535,7 @@ export function DashboardAdminManager({
               ))}
             </div>
             <p className="mt-2 text-xs text-[var(--text-subtle)]">
-              The assistant will fill the active locale title, summary, and content without switching away from the article editor.
+              The assistant can fill article text, slug, type, source attribution, image prompt, alt text, caption, and credit without leaving the editor.
             </p>
             {aiError && <p className="mt-2 text-sm text-red-700">{aiError}</p>}
           </section>
