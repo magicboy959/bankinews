@@ -11,6 +11,12 @@ type GeminiPart = {
   inline_data?: { mime_type?: string | null; data?: string | null } | null;
 };
 
+type InteractionImage = {
+  data?: string | null;
+  mime_type?: string | null;
+  mimeType?: string | null;
+};
+
 const DEFAULT_GOOGLE_TEXT_MODEL = "gemini-3.5-flash";
 const DEFAULT_GOOGLE_IMAGE_MODEL = "gemini-3.1-flash-image";
 
@@ -66,6 +72,16 @@ function getInlineImage(part: GeminiPart) {
   }
 
   return null;
+}
+
+function hasOutputImage(value: unknown) {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const response = value as { output_image?: InteractionImage | null; outputImage?: InteractionImage | null };
+  const outputImage = response.output_image ?? response.outputImage;
+  return cleanText(outputImage?.data).length > 100;
 }
 
 export async function GET() {
@@ -125,21 +141,26 @@ export async function POST(request: Request) {
       return ok({ target, model: status.textModel, receivedContent: Boolean(text) });
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(status.imageModel)}:generateContent`, {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-goog-api-key": getGoogleApiKey(),
       },
       body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: "Generate a simple realistic editorial photo of a bank building exterior, no text. Prefer a 16:9 composition." }] }],
-        generationConfig: {
-          responseModalities: ["TEXT", "IMAGE"],
+        model: status.imageModel,
+        input: [{ type: "text", text: "Generate a simple realistic editorial photo of a bank building exterior, no text." }],
+        response_format: {
+          type: "image",
+          mime_type: "image/png",
+          aspect_ratio: "16:9",
         },
       }),
     });
 
     const json = (await response.json().catch(() => ({}))) as {
+      output_image?: InteractionImage | null;
+      outputImage?: InteractionImage | null;
       candidates?: Array<{ content?: { parts?: GeminiPart[] } }>;
     };
 
@@ -149,7 +170,7 @@ export async function POST(request: Request) {
     }
 
     const imagePart = json.candidates?.[0]?.content?.parts?.map(getInlineImage).find(Boolean);
-    return ok({ target, model: status.imageModel, receivedImage: Boolean(imagePart) });
+    return ok({ target, model: status.imageModel, receivedImage: hasOutputImage(json) || Boolean(imagePart) });
   } catch {
     return serverError("Unable to test Google AI");
   }

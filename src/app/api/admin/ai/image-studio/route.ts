@@ -22,8 +22,27 @@ type GeminiPart = {
   } | null;
 };
 
+type InteractionImage = {
+  data?: string | null;
+  mime_type?: string | null;
+  mimeType?: string | null;
+};
+
 function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeGeminiModel(value: string, fallback: string) {
+  const model = value.trim().replace(/^models\//, "");
+  if (!model) {
+    return fallback;
+  }
+
+  if (model.startsWith("emini-")) {
+    return `g${model}`;
+  }
+
+  return model;
 }
 
 function parseInlineImage(value: unknown): InlineImage | null {
@@ -65,6 +84,23 @@ function getInlineImageFromPart(part: GeminiPart): InlineImage | null {
   return null;
 }
 
+function getOutputImage(value: unknown): InlineImage | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const response = value as { output_image?: InteractionImage | null; outputImage?: InteractionImage | null };
+  const outputImage = response.output_image ?? response.outputImage;
+  const data = cleanText(outputImage?.data);
+  const mimeType = cleanText(outputImage?.mime_type ?? outputImage?.mimeType) || "image/png";
+
+  if (!data || data.length < 100) {
+    return null;
+  }
+
+  return { data, mimeType };
+}
+
 function getGoogleErrorMessage(value: unknown) {
   if (!value || typeof value !== "object") {
     return "";
@@ -104,8 +140,9 @@ export async function POST(request: Request) {
       return badRequest("Choose or upload an image before asking Google AI to edit it.");
     }
 
-    const parts: Array<{ text: string } | { inline_data: { mime_type: string; data: string } }> = [
+    const input: Array<{ type: "text"; text: string } | { type: "image"; mime_type: string; data: string }> = [
       {
+        type: "text",
         text:
           mode === "edit"
             ? `Edit this image for a banking news article. Prefer a ${aspectRatio} composition when possible. ${prompt}`
@@ -114,30 +151,34 @@ export async function POST(request: Request) {
     ];
 
     if (sourceImage) {
-      parts.unshift({
-        inline_data: {
-          mime_type: sourceImage.mimeType,
-          data: sourceImage.data,
-        },
+      input.push({
+        type: "image",
+        mime_type: sourceImage.mimeType,
+        data: sourceImage.data,
       });
     }
 
-    const model = process.env.GOOGLE_AI_IMAGE_MODEL?.trim() || "gemini-3.1-flash-image";
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+    const model = normalizeGeminiModel(process.env.GOOGLE_AI_IMAGE_MODEL ?? "", "gemini-3.1-flash-image");
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-goog-api-key": apiKey,
       },
       body: JSON.stringify({
-        contents: [{ role: "user", parts }],
-        generationConfig: {
-          responseModalities: ["TEXT", "IMAGE"],
+        model,
+        input,
+        response_format: {
+          type: "image",
+          mime_type: "image/png",
+          aspect_ratio: aspectRatio,
         },
       }),
     });
 
     const json = (await response.json().catch(() => ({}))) as {
+      output_image?: InteractionImage | null;
+      outputImage?: InteractionImage | null;
       candidates?: Array<{ content?: { parts?: GeminiPart[] } }>;
     };
 
@@ -147,7 +188,7 @@ export async function POST(request: Request) {
     }
 
     const responseParts = json.candidates?.[0]?.content?.parts ?? [];
-    const imagePart = responseParts.map(getInlineImageFromPart).find(Boolean);
+    const imagePart = getOutputImage(json) ?? responseParts.map(getInlineImageFromPart).find(Boolean);
     const text = responseParts.map((part) => cleanText(part.text)).filter(Boolean).join("\n");
 
     if (!imagePart) {
