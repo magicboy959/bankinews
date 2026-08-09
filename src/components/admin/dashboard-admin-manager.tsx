@@ -576,6 +576,10 @@ export function DashboardAdminManager({
   const campaignClickRate = marketingOverview.sentTotal > 0 ? Math.round((marketingOverview.clickTotal / marketingOverview.sentTotal) * 1000) / 10 : 0;
   const avgDwellMinutes = Math.max(0, Math.round((engagementOverview.avgDwellSeconds / 60) * 10) / 10);
   const engagementRangeLabel = engagementRange === "7d" ? "7 Days" : engagementRange === "90d" ? "90 Days" : "30 Days";
+  const pendingSubscriberCount = subscribers.filter((subscriber) => subscriber.status === "pending").length;
+  const operationalIssueCount = summary.expiredJobs + summary.ratesNeedingUpdates + summary.messagesNeedResponse;
+  const editorialBacklogCount = draftRows.length + scheduledRows.length;
+  const publishQueueLabel = scheduledRows.length > 0 ? `${scheduledRows.length} scheduled` : `${draftRows.length} drafts`;
 
   useEffect(() => {
     return () => {
@@ -1362,7 +1366,56 @@ export function DashboardAdminManager({
       {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       {mediaWarning && <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{mediaWarning}</p>}
 
-      <section className="rounded-xl border border-slate-200 bg-gradient-to-r from-[#0A2342] to-[#123A63] p-5 text-white">
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Today&apos;s Command Center</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">Priority signals and shortcuts for the main publishing workflow.</p>
+          </div>
+          <span className={`rounded-full px-3 py-1 text-xs font-bold ${operationalIssueCount > 0 ? "bg-amber-500/15 text-amber-700 dark:text-amber-300" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"}`}>
+            {operationalIssueCount > 0 ? `${operationalIssueCount} items need attention` : "Operations clear"}
+          </span>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <CommandCenterCard
+            label="Editorial Queue"
+            value={editorialBacklogCount}
+            detail={publishQueueLabel}
+            href="#article-studio"
+            tone={editorialBacklogCount > 0 ? "cyan" : "neutral"}
+          />
+          <CommandCenterCard
+            label="Operations"
+            value={operationalIssueCount}
+            detail={`${summary.expiredJobs} jobs · ${summary.ratesNeedingUpdates} rates · ${summary.messagesNeedResponse} messages`}
+            href="#operations-summary"
+            tone={operationalIssueCount > 0 ? "amber" : "neutral"}
+          />
+          <CommandCenterCard
+            label="Audience"
+            value={activeSubscriberCount}
+            detail={`${pendingSubscriberCount} pending subscribers`}
+            href="#marketing-snapshot"
+            tone={activeSubscriberCount > 0 ? "emerald" : "neutral"}
+          />
+          <CommandCenterCard
+            label="Engagement"
+            value={`${Math.round(engagementOverview.completionRate)}%`}
+            detail={`${Math.round(engagementOverview.avgScrollPercent)}% avg depth · ${engagementRangeLabel}`}
+            href="#reader-engagement"
+            tone={engagementOverview.eventCount > 0 ? "indigo" : "neutral"}
+          />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <QuickAnchor href="#article-studio" label="Article Studio" />
+          <QuickAnchor href="#reader-engagement" label="Reader Engagement" />
+          <QuickAnchor href="#marketing-snapshot" label="Marketing" />
+          <QuickAnchor href="#hero-workspace" label="Hero" />
+          <QuickAnchor href="#operations-summary" label="Operations" />
+        </div>
+      </section>
+
+      <section id="marketing-snapshot" className="scroll-mt-24 rounded-xl border border-slate-200 bg-gradient-to-r from-[#0A2342] to-[#123A63] p-5 text-white">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-sm font-black uppercase tracking-wide text-cyan-100">Marketing Snapshot</h2>
@@ -1383,7 +1436,7 @@ export function DashboardAdminManager({
         </div>
       </section>
 
-      <section className="rounded-xl border border-cyan-500/25 bg-cyan-500/10 p-4">
+      <section id="hero-workspace" className="scroll-mt-24 rounded-xl border border-cyan-500/25 bg-cyan-500/10 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Homepage Hero Carousel</h2>
@@ -1400,7 +1453,7 @@ export function DashboardAdminManager({
         </div>
       </section>
 
-      <section className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-5">
+      <section id="reader-engagement" className="scroll-mt-24 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-sm font-black uppercase tracking-wide text-emerald-900 dark:text-emerald-300">Reader Engagement ({engagementRangeLabel})</h2>
@@ -1472,7 +1525,7 @@ export function DashboardAdminManager({
         </div>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+      <section id="operations-summary" className="scroll-mt-24 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
         <SummaryCard label="Published Today" value={summary.publishedToday} />
         <SummaryCard label="Drafts For Review" value={summary.draftsWaitingReview} />
         <SummaryCard label="Scheduled Posts" value={summary.scheduledPosts} />
@@ -1483,7 +1536,7 @@ export function DashboardAdminManager({
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
-        <form onSubmit={createOrUpdateArticle} className="rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-5">
+        <form id="article-studio" onSubmit={createOrUpdateArticle} className="scroll-mt-24 rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-black text-[var(--foreground)]">Article Studio</h2>
             {editingId ? (
@@ -2230,6 +2283,50 @@ function SummaryCard({ label, value }: { label: string; value: ReactNode }) {
       <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">{label}</p>
       <p className="mt-2 text-2xl font-black text-[var(--foreground)]">{value}</p>
     </div>
+  );
+}
+
+function CommandCenterCard({
+  label,
+  value,
+  detail,
+  href,
+  tone,
+}: {
+  label: string;
+  value: ReactNode;
+  detail: string;
+  href: string;
+  tone: "amber" | "cyan" | "emerald" | "indigo" | "neutral";
+}) {
+  const toneClass =
+    tone === "amber"
+      ? "border-amber-500/30 bg-amber-500/10"
+      : tone === "cyan"
+        ? "border-cyan-500/30 bg-cyan-500/10"
+        : tone === "emerald"
+          ? "border-emerald-500/30 bg-emerald-500/10"
+          : tone === "indigo"
+            ? "border-indigo-500/30 bg-indigo-500/10"
+            : "border-[var(--border)] bg-[var(--surface-strong)]";
+
+  return (
+    <a href={href} className={`block rounded-lg border p-3 transition hover:-translate-y-0.5 hover:shadow-sm ${toneClass}`}>
+      <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-subtle)]">{label}</p>
+      <p className="mt-2 text-2xl font-black text-[var(--foreground)]">{value}</p>
+      <p className="mt-1 text-xs font-medium text-[var(--text-muted)]">{detail}</p>
+    </a>
+  );
+}
+
+function QuickAnchor({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      className="rounded border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
+    >
+      {label}
+    </a>
   );
 }
 
