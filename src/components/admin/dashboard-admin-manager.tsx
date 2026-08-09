@@ -1121,10 +1121,10 @@ export function DashboardAdminManager({
     void generateGoogleImage("generate", promptParts.join(" "));
   }
 
-  async function generateAiDraft(mode: "single" | "dual") {
+  async function generateAiDraft(mode: "single" | "dual", promptOverride?: string) {
     setAiError(null);
 
-    const prompt = aiPrompt.trim();
+    const prompt = (promptOverride ?? aiPrompt).trim();
     if (prompt.length < 20) {
       setAiError("Describe the story angle or facts first.");
       return;
@@ -1172,12 +1172,36 @@ export function DashboardAdminManager({
         ...prev,
         translations: nextTranslations,
       }));
-      setAiPrompt("");
+      if (!promptOverride) {
+        setAiPrompt("");
+      }
     } catch {
       setAiError("Unable to generate AI draft");
     } finally {
       setAiGenerating(false);
     }
+  }
+
+  function polishActiveDraftForMobile() {
+    const draft = composer.translations[activeLocale];
+    const readableContent = stripHtml(draft.contentHtml);
+
+    if ([draft.title, draft.summary, readableContent].join(" ").trim().length < 40) {
+      setAiError("Add a draft title, summary, or content before polishing.");
+      return;
+    }
+
+    void generateAiDraft(
+      "single",
+      [
+        "Polish this article for small mobile screens while preserving all facts.",
+        "Use a clearer headline, tighter summary, shorter paragraphs, and simple section headings.",
+        "Do not invent new facts, numbers, dates, names, quotes, or sources.",
+        `Current title: ${draft.title}`,
+        `Current summary: ${draft.summary}`,
+        `Current content: ${readableContent.slice(0, 2400)}`,
+      ].join("\n")
+    );
   }
 
   async function generateArticleMetadata() {
@@ -1500,6 +1524,14 @@ export function DashboardAdminManager({
                   className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-60"
                 >
                   {aiGenerating ? "Generating..." : "Generate Arabic + English"}
+                </button>
+                <button
+                  type="button"
+                  onClick={polishActiveDraftForMobile}
+                  disabled={aiGenerating}
+                  className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--surface-elevated)] disabled:opacity-60"
+                >
+                  {aiGenerating ? "Polishing..." : "Polish mobile"}
                 </button>
                 <button
                   type="button"
