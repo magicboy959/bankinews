@@ -113,6 +113,7 @@ function getImageFromUnknown(value: unknown): InlineImage | null {
     mimeType?: unknown;
     inlineData?: InlineImage | null;
     inline_data?: { mime_type?: string | null; data?: string | null } | null;
+    image?: unknown;
     content?: unknown;
     parts?: unknown;
     steps?: unknown;
@@ -137,6 +138,11 @@ function getImageFromUnknown(value: unknown): InlineImage | null {
     return { data, mimeType: mimeType || "image/jpeg" };
   }
 
+  const directImage = getImageFromUnknown(candidate.image);
+  if (directImage) {
+    return directImage;
+  }
+
   for (const nested of [candidate.content, candidate.parts, candidate.steps]) {
     if (Array.isArray(nested)) {
       for (const item of nested) {
@@ -149,6 +155,70 @@ function getImageFromUnknown(value: unknown): InlineImage | null {
   }
 
   return null;
+}
+
+function findImageDeep(value: unknown, depth = 0): InlineImage | null {
+  if (!value || depth > 8) {
+    return null;
+  }
+
+  const direct = getImageFromUnknown(value);
+  if (direct) {
+    return direct;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const image = findImageDeep(item, depth + 1);
+      if (image) {
+        return image;
+      }
+    }
+    return null;
+  }
+
+  if (typeof value !== "object") {
+    return null;
+  }
+
+  const objectValue = value as Record<string, unknown>;
+  const mimeType = cleanText(objectValue.mime_type ?? objectValue.mimeType ?? objectValue.mime);
+  const data = cleanText(
+    objectValue.data ??
+      objectValue.bytesBase64Encoded ??
+      objectValue.base64 ??
+      objectValue.b64_json ??
+      objectValue.imageBytes
+  );
+
+  if (data.length > 100 && (mimeType.startsWith("image/") || cleanText(objectValue.type) === "image")) {
+    return { data, mimeType: mimeType || "image/jpeg" };
+  }
+
+  for (const item of Object.values(objectValue)) {
+    const image = findImageDeep(item, depth + 1);
+    if (image) {
+      return image;
+    }
+  }
+
+  return null;
+}
+
+function summarizeShape(value: unknown, depth = 0): string {
+  if (!value || typeof value !== "object" || depth > 2) {
+    return typeof value;
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.slice(0, 2).map((item) => summarizeShape(item, depth + 1)).join(", ")}]`;
+  }
+
+  const objectValue = value as Record<string, unknown>;
+  return `{${Object.entries(objectValue)
+    .slice(0, 8)
+    .map(([key, item]) => `${key}:${Array.isArray(item) ? `array(${item.length})` : typeof item}`)
+    .join(", ")}}`;
 }
 
 function collectText(value: unknown, output: string[] = []) {
@@ -219,18 +289,21 @@ export async function POST(request: Request) {
       return badRequest("Choose or upload an image before asking Google AI to edit it.");
     }
 
+    const textInput = {
+      type: "text" as const,
+      text:
+        mode === "edit"
+          ? `Edit this image for a banking news article. Prefer a ${aspectRatio} composition when possible. ${prompt}`
+          : `Generate a realistic editorial photo for a banking news article. Prefer a ${aspectRatio} composition. ${prompt}`,
+    };
     const input: Array<{ type: "text"; text: string } | { type: "image"; mime_type: string; data: string }> = [
       {
-        type: "text",
-        text:
-          mode === "edit"
-            ? `Edit this image for a banking news article. Prefer a ${aspectRatio} composition when possible. ${prompt}`
-            : `Generate a realistic editorial photo for a banking news article. Prefer a ${aspectRatio} composition. ${prompt}`,
+        ...textInput,
       },
     ];
 
     if (sourceImage) {
-      input.push({
+      input.unshift({
         type: "image",
         mime_type: sourceImage.mimeType,
         data: sourceImage.data,
@@ -267,11 +340,15 @@ export async function POST(request: Request) {
     }
 
     const responseParts = json.candidates?.[0]?.content?.parts ?? [];
-    const imagePart = getOutputImage(json) ?? getImageFromUnknown(json) ?? responseParts.map(getInlineImageFromPart).find(Boolean);
+    const imagePart = getOutputImage(json) ?? findImageDeep(json) ?? responseParts.map(getInlineImageFromPart).find(Boolean);
     const text = collectText(json).join("\n").trim();
 
     if (!imagePart) {
-      return serverError(text ? `Google AI did not return an image. Response: ${text.slice(0, 240)}` : "Google AI did not return an image");
+      return serverError(
+        text
+          ? `Google AI did not return an image. Response: ${text.slice(0, 240)}`
+          : `Google AI did not return an image. Response shape: ${summarizeShape(json)}`
+      );
     }
 
     return ok({

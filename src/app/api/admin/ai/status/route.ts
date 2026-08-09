@@ -96,6 +96,7 @@ function hasNestedImage(value: unknown): boolean {
     mimeType?: unknown;
     inlineData?: { data?: string | null } | null;
     inline_data?: { data?: string | null } | null;
+    image?: unknown;
     content?: unknown;
     parts?: unknown;
     steps?: unknown;
@@ -108,6 +109,10 @@ function hasNestedImage(value: unknown): boolean {
     return true;
   }
 
+  if (hasNestedImage(candidate.image)) {
+    return true;
+  }
+
   for (const nested of [candidate.content, candidate.parts, candidate.steps]) {
     if (Array.isArray(nested) && nested.some(hasNestedImage)) {
       return true;
@@ -115,6 +120,40 @@ function hasNestedImage(value: unknown): boolean {
   }
 
   return false;
+}
+
+function hasDeepImage(value: unknown, depth = 0): boolean {
+  if (!value || depth > 8) {
+    return false;
+  }
+
+  if (hasNestedImage(value)) {
+    return true;
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => hasDeepImage(item, depth + 1));
+  }
+
+  if (typeof value !== "object") {
+    return false;
+  }
+
+  const objectValue = value as Record<string, unknown>;
+  const mimeType = cleanText(objectValue.mime_type ?? objectValue.mimeType ?? objectValue.mime);
+  const data = cleanText(
+    objectValue.data ??
+      objectValue.bytesBase64Encoded ??
+      objectValue.base64 ??
+      objectValue.b64_json ??
+      objectValue.imageBytes
+  );
+
+  if (data.length > 100 && (mimeType.startsWith("image/") || cleanText(objectValue.type) === "image")) {
+    return true;
+  }
+
+  return Object.values(objectValue).some((item) => hasDeepImage(item, depth + 1));
 }
 
 export async function GET() {
@@ -203,7 +242,7 @@ export async function POST(request: Request) {
     }
 
     const imagePart = json.candidates?.[0]?.content?.parts?.map(getInlineImage).find(Boolean);
-    return ok({ target, model: status.imageModel, receivedImage: hasOutputImage(json) || hasNestedImage(json) || Boolean(imagePart) });
+    return ok({ target, model: status.imageModel, receivedImage: hasOutputImage(json) || hasDeepImage(json) || Boolean(imagePart) });
   } catch {
     return serverError("Unable to test Google AI");
   }
