@@ -58,8 +58,8 @@ export default async function ArticlePage({
         const relatedArabic = await getPublishedArticles("ar", 6);
 
         return (
-          <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-            <article className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
+          <div className="article-page-grid grid gap-8 lg:grid-cols-[1fr_320px]">
+            <article className="article-shell rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
               <h1 className="text-2xl font-black text-[var(--foreground)]">Arabic Is Our Main Language</h1>
               <p className="mt-3 text-base leading-7 text-slate-600 dark:text-slate-300">
                 This content is not available in this language right now.
@@ -129,19 +129,19 @@ export default async function ArticlePage({
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-      <article className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
+    <div className="article-page-grid grid gap-8 lg:grid-cols-[1fr_320px]">
+      <article className="article-shell rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
         <div className="mb-4 flex flex-wrap gap-2 text-xs font-bold uppercase">
           {article.isSponsored && <span className="rounded bg-amber-100 px-2 py-1 text-amber-700">{t.labels.sponsored}</span>}
           {article.isOpinion && <span className="rounded bg-cyan-100 px-2 py-1 text-cyan-700">{t.labels.opinion}</span>}
           {article.isPressRelease && <span className="rounded bg-slate-200 px-2 py-1 text-slate-700">{t.labels.pressRelease}</span>}
         </div>
 
-        <h1 className="text-3xl font-black text-[var(--foreground)]">{article.title}</h1>
-        <p className="mt-3 text-lg text-slate-600 dark:text-slate-300">{article.summary}</p>
+        <h1 className="article-headline text-3xl font-black text-[var(--foreground)]">{article.title}</h1>
+        <p className="article-summary mt-3 text-lg text-slate-600 dark:text-slate-300">{article.summary}</p>
 
         {article.featuredImageUrl ? (
-          <div className="mt-5 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-muted)]">
+          <div className="article-featured-media mt-5 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-muted)]">
             <img
               src={article.featuredImageUrl}
               alt={article.title}
@@ -181,7 +181,7 @@ export default async function ArticlePage({
           </section>
         ) : null}
 
-        <div className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+        <div className="article-meta mt-4 text-sm text-slate-500 dark:text-slate-400">
           {article.publishedAt ? formatDate(article.publishedAt, safeLocale) : "-"}
           <span className="mx-2">•</span>
           {article.readingTimeMinutes} min
@@ -199,7 +199,7 @@ export default async function ArticlePage({
           </ArticleReaderExperience>
         </div>
 
-        <section className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+        <section className="article-info-panel mt-8 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4">
           <h2 className="text-lg font-black text-[var(--primary)]">
             {safeLocale === "ar" ? "المصدر والتحقق" : "Source & Verification"}
           </h2>
@@ -263,7 +263,7 @@ export default async function ArticlePage({
         </section>
 
         {correctionHistory.length > 1 && (
-          <section className="mt-8 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+          <section className="article-info-panel mt-8 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
             <h2 className="text-lg font-black text-[var(--primary)]">
               {safeLocale === "ar" ? "سجل التصحيحات" : "Correction History"}
             </h2>
@@ -288,7 +288,7 @@ export default async function ArticlePage({
         )}
       </article>
 
-      <aside>
+      <aside className="article-related">
         <h2 className="mb-4 text-xl font-black text-[#0A2342]">{t.labels.mostRead}</h2>
         <div className="space-y-3">
           {related.map((card) => (

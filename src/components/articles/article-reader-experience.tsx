@@ -14,15 +14,30 @@ type Props = {
 type DensityMode = "default" | "comfortable";
 
 export function ArticleReaderExperience({ articleId, locale, slug, title, readingTimeMinutes, children }: Props) {
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number | null>(null);
   const sentMilestonesRef = useRef<Set<number>>(new Set());
   const sentDwellRef = useRef<Set<number>>(new Set());
   const [progress, setProgress] = useState(0);
   const [density, setDensity] = useState<DensityMode>("default");
   const [fontBoost, setFontBoost] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [shareUrl, setShareUrl] = useState("");
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
+
+  function getStartTime() {
+    if (startTimeRef.current === null) {
+      startTimeRef.current = Date.now();
+    }
+
+    return startTimeRef.current;
+  }
+
+  function getShareUrl() {
+    if (typeof window !== "undefined") {
+      return window.location.href;
+    }
+
+    return `/${locale}/news/${slug}`;
+  }
 
   async function sendEngagementEvent(payload: {
     articleId: number;
@@ -48,12 +63,6 @@ export function ArticleReaderExperience({ articleId, locale, slug, title, readin
   }
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setShareUrl(window.location.href);
-    }
-  }, [slug]);
-
-  useEffect(() => {
     const milestones = [25, 50, 75, 100];
     for (const milestone of milestones) {
       if (progress >= milestone && !sentMilestonesRef.current.has(milestone)) {
@@ -62,7 +71,7 @@ export function ArticleReaderExperience({ articleId, locale, slug, title, readin
           articleId,
           eventName: `scroll_${milestone}`,
           progressPercent: milestone,
-          secondsOnPage: Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000)),
+          secondsOnPage: Math.max(1, Math.round((Date.now() - getStartTime()) / 1000)),
           locale,
         });
       }
@@ -72,7 +81,7 @@ export function ArticleReaderExperience({ articleId, locale, slug, title, readin
   useEffect(() => {
     const dwellMilestones = [30, 90, 180];
     const intervalId = window.setInterval(() => {
-      const secondsOnPage = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
+      const secondsOnPage = Math.max(1, Math.round((Date.now() - getStartTime()) / 1000));
       for (const point of dwellMilestones) {
         if (secondsOnPage >= point && !sentDwellRef.current.has(point)) {
           sentDwellRef.current.add(point);
@@ -116,7 +125,7 @@ export function ArticleReaderExperience({ articleId, locale, slug, title, readin
   }, []);
 
   async function copyLink() {
-    const target = shareUrl || `${window.location.origin}/${locale}/news/${slug}`;
+    const target = getShareUrl();
     await navigator.clipboard.writeText(target);
     void sendEngagementEvent({ articleId, eventName: "copy_link", progressPercent: Math.round(progress), locale });
     setCopied(true);
@@ -124,7 +133,7 @@ export function ArticleReaderExperience({ articleId, locale, slug, title, readin
   }
 
   async function nativeShare() {
-    const target = shareUrl || `${window.location.origin}/${locale}/news/${slug}`;
+    const target = getShareUrl();
     if (!navigator.share) {
       await copyLink();
       return;
@@ -138,7 +147,7 @@ export function ArticleReaderExperience({ articleId, locale, slug, title, readin
     }
   }
 
-  const currentUrl = shareUrl || `/${locale}/news/${slug}`;
+  const currentUrl = `/${locale}/news/${slug}`;
   const encodedUrl = encodeURIComponent(currentUrl);
   const encodedTitle = encodeURIComponent(title);
 
@@ -202,19 +211,19 @@ export function ArticleReaderExperience({ articleId, locale, slug, title, readin
     <div>
       <div className="article-progress-bar" style={{ width: `${progress}%` }} aria-hidden="true" />
 
-      <section className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
+      <section className="article-reader-toolbar mb-6 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+          <div className="article-reader-status text-xs font-semibold text-slate-600 dark:text-slate-300">
             {locale === "ar"
               ? `التقدم ${Math.round(progress)}% • متبق تقريبا ${readingMinutesLeft} دقيقة`
               : `${Math.round(progress)}% read • about ${readingMinutesLeft} min left`}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="article-reader-actions flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setDensity((prev) => (prev === "default" ? "comfortable" : "default"))}
-              className="rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="article-reader-action rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               {density === "default"
                 ? locale === "ar"
@@ -227,7 +236,7 @@ export function ArticleReaderExperience({ articleId, locale, slug, title, readin
             <button
               type="button"
               onClick={() => setFontBoost((prev) => !prev)}
-              className="rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="article-reader-action rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               {fontBoost
                 ? locale === "ar"
@@ -248,27 +257,27 @@ export function ArticleReaderExperience({ articleId, locale, slug, title, readin
         {children}
       </div>
 
-      <div className="mt-8 flex justify-end">
+      <div className="article-share-area mt-8 flex justify-end">
         <div className="flex flex-col items-end">
           <button
             type="button"
             onClick={() => setSharePanelOpen((prev) => !prev)}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800"
+            className="article-share-toggle inline-flex items-center gap-2 rounded-full border border-slate-300 bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800"
             aria-expanded={sharePanelOpen}
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
               <path d="M14 4h6v6h-2V7.4l-7.3 7.3-1.4-1.4L16.6 6H14V4ZM5 5h7v2H7v10h10v-5h2v7H5V5Z" />
             </svg>
-            <span>{locale === "ar" ? "مشاركة" : "Share"}</span>
+            <span>{copied ? (locale === "ar" ? "تم النسخ" : "Copied") : locale === "ar" ? "مشاركة" : "Share"}</span>
           </button>
 
           {sharePanelOpen ? (
-            <div className="mt-3 flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)]/95 px-2 py-2 shadow-sm backdrop-blur">
+            <div className="article-share-panel mt-3 flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)]/95 px-2 py-2 shadow-sm backdrop-blur">
               <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
                 {locale === "ar" ? "مشاركة" : "Share"}
               </span>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="article-share-buttons flex flex-wrap items-center gap-2">
                 {shareButtons.map((button) => (
                   <a
                     key={button.key}
