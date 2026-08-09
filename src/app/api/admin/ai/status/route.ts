@@ -152,7 +152,7 @@ export async function POST(request: Request) {
         input: [{ type: "text", text: "Generate a simple realistic editorial photo of a bank building exterior, no text." }],
         response_format: {
           type: "image",
-          mime_type: "image/png",
+          mime_type: "image/jpeg",
           aspect_ratio: "16:9",
         },
       }),

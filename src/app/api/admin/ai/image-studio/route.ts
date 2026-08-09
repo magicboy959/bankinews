@@ -92,7 +92,7 @@ function getOutputImage(value: unknown): InlineImage | null {
   const response = value as { output_image?: InteractionImage | null; outputImage?: InteractionImage | null };
   const outputImage = response.output_image ?? response.outputImage;
   const data = cleanText(outputImage?.data);
-  const mimeType = cleanText(outputImage?.mime_type ?? outputImage?.mimeType) || "image/png";
+  const mimeType = cleanText(outputImage?.mime_type ?? outputImage?.mimeType) || "image/jpeg";
 
   if (!data || data.length < 100) {
     return null;
@@ -170,7 +170,7 @@ export async function POST(request: Request) {
         input,
         response_format: {
           type: "image",
-          mime_type: "image/png",
+          mime_type: "image/jpeg",
           aspect_ratio: aspectRatio,
         },
       }),
