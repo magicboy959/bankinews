@@ -6,6 +6,7 @@
   --background: #f8fafc;
   --foreground: #0f172a;
   --primary: #0a2342;
+  --primary-contrast: #ffffff;
   --accent: #0ea5a8;
   --gold: #c9a227;
   --surface: #ffffff;
@@ -23,6 +24,7 @@
   --background: #020617;
   --foreground: #e2e8f0;
   --primary: #e2e8f0;
+  --primary-contrast: #020617;
   --accent: #5eead4;
   --gold: #fbbf24;
   --surface: #0f172a;

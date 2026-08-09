@@ -1789,10 +1789,10 @@ export function DashboardAdminManager({
                     <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] bg-[var(--surface-strong)] px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-subtle)]">
                       <span>{studioPreviewMode === "before" ? "Before upload" : "After optimization"}</span>
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => setStudioPreviewMode("before")} className={`rounded px-2 py-1 ${studioPreviewMode === "before" ? "bg-[var(--primary)] text-white" : "bg-[var(--surface)] text-[var(--text-muted)]"}`}>
+                        <button type="button" onClick={() => setStudioPreviewMode("before")} className={`rounded px-2 py-1 ${studioPreviewMode === "before" ? "bg-[var(--primary)] text-[var(--primary-contrast)]" : "bg-[var(--surface)] text-[var(--text-muted)]"}`}>
                           Before
                         </button>
-                        <button type="button" onClick={() => setStudioPreviewMode("after")} className={`rounded px-2 py-1 ${studioPreviewMode === "after" ? "bg-[var(--primary)] text-white" : "bg-[var(--surface)] text-[var(--text-muted)]"}`}>
+                        <button type="button" onClick={() => setStudioPreviewMode("after")} className={`rounded px-2 py-1 ${studioPreviewMode === "after" ? "bg-[var(--primary)] text-[var(--primary-contrast)]" : "bg-[var(--surface)] text-[var(--text-muted)]"}`}>
                           After
                         </button>
                       </div>
