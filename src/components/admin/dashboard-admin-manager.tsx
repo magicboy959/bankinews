@@ -155,6 +155,7 @@ type ApiFailure = {
   ok: false;
   error?: {
     message?: string;
+    details?: { fieldErrors?: Record<string, string[]> };
   };
 };
 
@@ -215,6 +216,7 @@ const articleTypeOptions = [
   { value: "job_listing", label: "Job listing" },
   { value: "security_alert", label: "Security alert" },
 ];
+const articleTypeValues = new Set(articleTypeOptions.map((option) => option.value));
 
 function truthyFlag(value: number | boolean): boolean {
   return value === true || value === 1;
@@ -420,6 +422,22 @@ function normalizeArticleSlug(value: string): string {
 async function parseResponse<T>(response: Response): Promise<ApiSuccess<T> | ApiFailure> {
   const json = (await response.json().catch(() => ({}))) as ApiSuccess<T> | ApiFailure;
   return json;
+}
+
+function formatApiError(result: ApiSuccess<unknown> | ApiFailure, fallback: string) {
+  if (result.ok) {
+    return fallback;
+  }
+
+  const fieldMessages = Object.entries(result.error?.details?.fieldErrors ?? {})
+    .flatMap(([field, messages]) => (messages ?? []).map((message) => `${field}: ${message}`))
+    .slice(0, 4);
+
+  if (fieldMessages.length) {
+    return `${result.error?.message ?? fallback}: ${fieldMessages.join("; ")}`;
+  }
+
+  return result.error?.message ?? fallback;
 }
 
 export function DashboardAdminManager({
@@ -692,13 +710,15 @@ export function DashboardAdminManager({
   }
 
   function buildPayload(locale: Locale) {
+    const articleType = composer.articleType.trim();
+
     return {
       locale,
-      slug: composer.slug.trim() || null,
+      slug: normalizeArticleSlug(composer.slug) || null,
       title: composer.translations[locale].title.trim(),
       summary: composer.translations[locale].summary.trim(),
       contentHtml: composer.translations[locale].contentHtml.trim(),
-      articleType: composer.articleType.trim(),
+      articleType: articleTypeValues.has(articleType) ? articleType : "news",
       status: composer.status,
       featuredImageUrl: composer.featuredImageUrl.trim() || null,
       videoUrl: composer.videoUrl.trim() || null,
@@ -756,7 +776,7 @@ export function DashboardAdminManager({
       const result = await parseResponse<{ articleId: number }>(response);
       if (!response.ok || !result.ok) {
         setSubmitting(false);
-        setError(result.ok ? "Unable to create article" : result.error?.message ?? "Unable to create article");
+        setError(formatApiError(result, "Unable to create article"));
         return;
       }
 
@@ -798,7 +818,7 @@ export function DashboardAdminManager({
       const result = await parseResponse<{ id: number }>(response);
       if (!response.ok || !result.ok) {
         setSubmitting(false);
-        setError(result.ok ? "Unable to update article" : result.error?.message ?? "Unable to update article");
+        setError(formatApiError(result, "Unable to update article"));
         return;
       }
     }

@@ -169,7 +169,14 @@ export async function POST(request: Request) {
     const parsed = articleCreateSchema.safeParse(body);
 
     if (!parsed.success) {
-      return badRequest("Invalid article payload", parsed.error.flatten());
+      const flattened = parsed.error.flatten();
+      const fieldMessages = Object.entries(flattened.fieldErrors)
+        .flatMap(([field, messages]) => (messages ?? []).map((message) => `${field}: ${message}`))
+        .slice(0, 4);
+      return badRequest(
+        fieldMessages.length ? `Invalid article payload: ${fieldMessages.join("; ")}` : "Invalid article payload",
+        flattened
+      );
     }
 
     const payload = parsed.data;
