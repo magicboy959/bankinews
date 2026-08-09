@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import NextImage from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RichTextEditor, hasRichTextContent } from "./rich-text-editor";
@@ -1798,11 +1799,15 @@ export function DashboardAdminManager({
                       </div>
                     </div>
                     <div className="relative p-3">
-                      <img
+                      <div className="relative h-72 w-full overflow-hidden rounded">
+                        <NextImage
                         key={`${studioPreviewMode}-${studioPreviewUrl || composer.featuredImageUrl}`}
                         src={studioPreviewMode === "before" ? (studioPreviewUrl || composer.featuredImageUrl) : (studioPreviewUrl || composer.featuredImageUrl)}
                         alt="Featured image preview"
-                        className="h-72 w-full rounded object-cover"
+                        fill
+                        unoptimized
+                        sizes="(max-width: 1024px) 100vw, 45vw"
+                        className="object-cover"
                         style={{ transform: `scale(${studioScale})`, transformOrigin: "center center" }}
                         onLoad={() => {
                           setImagePreviewState("ok");
@@ -1811,7 +1816,8 @@ export function DashboardAdminManager({
                           setImagePreviewState("error");
                           setStudioPreviewError("This preview could not be loaded. Choose another image or verify the URL.");
                         }}
-                      />
+                        />
+                      </div>
                       {(studioPreviewUrl || composer.featuredImageUrl.trim()) ? (
                         <div className="absolute left-6 top-6 rounded-full border border-white/60 bg-black/55 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow-lg backdrop-blur">
                           {selectionStatusLabel}
@@ -1969,7 +1975,9 @@ export function DashboardAdminManager({
                             }}
                             className="block w-full text-left hover:text-[var(--primary)]"
                           >
-                            <img src={media.url} alt={media.fileName} className="mb-2 h-16 w-full rounded object-cover" />
+                            <span className="relative mb-2 block h-16 w-full overflow-hidden rounded">
+                              <NextImage src={media.url} alt={media.fileName} fill unoptimized sizes="108px" className="object-cover" />
+                            </span>
                             <span className="line-clamp-1 font-semibold">{media.fileName}</span>
                           </button>
                           <div className="mt-2 flex items-center justify-between gap-2">
@@ -2040,11 +2048,14 @@ export function DashboardAdminManager({
 
             <div className="mt-4 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm">
               {composer.featuredImageUrl.trim() ? (
-                <div className="bg-slate-100">
-                  <img
+                <div className="relative h-72 bg-slate-100">
+                  <NextImage
                     src={composer.featuredImageUrl}
                     alt={previewTitle || "Article preview"}
-                    className="h-auto max-h-72 w-full object-cover"
+                    fill
+                    unoptimized
+                    sizes="(max-width: 1280px) 100vw, 55vw"
+                    className="object-cover"
                     onLoad={() => setImagePreviewState("ok")}
                     onError={() => setImagePreviewState("error")}
                   />
