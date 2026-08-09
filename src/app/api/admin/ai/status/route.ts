@@ -17,7 +17,7 @@ type InteractionImage = {
   mimeType?: string | null;
 };
 
-const DEFAULT_GOOGLE_TEXT_MODEL = "gemini-3.5-flash";
+const DEFAULT_GOOGLE_TEXT_MODEL = "gemini-3.6-flash";
 const DEFAULT_GOOGLE_IMAGE_MODEL = "gemini-3.1-flash-image";
 
 function cleanText(value: unknown) {

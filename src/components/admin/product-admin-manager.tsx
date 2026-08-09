@@ -70,6 +70,9 @@ export function ProductAdminManager({
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const sortedRows = useMemo(
     () => [...initialRows].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
@@ -98,6 +101,31 @@ export function ProductAdminManager({
       description: form.description.trim(),
       officialSourceUrl: form.officialSourceUrl.trim() || null,
     };
+  }
+
+  async function fillCreateWithAi() {
+    setAiError(null);
+    const prompt = aiPrompt.trim();
+    if (prompt.length < 12) {
+      setAiError("Describe the product details first.");
+      return;
+    }
+
+    setAiGenerating(true);
+    const response = await fetch("/api/admin/ai/data-entry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target: "product", prompt }),
+    });
+    const result = await parseResponse<Partial<ProductFormState>>(response);
+    setAiGenerating(false);
+
+    if (!response.ok || !result.ok) {
+      setAiError(result.ok ? "Unable to fill product fields" : result.error?.message ?? "Unable to fill product fields");
+      return;
+    }
+
+    setCreateForm((prev) => ({ ...prev, ...result.data, bankId: prev.bankId }));
   }
 
   async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
@@ -209,6 +237,19 @@ export function ProductAdminManager({
 
       <form onSubmit={handleCreate} className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
         <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Create Product</h2>
+        <div className="mt-3 rounded-lg border border-cyan-500/25 bg-cyan-500/10 p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--foreground)]">Google AI data entry</p>
+          <textarea
+            className="mt-2 min-h-20 w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
+            placeholder="Paste product facts, category, fees, benefits, requirements, and source URL..."
+            value={aiPrompt}
+            onChange={(event) => setAiPrompt(event.target.value)}
+          />
+          <button type="button" onClick={fillCreateWithAi} disabled={aiGenerating} className="mt-2 rounded bg-[#0A2342] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">
+            {aiGenerating ? "Filling..." : "Fill product fields"}
+          </button>
+          {aiError ? <p className="mt-2 text-sm text-red-700 dark:text-red-300">{aiError}</p> : null}
+        </div>
 
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <input

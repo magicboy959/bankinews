@@ -22,7 +22,7 @@ type DualDraftResponse = {
   en: DraftResponse;
 };
 
-const DEFAULT_GOOGLE_TEXT_MODEL = "gemini-3.5-flash";
+const DEFAULT_GOOGLE_TEXT_MODEL = "gemini-3.6-flash";
 
 function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";

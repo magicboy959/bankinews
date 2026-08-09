@@ -63,6 +63,9 @@ export function BankAdminManager({ initialRows }: { initialRows: BankListItem[] 
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const sortedRows = useMemo(
     () => [...initialRows].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
@@ -92,6 +95,31 @@ export function BankAdminManager({ initialRows }: { initialRows: BankListItem[] 
       swiftCode: form.swiftCode.trim() || null,
       showOnWebsite: form.showOnWebsite,
     };
+  }
+
+  async function fillCreateWithAi() {
+    setAiError(null);
+    const prompt = aiPrompt.trim();
+    if (prompt.length < 12) {
+      setAiError("Describe the bank details first.");
+      return;
+    }
+
+    setAiGenerating(true);
+    const response = await fetch("/api/admin/ai/data-entry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target: "bank", prompt }),
+    });
+    const result = await parseResponse<Partial<BankFormState>>(response);
+    setAiGenerating(false);
+
+    if (!response.ok || !result.ok) {
+      setAiError(result.ok ? "Unable to fill bank fields" : result.error?.message ?? "Unable to fill bank fields");
+      return;
+    }
+
+    setCreateForm((prev) => ({ ...prev, ...result.data, showOnWebsite: prev.showOnWebsite }));
   }
 
   async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
@@ -204,6 +232,19 @@ export function BankAdminManager({ initialRows }: { initialRows: BankListItem[] 
 
       <form onSubmit={handleCreate} className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
         <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Create Bank</h2>
+        <div className="mt-3 rounded-lg border border-cyan-500/25 bg-cyan-500/10 p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--foreground)]">Google AI data entry</p>
+          <textarea
+            className="mt-2 min-h-20 w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
+            placeholder="Paste bank facts, official website, headquarters, SWIFT code, and short description..."
+            value={aiPrompt}
+            onChange={(event) => setAiPrompt(event.target.value)}
+          />
+          <button type="button" onClick={fillCreateWithAi} disabled={aiGenerating} className="mt-2 rounded bg-[#0A2342] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">
+            {aiGenerating ? "Filling..." : "Fill bank fields"}
+          </button>
+          {aiError ? <p className="mt-2 text-sm text-red-700 dark:text-red-300">{aiError}</p> : null}
+        </div>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Slug" value={createForm.slug} onChange={(e) => onChange(setCreateForm, "slug", e.target.value)} required />
           <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Name" value={createForm.name} onChange={(e) => onChange(setCreateForm, "name", e.target.value)} required />

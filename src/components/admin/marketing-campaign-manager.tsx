@@ -45,19 +45,6 @@ type CampaignStats = {
 type ApiSuccess<T> = { ok: true; data: T };
 type ApiFailure = { ok: false; error?: { message?: string } };
 
-function toDateTimeLocalValue(value: string | null): string {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-}
-
 async function parseResponse<T>(response: Response): Promise<ApiSuccess<T> | ApiFailure> {
   const json = (await response.json().catch(() => ({}))) as ApiSuccess<T> | ApiFailure;
   return json;
@@ -82,6 +69,9 @@ export function MarketingCampaignManager({
   const [sendNow, setSendNow] = useState(false);
   const [templateKey, setTemplateKey] = useState<"" | MarketingTemplateKey>("");
   const [submitting, setSubmitting] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [expandedCampaignId, setExpandedCampaignId] = useState<number | null>(null);
   const [loadingStatsId, setLoadingStatsId] = useState<number | null>(null);
@@ -150,6 +140,34 @@ export function MarketingCampaignManager({
     setTextContent(template.textContent);
   }
 
+  async function fillCampaignWithAi() {
+    setAiError(null);
+    const prompt = aiPrompt.trim();
+    if (prompt.length < 12) {
+      setAiError("Describe the campaign first.");
+      return;
+    }
+
+    setAiGenerating(true);
+    const response = await fetch("/api/admin/ai/data-entry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target: "campaign", prompt }),
+    });
+    const result = await parseResponse<Partial<{ subject: string; htmlContent: string; textContent: string }>>(response);
+    setAiGenerating(false);
+
+    if (!response.ok || !result.ok) {
+      setAiError(result.ok ? "Unable to draft campaign" : result.error?.message ?? "Unable to draft campaign");
+      return;
+    }
+
+    setSubject(result.data.subject ?? "");
+    setHtmlContent(result.data.htmlContent ?? "");
+    setTextContent(result.data.textContent ?? "");
+    setTemplateKey("");
+  }
+
   async function sendCampaign(id: number) {
     setError(null);
     setSendingId(id);
@@ -212,6 +230,19 @@ export function MarketingCampaignManager({
       <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
         <h2 className="text-lg font-black text-[var(--foreground)]">New Campaign</h2>
         <form onSubmit={createCampaign} className="mt-4 space-y-3">
+          <div className="rounded-lg border border-cyan-500/25 bg-cyan-500/10 p-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-[var(--foreground)]">Google AI data entry</p>
+            <textarea
+              className="mt-2 min-h-20 w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--text-subtle)]"
+              placeholder="Describe the newsletter topic, audience, key links, offer, and tone..."
+              value={aiPrompt}
+              onChange={(event) => setAiPrompt(event.target.value)}
+            />
+            <button type="button" onClick={fillCampaignWithAi} disabled={aiGenerating} className="mt-2 rounded bg-[#0A2342] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">
+              {aiGenerating ? "Drafting..." : "Draft campaign fields"}
+            </button>
+            {aiError ? <p className="mt-2 text-sm text-red-700 dark:text-red-300">{aiError}</p> : null}
+          </div>
           <select
             className="w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--foreground)]"
             value={templateKey}
