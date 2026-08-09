@@ -40,6 +40,20 @@ type ApiFailure = {
   error?: { message?: string };
 };
 
+type GoogleAiStatus = {
+  configured: boolean;
+  keyStatus: string;
+  textModel: string;
+  imageModel: string;
+};
+
+type AiTestResult = {
+  target: string;
+  model: string;
+  receivedContent?: boolean;
+  receivedImage?: boolean;
+};
+
 type SocialPlatform = "facebook" | "x" | "linkedin" | "instagram" | "youtube";
 
 type SocialLinkDraft = {
@@ -232,9 +246,11 @@ function truthy(value: number | boolean): boolean {
 export function SettingsAdminManager({
   initialSettings,
   initialSections,
+  googleAiStatus,
 }: {
   initialSettings: SettingItem[];
   initialSections: SectionItem[];
+  googleAiStatus: GoogleAiStatus;
 }) {
   const router = useRouter();
 
@@ -247,6 +263,9 @@ export function SettingsAdminManager({
   const [error, setError] = useState<string | null>(null);
   const [socialLinksDraft, setSocialLinksDraft] = useState<SocialLinkDraft[]>(socialLinksPresetRows);
   const [heroSlidesDraft, setHeroSlidesDraft] = useState<HeroSlideDraft[]>(heroSlidesPresetRows);
+  const [aiTestingTarget, setAiTestingTarget] = useState<"text" | "image" | null>(null);
+  const [aiTestResult, setAiTestResult] = useState<string | null>(null);
+  const [aiTestError, setAiTestError] = useState<string | null>(null);
 
   const sortedSettings = useMemo(
     () => [...initialSettings].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
@@ -261,6 +280,29 @@ export function SettingsAdminManager({
   async function parseResponse<T>(response: Response): Promise<ApiSuccess<T> | ApiFailure> {
     const json = (await response.json().catch(() => ({}))) as ApiSuccess<T> | ApiFailure;
     return json;
+  }
+
+  async function testGoogleAi(target: "text" | "image") {
+    setAiTestError(null);
+    setAiTestResult(null);
+    setAiTestingTarget(target);
+
+    const response = await fetch("/api/admin/ai/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target }),
+    });
+
+    const result = await parseResponse<AiTestResult>(response);
+    setAiTestingTarget(null);
+
+    if (!response.ok || !result.ok) {
+      setAiTestError(result.ok ? "Google AI test failed" : result.error?.message ?? "Google AI test failed");
+      return;
+    }
+
+    const received = target === "image" ? result.data.receivedImage : result.data.receivedContent;
+    setAiTestResult(`${target === "image" ? "Image" : "Text"} test reached ${result.data.model}${received ? " and returned content." : ", but no usable content was returned."}`);
   }
 
   function resetSettingForm() {
@@ -354,8 +396,12 @@ export function SettingsAdminManager({
       return;
     }
 
-    const nextValue = socialDraftToJson(socialLinksDraft);
-    setSettingForm((prev) => ({ ...prev, settingValue: nextValue }));
+    const updateTimer = setTimeout(() => {
+      const nextValue = socialDraftToJson(socialLinksDraft);
+      setSettingForm((prev) => ({ ...prev, settingValue: nextValue }));
+    }, 0);
+
+    return () => clearTimeout(updateTimer);
   }, [settingForm.settingKey, socialLinksDraft]);
 
   function resetSectionForm() {
@@ -554,6 +600,63 @@ export function SettingsAdminManager({
 
       {error && <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
+      <section className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Google AI Diagnostics</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              Verify the production Google AI key and the Gemini models used by Article Studio and Image Studio.
+            </p>
+          </div>
+          <span
+            className={`w-fit rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${
+              googleAiStatus.configured
+                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                : "bg-red-500/10 text-red-700 dark:text-red-300"
+            }`}
+          >
+            {googleAiStatus.configured ? "Configured" : "Missing key"}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] p-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-subtle)]">API key</p>
+            <p className="mt-1 text-sm font-semibold text-[var(--foreground)]">{googleAiStatus.keyStatus}</p>
+          </div>
+          <div className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] p-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-subtle)]">Text model</p>
+            <p className="mt-1 break-words text-sm font-semibold text-[var(--foreground)]">{googleAiStatus.textModel}</p>
+          </div>
+          <div className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] p-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-subtle)]">Image model</p>
+            <p className="mt-1 break-words text-sm font-semibold text-[var(--foreground)]">{googleAiStatus.imageModel}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => testGoogleAi("text")}
+            disabled={aiTestingTarget !== null}
+            className="rounded bg-[#0A2342] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {aiTestingTarget === "text" ? "Testing..." : "Test Writing"}
+          </button>
+          <button
+            type="button"
+            onClick={() => testGoogleAi("image")}
+            disabled={aiTestingTarget !== null}
+            className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--surface-elevated)] disabled:opacity-60"
+          >
+            {aiTestingTarget === "image" ? "Testing..." : "Test Image"}
+          </button>
+        </div>
+
+        {aiTestResult && <p className="mt-3 rounded border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">{aiTestResult}</p>}
+        {aiTestError && <p className="mt-3 rounded border border-red-500/25 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{aiTestError}</p>}
+      </section>
+
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <section className="rounded-lg border border-slate-200 p-4">
           <div className="flex items-center justify-between">
@@ -688,7 +791,7 @@ export function SettingsAdminManager({
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700"
+                        className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
                         onClick={() => editSetting(row.id)}
                         disabled={submitting || loadingKey === `setting-${row.id}`}
                       >
@@ -889,7 +992,7 @@ export function SettingsAdminManager({
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        className="rounded border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700"
+                        className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
                         onClick={() => editSection(row.id)}
                         disabled={submitting || loadingKey === `section-${row.id}`}
                       >

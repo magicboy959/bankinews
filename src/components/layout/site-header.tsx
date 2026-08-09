@@ -48,7 +48,7 @@ function socialButtonClass(platform: SocialPlatform, mobile = false): string {
   if (platform === "x") return "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 hover:bg-slate-200";
   if (platform === "linkedin") return "border-cyan-200 bg-cyan-50 text-cyan-700 hover:border-cyan-300 hover:bg-cyan-100";
   if (platform === "youtube") return "border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100";
-  return "border-slate-300 bg-white text-slate-700 hover:border-[#0A2342] hover:text-[#0A2342]";
+  return "border-slate-300 bg-white text-slate-700 hover:border-[#0A2342] hover:text-[#0A2342] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-300 dark:hover:text-white";
 }
 
 function SocialIcon({ platform }: { platform: SocialPlatform }) {
@@ -108,7 +108,17 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
   const [showSearchOverlay, setShowSearchOverlay] = useState(false);
   const [showArabicCoverageHint, setShowArabicCoverageHint] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
-  const [showShortcutHint, setShowShortcutHint] = useState(true);
+  const [showShortcutHint, setShowShortcutHint] = useState(() => {
+    if (typeof window === "undefined") {
+      return true;
+    }
+
+    try {
+      return window.localStorage.getItem(SEARCH_HINT_STORAGE_KEY) !== "1";
+    } catch {
+      return true;
+    }
+  });
   const [showSearchSettingsMenu, setShowSearchSettingsMenu] = useState(false);
   const t = dictionary[locale];
   const desktopListboxId = `header-search-listbox-desktop-${locale}`;
@@ -127,21 +137,15 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
   }, [menuOpen]);
 
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(SEARCH_HINT_STORAGE_KEY);
-      setShowShortcutHint(saved !== "1");
-    } catch {
-      setShowShortcutHint(true);
-    }
-  }, []);
-
-  useEffect(() => {
     const query = searchQuery.trim();
     if (query.length < 2) {
-      setSearchResult(null);
-      setSearchLoading(false);
-      setShowArabicCoverageHint(false);
-      return;
+      const resetTimer = setTimeout(() => {
+        setSearchResult(null);
+        setSearchLoading(false);
+        setShowArabicCoverageHint(false);
+      }, 0);
+
+      return () => clearTimeout(resetTimer);
     }
 
     let active = true;
@@ -189,7 +193,11 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
   }, [locale, searchQuery]);
 
   useEffect(() => {
-    setActiveSuggestionIndex(-1);
+    const resetTimer = setTimeout(() => {
+      setActiveSuggestionIndex(-1);
+    }, 0);
+
+    return () => clearTimeout(resetTimer);
   }, [searchQuery, locale, searchResult, showArabicCoverageHint]);
 
   useEffect(() => {
@@ -569,7 +577,7 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
                         role="option"
                         aria-selected={searchSuggestions[activeSuggestionIndex]?.id === "arabic-fallback"}
                         aria-label={getSuggestionAriaLabel({ id: "arabic-fallback", label: "Open Arabic Search", href: "/ar/search", kind: "arabicFallback" })}
-                        className="font-semibold text-[#0A2342] underline"
+                        className="font-semibold text-[#0A2342] underline dark:text-cyan-300"
                         onMouseEnter={() => {
                           const hintIndex = searchSuggestions.findIndex((item) => item.kind === "arabicFallback");
                           if (hintIndex >= 0) {

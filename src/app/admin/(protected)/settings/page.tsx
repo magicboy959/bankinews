@@ -17,6 +17,18 @@ type HomepageSectionRow = DbRow & {
   configJson: unknown;
 };
 
+function getGoogleAiStatus() {
+  const apiKey = process.env.GOOGLE_AI_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim() || "";
+  const configured = Boolean(apiKey && apiKey !== "replace_me");
+
+  return {
+    configured,
+    keyStatus: configured ? "configured" : "missing",
+    textModel: process.env.GOOGLE_AI_TEXT_MODEL?.trim() || "gemini-3.6-flash",
+    imageModel: process.env.GOOGLE_AI_IMAGE_MODEL?.trim() || "gemini-3.1-flash-image",
+  };
+}
+
 export default async function AdminSettingsPage() {
   const [settings, sections] = await Promise.all([
     dbQuery<SettingRow[]>(
@@ -32,5 +44,5 @@ export default async function AdminSettingsPage() {
     ),
   ]);
 
-  return <SettingsAdminManager initialSettings={settings} initialSections={sections} />;
+  return <SettingsAdminManager initialSettings={settings} initialSections={sections} googleAiStatus={getGoogleAiStatus()} />;
 }

@@ -109,7 +109,6 @@ type MediaItem = {
 type StudioFormat = "image/webp" | "image/jpeg" | "image/png";
 type StudioFitMode = "none" | "contain" | "cover";
 type StudioAspectRatio = "free" | "16:9" | "4:3" | "1:1";
-type AiProvider = "openai" | "google";
 
 type MarketingOverview = {
   campaignCount: number;
@@ -475,7 +474,6 @@ export function DashboardAdminManager({
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
-  const [aiProvider, setAiProvider] = useState<AiProvider>("openai");
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -608,6 +606,7 @@ export function DashboardAdminManager({
 
     focusQaTarget(action.target);
   }
+
   const qaNotes = useMemo<QANote[]>(() => {
     const notes: QANote[] = [];
     const arComplete = hasCompleteTranslation(composer.translations.ar);
@@ -984,11 +983,11 @@ export function DashboardAdminManager({
     }
   }
 
-  async function generateGoogleImage(mode: "generate" | "edit") {
+  async function generateGoogleImage(mode: "generate" | "edit", promptOverride?: string) {
     setGoogleImageError(null);
     setError(null);
 
-    const prompt = googleImagePrompt.trim();
+    const prompt = (promptOverride ?? googleImagePrompt).trim();
     if (prompt.length < 12) {
       setGoogleImageError("Describe the photo you want Google AI to generate or edit.");
       return;
@@ -1045,12 +1044,26 @@ export function DashboardAdminManager({
       setStudioPreviewError(null);
       setStudioOpen(true);
       await uploadGeneratedStudioImage(file, result.data.dataUrl);
-      setGoogleImagePrompt("");
+      if (!promptOverride) {
+        setGoogleImagePrompt("");
+      }
     } catch (error) {
       setGoogleImageError(error instanceof Error ? error.message : "Google AI image request failed");
     } finally {
       setGoogleImageBusy(null);
     }
+  }
+
+  function generateImageFromArticleDraft() {
+    const draft = composer.translations[activeLocale];
+    const promptParts = [
+      "Generate a realistic editorial featured photo for a banking news website.",
+      `Article title: ${draft.title || composer.translations.ar.title || composer.translations.en.title}`,
+      `Summary: ${draft.summary || composer.translations.ar.summary || composer.translations.en.summary}`,
+      "Style: clean professional banking/finance photo, no text, no logos, suitable as a hero image.",
+    ].filter((part) => !part.endsWith(": "));
+
+    void generateGoogleImage("generate", promptParts.join(" "));
   }
 
   async function generateAiDraft(mode: "single" | "dual") {
@@ -1072,7 +1085,6 @@ export function DashboardAdminManager({
         body: JSON.stringify({
           prompt,
           mode,
-          provider: aiProvider,
           locale: activeLocale,
           articleType: composer.articleType,
           title: draft.title,
@@ -1206,7 +1218,7 @@ export function DashboardAdminManager({
               Campaign health at a glance, with subscriber count and delivery performance.
             </p>
           </div>
-          <Link href="/admin/marketing" className="rounded bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[#0A2342] hover:bg-[var(--surface-elevated)]">
+          <Link href="/admin/marketing" className="rounded bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--surface-elevated)]">
             Open Marketing Dashboard
           </Link>
         </div>
@@ -1239,7 +1251,7 @@ export function DashboardAdminManager({
       <section className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-sm font-black uppercase tracking-wide text-emerald-900">Reader Engagement ({engagementRangeLabel})</h2>
+            <h2 className="text-sm font-black uppercase tracking-wide text-emerald-900 dark:text-emerald-300">Reader Engagement ({engagementRangeLabel})</h2>
             <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
               Measures real reading behavior: depth, completion, dwell time, and interaction volume.
             </p>
@@ -1342,15 +1354,9 @@ export function DashboardAdminManager({
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <select
-                  value={aiProvider}
-                  onChange={(event) => setAiProvider(event.target.value as AiProvider)}
-                  disabled={aiGenerating}
-                  className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] disabled:opacity-60"
-                >
-                  <option value="openai">OpenAI</option>
-                  <option value="google">Google AI</option>
-                </select>
+                <span className="rounded border border-cyan-500/30 bg-[var(--surface)] px-3 py-2 text-sm font-semibold text-cyan-700 dark:text-cyan-300">
+                  Google AI
+                </span>
                 <button
                   type="button"
                   onClick={() => generateAiDraft("single")}
@@ -1363,7 +1369,7 @@ export function DashboardAdminManager({
                   type="button"
                   onClick={() => generateAiDraft("dual")}
                   disabled={aiGenerating}
-                  className="rounded border border-[#0A2342] px-3 py-2 text-sm font-semibold text-[#0A2342] disabled:opacity-60"
+                  className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-60"
                 >
                   {aiGenerating ? "Generating..." : "Generate Arabic + English"}
                 </button>
@@ -1375,6 +1381,23 @@ export function DashboardAdminManager({
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
             />
+            <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                "Create a publish-ready banking news article from these facts. Keep it accurate and concise.",
+                "Rewrite this article for clarity, stronger headline, and mobile reading.",
+                "Create a short breaking-news style update with title, summary, and bullet points.",
+                "Suggest a featured image concept and write article copy based on this story.",
+              ].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setAiPrompt(preset)}
+                  className="rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-2 text-left text-xs font-semibold leading-5 text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
             <p className="mt-2 text-xs text-[var(--text-subtle)]">
               The assistant will fill the active locale title, summary, and content without switching away from the article editor.
             </p>
@@ -1446,8 +1469,8 @@ export function DashboardAdminManager({
                 <h3 className="text-sm font-black uppercase tracking-wide text-[var(--foreground)]">Image Studio</h3>
                 <p className="mt-1 text-sm text-[var(--text-muted)]">Optimize locally, generate or edit with Google AI, preview before attach, and pick from recent media.</p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <input ref={fileInputRef} type="file" accept="image/*" className="max-w-44 rounded border border-[var(--border)] bg-[var(--surface-strong)] px-2 py-2 text-xs text-[var(--foreground)]" />
+              <div className="grid w-full gap-2 sm:w-auto sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center">
+                <input ref={fileInputRef} type="file" accept="image/*" className="w-full rounded border border-[var(--border)] bg-[var(--surface-strong)] px-2 py-2 text-xs text-[var(--foreground)] lg:max-w-44" />
                 <button type="button" onClick={() => { setStudioOpen(true); void uploadImage(); }} disabled={uploadingImage} className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-strong)] disabled:opacity-60">
                   {uploadingImage ? "Optimizing..." : "Upload image"}
                 </button>
@@ -1483,7 +1506,7 @@ export function DashboardAdminManager({
                   <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Google AI photo tools</p>
                   <p className="mt-1 text-xs text-[var(--text-muted)]">Generate a new editorial photo or edit the selected image, then upload and attach the result.</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid w-full gap-2 sm:w-auto sm:grid-cols-3">
                   <button
                     type="button"
                     onClick={() => generateGoogleImage("generate")}
@@ -1496,9 +1519,17 @@ export function DashboardAdminManager({
                     type="button"
                     onClick={() => generateGoogleImage("edit")}
                     disabled={googleImageBusy !== null}
-                    className="rounded border border-[#0A2342] px-3 py-2 text-sm font-semibold text-[#0A2342] disabled:opacity-60"
+                    className="rounded border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--surface)] disabled:opacity-60"
                   >
                     {googleImageBusy === "edit" ? "Editing..." : "Edit selected"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={generateImageFromArticleDraft}
+                    disabled={googleImageBusy !== null}
+                    className="rounded border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-500/15 disabled:opacity-60 dark:text-emerald-300"
+                  >
+                    {googleImageBusy === "generate" ? "Generating..." : "From article"}
                   </button>
                 </div>
               </div>
@@ -1768,7 +1799,7 @@ export function DashboardAdminManager({
             <input ref={titleInputRef} className="w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder={`${activeLocale.toUpperCase()} title`} value={composer.translations[activeLocale].title} onChange={(e) => updateLocaleDraft(activeLocale, "title", e.target.value)} required={activeLocale === "ar"} />
             <textarea ref={summaryInputRef} className="min-h-20 w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder={`${activeLocale.toUpperCase()} summary`} value={composer.translations[activeLocale].summary} onChange={(e) => updateLocaleDraft(activeLocale, "summary", e.target.value)} required={activeLocale === "ar"} />
             <div ref={contentSectionRef}>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">{activeLocale.toUpperCase()} content</label>
+              <label className="mb-2 block text-sm font-semibold text-[var(--text-muted)]">{activeLocale.toUpperCase()} content</label>
               <RichTextEditor
                 value={composer.translations[activeLocale].contentHtml}
                 onChange={(value) => updateLocaleDraft(activeLocale, "contentHtml", value)}
@@ -1849,11 +1880,10 @@ export function DashboardAdminManager({
                   The current article looks ready for review.
                 </div>
               ) : (
-                qaNotes.map((note, index) => (
-                  (() => {
-                    const action = note.action;
+                qaNotes.map((note, index) => {
+                  const action = note.action;
 
-                    return (
+                  return (
                   <div
                     key={`${note.message}-${index}`}
                     className={`rounded border px-3 py-2 text-sm ${note.tone === "warning" ? "border-amber-400/30 bg-amber-500/10 text-amber-700 dark:text-amber-400" : "border-[var(--border)] bg-[var(--surface-strong)] text-[var(--text-muted)]"}`}
@@ -1861,19 +1891,12 @@ export function DashboardAdminManager({
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <p>{note.message}</p>
                       {action ? (
-                        <button
-                          type="button"
-                          onClick={() => handleQaAction(action)}
-                          className="rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
-                        >
-                          {action.type === "switchLocale" ? `Go to ${action.locale.toUpperCase()}` : "Fix"}
-                        </button>
+                        <QAActionButton action={action} onAction={handleQaAction} />
                       ) : null}
                     </div>
                   </div>
-                    );
-                  })()
-                ))
+                  );
+                })
               )}
             </div>
           </section>
@@ -2012,7 +2035,7 @@ export function DashboardAdminManager({
                     {truthyFlag(row.isFeatured) ? "Featured" : "-"}
                     {truthyFlag(row.isBreaking) ? " • Breaking" : ""}
                   </td>
-                  <td className="px-3 py-2 text-slate-700">{new Date(row.updatedAt).toLocaleString()}</td>
+                  <td className="px-3 py-2 text-[var(--text-muted)]">{new Date(row.updatedAt).toLocaleString()}</td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
                       <button type="button" onClick={() => startEdit(row.id)} disabled={loadingArticleId === row.id} className="rounded border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)] disabled:opacity-60">
@@ -2037,8 +2060,20 @@ function SummaryCard({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 text-[var(--foreground)]">
       <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">{label}</p>
-      <p className="mt-2 text-2xl font-black text-[#0A2342]">{value}</p>
+      <p className="mt-2 text-2xl font-black text-[var(--foreground)]">{value}</p>
     </div>
+  );
+}
+
+function QAActionButton({ action, onAction }: { action: QAAction; onAction: (action: QAAction) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onAction(action)}
+      className="rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
+    >
+      {action.type === "switchLocale" ? `Go to ${action.locale.toUpperCase()}` : "Fix"}
+    </button>
   );
 }
 

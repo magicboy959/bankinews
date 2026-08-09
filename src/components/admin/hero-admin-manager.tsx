@@ -18,6 +18,14 @@ type MediaItem = {
   createdAt: string;
 };
 
+type RecentArticleItem = {
+  id: number;
+  slug: string;
+  title: string;
+  summary: string;
+  featuredImageUrl: string | null;
+};
+
 type HeroSlideDraft = {
   id: string;
   title: string;
@@ -121,9 +129,11 @@ async function parseResponse<T>(response: Response): Promise<ApiSuccess<T> | Api
 export function HeroAdminManager({
   heroSection,
   recentMedia,
+  recentArticles,
 }: {
   heroSection: HeroSectionItem | null;
   recentMedia: MediaItem[];
+  recentArticles: RecentArticleItem[];
 }) {
   const router = useRouter();
   const initialSlides = useMemo(() => {
@@ -165,6 +175,39 @@ export function HeroAdminManager({
   function removeSlide(index: number) {
     setSlides((prev) => (prev.length <= 1 ? prev : prev.filter((_, slideIndex) => slideIndex !== index)));
     setSaved(false);
+  }
+
+  function applyArticleToSlide(index: number, articleId: string) {
+    const article = recentArticles.find((item) => String(item.id) === articleId);
+    if (!article) {
+      return;
+    }
+
+    setSlides((prev) =>
+      prev.map((slide, slideIndex) =>
+        slideIndex === index
+          ? {
+              ...slide,
+              title: article.title,
+              summary: article.summary,
+              imageUrl: article.featuredImageUrl || slide.imageUrl,
+              href: `/ar/news/${article.slug}`,
+              eyebrow: slide.eyebrow || "آخر الأخبار",
+              ctaLabel: slide.ctaLabel || "اقرأ المزيد",
+            }
+          : slide
+      )
+    );
+    setSaved(false);
+  }
+
+  function applyMediaToSlide(index: number, mediaId: string) {
+    const media = recentMedia.find((item) => String(item.id) === mediaId);
+    if (!media) {
+      return;
+    }
+
+    updateSlide(index, "imageUrl", media.url);
   }
 
   async function saveHero() {
@@ -265,6 +308,45 @@ export function HeroAdminManager({
                 >
                   Remove
                 </button>
+              </div>
+
+              <div className="mb-3 grid gap-3 md:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Use article</span>
+                  <select
+                    className="w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)]"
+                    defaultValue=""
+                    onChange={(event) => {
+                      applyArticleToSlide(index, event.target.value);
+                      event.target.value = "";
+                    }}
+                  >
+                    <option value="">Pick a recent article</option>
+                    {recentArticles.map((article) => (
+                      <option key={article.id} value={article.id}>
+                        {article.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Use media</span>
+                  <select
+                    className="w-full rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)]"
+                    defaultValue=""
+                    onChange={(event) => {
+                      applyMediaToSlide(index, event.target.value);
+                      event.target.value = "";
+                    }}
+                  >
+                    <option value="">Pick a recent image</option>
+                    {recentMedia.map((media) => (
+                      <option key={media.id} value={media.id}>
+                        {media.fileName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">

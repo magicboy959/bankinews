@@ -5,7 +5,6 @@ type GenerateRequest = {
   prompt?: unknown;
   locale?: unknown;
   mode?: unknown;
-  provider?: unknown;
   articleType?: unknown;
   title?: unknown;
   summary?: unknown;
@@ -29,10 +28,6 @@ function cleanText(value: unknown) {
 
 function isLocale(value: string): value is "ar" | "en" {
   return value === "ar" || value === "en";
-}
-
-function isAiProvider(value: string): value is "openai" | "google" {
-  return value === "openai" || value === "google";
 }
 
 function parseDraftResponse(value: unknown): DraftResponse | null {
@@ -68,6 +63,15 @@ function parseDualDraftResponse(value: unknown): DualDraftResponse | null {
   return { ar, en };
 }
 
+function getGoogleErrorMessage(value: unknown) {
+  if (!value || typeof value !== "object") {
+    return "";
+  }
+
+  const error = (value as { error?: { message?: unknown } }).error;
+  return typeof error?.message === "string" ? error.message.trim() : "";
+}
+
 export async function POST(request: Request) {
   const user = await requireRole("editor");
   if (!user) {
@@ -79,7 +83,6 @@ export async function POST(request: Request) {
     const prompt = cleanText(body.prompt);
     const localeValue = cleanText(body.locale);
     const modeValue = cleanText(body.mode) || "single";
-    const providerValue = cleanText(body.provider) || "openai";
     const articleType = cleanText(body.articleType) || "news";
     const title = cleanText(body.title);
     const summary = cleanText(body.summary);
@@ -91,10 +94,6 @@ export async function POST(request: Request) {
 
     if (!isLocale(localeValue)) {
       return badRequest("locale must be 'ar' or 'en'");
-    }
-
-    if (!isAiProvider(providerValue)) {
-      return badRequest("provider must be 'openai' or 'google'");
     }
 
     const isDualMode = modeValue === "dual";
@@ -136,70 +135,38 @@ export async function POST(request: Request) {
 
     let content = "";
 
-    if (providerValue === "google") {
-      const apiKey = process.env.GOOGLE_AI_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim();
-      if (!apiKey) {
-        return badRequest("Google AI writing is not configured. Set GOOGLE_AI_API_KEY first.");
-      }
-
-      const model = process.env.GOOGLE_AI_TEXT_MODEL?.trim() || "gemini-3.5-flash";
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            responseMimeType: "application/json",
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        return serverError("Google AI request failed");
-      }
-
-      const json = (await response.json().catch(() => ({}))) as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string | null }> } }>;
-      };
-      content = json.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("").trim() ?? "";
-    } else {
-      const apiKey = process.env.OPENAI_API_KEY?.trim();
-      if (!apiKey) {
-        return badRequest("AI writing is not configured. Set OPENAI_API_KEY first.");
-      }
-
-      const model = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          temperature: 0.7,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-        }),
-      });
-
-      if (!response.ok) {
-        return serverError("AI request failed");
-      }
-
-      const json = (await response.json().catch(() => ({}))) as {
-        choices?: Array<{ message?: { content?: string | null } }>;
-      };
-      content = json.choices?.[0]?.message?.content?.trim() ?? "";
+    const apiKey = process.env.GOOGLE_AI_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim();
+    if (!apiKey || apiKey === "replace_me") {
+      return badRequest("Google AI writing is not configured. Set GOOGLE_AI_API_KEY to your paid Google API key.");
     }
+
+    const model = process.env.GOOGLE_AI_TEXT_MODEL?.trim() || "gemini-3.6-flash";
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          responseMimeType: "application/json",
+        },
+      }),
+    });
+
+    const json = (await response.json().catch(() => ({}))) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string | null }> } }>;
+    };
+
+    if (!response.ok) {
+      const googleMessage = getGoogleErrorMessage(json);
+      return serverError(googleMessage ? `Google AI request failed: ${googleMessage}` : "Google AI request failed");
+    }
+
+    content = json.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("").trim() ?? "";
 
     if (!content) {
       return serverError("AI did not return any content");

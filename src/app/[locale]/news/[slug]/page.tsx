@@ -7,6 +7,7 @@ import { getArticleBySlug, getArticleCorrectionHistory, getPublishedArticleLocal
 import { ArticleContent } from "@/components/articles/article-content";
 import { ArticleCardView } from "@/components/articles/article-card";
 import { ArticleReaderExperience } from "@/components/articles/article-reader-experience";
+import { NewsletterForm } from "@/components/ui/newsletter-form";
 import { getYouTubeEmbedUrl } from "@/lib/media";
 import { buildArticleMetadata } from "@/lib/seo/metadata";
 import { formatDate } from "@/lib/utils";
@@ -76,7 +77,7 @@ export default async function ArticlePage({
             </article>
 
             <aside>
-              <h2 className="mb-4 text-xl font-black text-[#0A2342]">Latest In Arabic</h2>
+              <h2 className="mb-4 text-xl font-black text-[var(--foreground)]">Latest In Arabic</h2>
               <div className="space-y-3">
                 {relatedArabic.map((card) => (
                   <ArticleCardView key={card.id} locale="ar" article={card} />
@@ -199,6 +200,22 @@ export default async function ArticlePage({
           </ArticleReaderExperience>
         </div>
 
+        <section className="mt-8 rounded-xl border border-cyan-500/25 bg-cyan-500/10 p-4">
+          <p className="text-sm font-semibold text-[var(--text-muted)]">
+            {safeLocale === "ar" ? "لا إزعاج. لا حشو. فقط المهم." : "No noise. No filler. Only what matters."}
+          </p>
+          <h2 className="mt-1 text-xl font-black text-[var(--foreground)]">
+            {safeLocale === "ar" ? "اشترك مجانا" : "Subscribe free"}
+          </h2>
+          <NewsletterForm
+            locale={safeLocale}
+            tone="surface"
+            showName={false}
+            buttonLabel={safeLocale === "ar" ? "اشترك مجانا" : "Subscribe free"}
+            emailPlaceholder={safeLocale === "ar" ? "ادخل الايميل" : "Enter your email"}
+          />
+        </section>
+
         <section className="article-info-panel mt-8 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4">
           <h2 className="text-lg font-black text-[var(--primary)]">
             {safeLocale === "ar" ? "المصدر والتحقق" : "Source & Verification"}
@@ -289,7 +306,7 @@ export default async function ArticlePage({
       </article>
 
       <aside className="article-related">
-        <h2 className="mb-4 text-xl font-black text-[#0A2342]">{t.labels.mostRead}</h2>
+        <h2 className="mb-4 text-xl font-black text-[var(--foreground)]">{t.labels.mostRead}</h2>
         <div className="space-y-3">
           {related.map((card) => (
             <ArticleCardView key={card.id} locale={safeLocale} article={card} compact />

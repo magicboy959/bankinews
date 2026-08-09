@@ -17,6 +17,14 @@ type MediaRow = DbRow & {
   createdAt: string;
 };
 
+type ArticleRow = DbRow & {
+  id: number;
+  slug: string;
+  title: string;
+  summary: string;
+  featuredImageUrl: string | null;
+};
+
 function normalizeDbJson(value: unknown): unknown {
   if (typeof value !== "string") {
     return value;
@@ -30,7 +38,7 @@ function normalizeDbJson(value: unknown): unknown {
 }
 
 export default async function AdminHeroPage() {
-  const [heroRows, recentMedia] = await Promise.all([
+  const [heroRows, recentMedia, recentArticles] = await Promise.all([
     dbQuery<HeroSectionRow[]>(
       `SELECT id, section_key AS sectionKey, enabled, sort_order AS sortOrder, config_json AS configJson
        FROM homepage_sections
@@ -44,6 +52,14 @@ export default async function AdminHeroPage() {
        ORDER BY created_at DESC
        LIMIT 24`
     ),
+    dbQuery<ArticleRow[]>(
+      `SELECT a.id, a.slug, at.title, at.summary, a.featured_image_url AS featuredImageUrl
+       FROM articles a
+       JOIN article_translations at ON at.article_id = a.id AND at.locale = 'ar'
+       WHERE a.deleted_at IS NULL
+       ORDER BY a.published_at DESC, a.updated_at DESC
+       LIMIT 30`
+    ),
   ]);
 
   const heroSection = heroRows[0]
@@ -53,5 +69,5 @@ export default async function AdminHeroPage() {
       }
     : null;
 
-  return <HeroAdminManager heroSection={heroSection} recentMedia={recentMedia} />;
+  return <HeroAdminManager heroSection={heroSection} recentMedia={recentMedia} recentArticles={recentArticles} />;
 }

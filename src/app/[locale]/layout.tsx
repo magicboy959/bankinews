@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { NewsletterBottomSheet } from "@/components/ui/newsletter-bottom-sheet";
 import { dbQuery } from "@/lib/db/query";
 import type { DbRow } from "@/lib/db/pool";
 import { isLocale, localeDirection, type Locale } from "@/lib/i18n/config";
@@ -76,6 +77,7 @@ export default async function LocaleLayout({
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-6">{children}</main>
         <SiteFooter locale={typedLocale} />
       </div>
+      <NewsletterBottomSheet locale={typedLocale} />
     </div>
   );
 }

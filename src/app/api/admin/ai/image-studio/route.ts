@@ -65,6 +65,15 @@ function getInlineImageFromPart(part: GeminiPart): InlineImage | null {
   return null;
 }
 
+function getGoogleErrorMessage(value: unknown) {
+  if (!value || typeof value !== "object") {
+    return "";
+  }
+
+  const error = (value as { error?: { message?: unknown } }).error;
+  return typeof error?.message === "string" ? error.message.trim() : "";
+}
+
 export async function POST(request: Request) {
   const user = await requireRole("editor");
   if (!user) {
@@ -72,8 +81,8 @@ export async function POST(request: Request) {
   }
 
   const apiKey = process.env.GOOGLE_AI_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim();
-  if (!apiKey) {
-    return badRequest("Google AI Image Studio is not configured. Set GOOGLE_AI_API_KEY first.");
+  if (!apiKey || apiKey === "replace_me") {
+    return badRequest("Google AI Image Studio is not configured. Set GOOGLE_AI_API_KEY to your paid Google API key.");
   }
 
   try {
@@ -131,13 +140,15 @@ export async function POST(request: Request) {
       }),
     });
 
-    if (!response.ok) {
-      return serverError("Google AI image request failed");
-    }
-
     const json = (await response.json().catch(() => ({}))) as {
       candidates?: Array<{ content?: { parts?: GeminiPart[] } }>;
     };
+
+    if (!response.ok) {
+      const googleMessage = getGoogleErrorMessage(json);
+      return serverError(googleMessage ? `Google AI image request failed: ${googleMessage}` : "Google AI image request failed");
+    }
+
     const responseParts = json.candidates?.[0]?.content?.parts ?? [];
     const imagePart = responseParts.map(getInlineImageFromPart).find(Boolean);
     const text = responseParts.map((part) => cleanText(part.text)).filter(Boolean).join("\n");

@@ -5,9 +5,9 @@ export default async function SponsoredContentPolicyPage({ params }: { params: P
   const safeLocale: Locale = isLocale(locale) ? locale : "ar";
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6">
-      <h1 className="text-2xl font-black text-[#0A2342]">{safeLocale === "ar" ? "سياسة المحتوى المدعوم" : "Sponsored Content Policy"}</h1>
-      <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 shadow-[0_10px_30px_rgba(2,6,23,0.06)]">
+      <h1 className="text-2xl font-black text-[var(--foreground)]">{safeLocale === "ar" ? "سياسة المحتوى المدعوم" : "Sponsored Content Policy"}</h1>
+      <div className="mt-4 space-y-3 text-sm leading-7 text-[var(--text-muted)]">
         <p>
           {safeLocale === "ar"
             ? "يتم وسم أي مادة مدفوعة بوضوح بكلمة (محتوى برعاية) أو (Sponsored) في أعلى المقال وبشكل ظاهر."
