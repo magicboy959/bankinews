@@ -84,6 +84,39 @@ function hasOutputImage(value: unknown) {
   return cleanText(outputImage?.data).length > 100;
 }
 
+function hasNestedImage(value: unknown): boolean {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as {
+    type?: unknown;
+    data?: unknown;
+    mime_type?: unknown;
+    mimeType?: unknown;
+    inlineData?: { data?: string | null } | null;
+    inline_data?: { data?: string | null } | null;
+    content?: unknown;
+    parts?: unknown;
+    steps?: unknown;
+  };
+  const type = cleanText(candidate.type);
+  const data = cleanText(candidate.data ?? candidate.inlineData?.data ?? candidate.inline_data?.data);
+  const mimeType = cleanText(candidate.mime_type ?? candidate.mimeType);
+
+  if ((type === "image" || mimeType.startsWith("image/")) && data.length > 100) {
+    return true;
+  }
+
+  for (const nested of [candidate.content, candidate.parts, candidate.steps]) {
+    if (Array.isArray(nested) && nested.some(hasNestedImage)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export async function GET() {
   const user = await requireRole("editor");
   if (!user) {
@@ -170,7 +203,7 @@ export async function POST(request: Request) {
     }
 
     const imagePart = json.candidates?.[0]?.content?.parts?.map(getInlineImage).find(Boolean);
-    return ok({ target, model: status.imageModel, receivedImage: hasOutputImage(json) || Boolean(imagePart) });
+    return ok({ target, model: status.imageModel, receivedImage: hasOutputImage(json) || hasNestedImage(json) || Boolean(imagePart) });
   } catch {
     return serverError("Unable to test Google AI");
   }

@@ -101,6 +101,85 @@ function getOutputImage(value: unknown): InlineImage | null {
   return { data, mimeType };
 }
 
+function getImageFromUnknown(value: unknown): InlineImage | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const candidate = value as {
+    type?: unknown;
+    data?: unknown;
+    mime_type?: unknown;
+    mimeType?: unknown;
+    inlineData?: InlineImage | null;
+    inline_data?: { mime_type?: string | null; data?: string | null } | null;
+    content?: unknown;
+    parts?: unknown;
+    steps?: unknown;
+  };
+
+  if (candidate.inlineData?.data) {
+    return candidate.inlineData;
+  }
+
+  if (candidate.inline_data?.data) {
+    return {
+      data: candidate.inline_data.data,
+      mimeType: candidate.inline_data.mime_type || "image/jpeg",
+    };
+  }
+
+  const type = cleanText(candidate.type);
+  const data = cleanText(candidate.data);
+  const mimeType = cleanText(candidate.mime_type ?? candidate.mimeType);
+
+  if ((type === "image" || mimeType.startsWith("image/")) && data.length > 100) {
+    return { data, mimeType: mimeType || "image/jpeg" };
+  }
+
+  for (const nested of [candidate.content, candidate.parts, candidate.steps]) {
+    if (Array.isArray(nested)) {
+      for (const item of nested) {
+        const image = getImageFromUnknown(item);
+        if (image) {
+          return image;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function collectText(value: unknown, output: string[] = []) {
+  if (!value || typeof value !== "object") {
+    return output;
+  }
+
+  const candidate = value as {
+    text?: unknown;
+    output_text?: unknown;
+    outputText?: unknown;
+    content?: unknown;
+    parts?: unknown;
+    steps?: unknown;
+  };
+  const text = cleanText(candidate.text ?? candidate.output_text ?? candidate.outputText);
+  if (text) {
+    output.push(text);
+  }
+
+  for (const nested of [candidate.content, candidate.parts, candidate.steps]) {
+    if (Array.isArray(nested)) {
+      for (const item of nested) {
+        collectText(item, output);
+      }
+    }
+  }
+
+  return output;
+}
+
 function getGoogleErrorMessage(value: unknown) {
   if (!value || typeof value !== "object") {
     return "";
@@ -188,11 +267,11 @@ export async function POST(request: Request) {
     }
 
     const responseParts = json.candidates?.[0]?.content?.parts ?? [];
-    const imagePart = getOutputImage(json) ?? responseParts.map(getInlineImageFromPart).find(Boolean);
-    const text = responseParts.map((part) => cleanText(part.text)).filter(Boolean).join("\n");
+    const imagePart = getOutputImage(json) ?? getImageFromUnknown(json) ?? responseParts.map(getInlineImageFromPart).find(Boolean);
+    const text = collectText(json).join("\n").trim();
 
     if (!imagePart) {
-      return serverError("Google AI did not return an image");
+      return serverError(text ? `Google AI did not return an image. Response: ${text.slice(0, 240)}` : "Google AI did not return an image");
     }
 
     return ok({
