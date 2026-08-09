@@ -248,6 +248,24 @@ function toIsoDateTime(value: string): string | null {
   return date.toISOString();
 }
 
+function normalizeOptionalUrlOrLocalPath(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.startsWith("/")) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? trimmed : null;
+  } catch {
+    return null;
+  }
+}
+
 function formatBytes(value: number): string {
   if (!Number.isFinite(value) || value <= 0) {
     return "0 KB";
@@ -720,9 +738,9 @@ export function DashboardAdminManager({
       contentHtml: composer.translations[locale].contentHtml.trim(),
       articleType: articleTypeValues.has(articleType) ? articleType : "news",
       status: composer.status,
-      featuredImageUrl: composer.featuredImageUrl.trim() || null,
-      videoUrl: composer.videoUrl.trim() || null,
-      sourceUrl: composer.sourceUrl.trim() || null,
+      featuredImageUrl: normalizeOptionalUrlOrLocalPath(composer.featuredImageUrl),
+      videoUrl: normalizeOptionalUrlOrLocalPath(composer.videoUrl),
+      sourceUrl: normalizeOptionalUrlOrLocalPath(composer.sourceUrl),
       sourceAttribution: composer.sourceAttribution.trim() || null,
       relatedBankId: composer.relatedBankId ? Number(composer.relatedBankId) : null,
       categoryId: composer.categoryId ? Number(composer.categoryId) : null,

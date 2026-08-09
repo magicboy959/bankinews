@@ -18,14 +18,34 @@ function isValidUrlOrLocalPath(value: string): boolean {
   }
 }
 
-const optionalUrlOrLocalPathSchema = z
-  .string()
-  .trim()
-  .nullable()
-  .optional()
-  .refine((value) => value === null || value === undefined || isValidUrlOrLocalPath(value), {
-    message: "Must be a valid URL or local media path",
-  });
+function normalizeOptionalUrlOrLocalPath(value: unknown) {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  return isValidUrlOrLocalPath(trimmed) ? trimmed : null;
+}
+
+const optionalUrlOrLocalPathSchema = z.preprocess(
+  normalizeOptionalUrlOrLocalPath,
+  z
+    .string()
+    .trim()
+    .nullable()
+    .optional()
+    .refine((value) => value === null || value === undefined || isValidUrlOrLocalPath(value), {
+      message: "Must be a valid URL or local media path",
+    })
+);
 
 export const loginSchema = z.object({
   email: z.email(),
