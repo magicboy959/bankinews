@@ -1,9 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { dbQuery } from "@/lib/db/query";
+import type { DbRow } from "@/lib/db/pool";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { LanguageUnavailableNotice } from "@/components/ui/language-unavailable-notice";
 import { buildMetadata } from "@/lib/seo/metadata";
+
+type ProductRow = DbRow & {
+  slug: string;
+  category: string;
+  bankName: string;
+  name: string;
+  shortDescription: string;
+};
+
+type CountRow = DbRow & { count: number };
 
 export async function generateMetadata({
   params,
@@ -28,27 +39,27 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
   const { locale } = await params;
   const safeLocale: Locale = isLocale(locale) ? locale : "ar";
 
-  let products: any[] = [];
+  let products: ProductRow[] = [];
   let arabicProductCount = 0;
   try {
-    products = await dbQuery<any[]>(
+    products = await dbQuery<ProductRow[]>(
       `SELECT p.slug, p.product_category AS category, bt.name AS bankName,
               pt.name, pt.short_description AS shortDescription
        FROM products p
        JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = ?
        JOIN banks b ON b.id = p.bank_id
        JOIN bank_translations bt ON bt.bank_id = b.id AND bt.locale = ?
-       WHERE p.deleted_at IS NULL
+       WHERE p.deleted_at IS NULL AND p.slug NOT LIKE 'demo-%'
        ORDER BY p.updated_at DESC`,
       [safeLocale, safeLocale]
     );
 
     if (safeLocale === "en") {
-      const arabicRows = await dbQuery<Array<{ count: number }>>(
+      const arabicRows = await dbQuery<CountRow[]>(
         `SELECT COUNT(*) AS count
          FROM products p
          JOIN product_translations pt ON pt.product_id = p.id AND pt.locale = 'ar'
-         WHERE p.deleted_at IS NULL`
+         WHERE p.deleted_at IS NULL AND p.slug NOT LIKE 'demo-%'`
       );
       arabicProductCount = Number(arabicRows[0]?.count ?? 0);
     }
