@@ -188,7 +188,7 @@ export default async function ArticlePage({
         <div className="article-meta mt-4 text-sm text-slate-500 dark:text-slate-400">
           {article.publishedAt ? formatDate(article.publishedAt, safeLocale) : "-"}
           <span className="mx-2">•</span>
-          {article.readingTimeMinutes} min
+          {safeLocale === "ar" ? `${article.readingTimeMinutes} دقائق قراءة` : `${article.readingTimeMinutes} min read`}
         </div>
 
         <div className="mt-8">
@@ -229,19 +229,31 @@ export default async function ArticlePage({
               : "We verify banking and financial coverage against official or trusted sources before publication and disclose source attribution whenever available."}
           </p>
 
-          <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2">
+          <dl className="mt-4 grid gap-3 text-sm md:grid-cols-3">
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+              <dt className="font-semibold text-slate-500 dark:text-slate-400">
+                {safeLocale === "ar" ? "المصدر" : "Source"}
+              </dt>
+              <dd className="mt-1 font-medium text-slate-800 dark:text-slate-200">
+                {article.relatedBankName || article.sourceAttribution || (safeLocale === "ar" ? "فريق بنكي نيوز" : "Banki News editorial team")}
+              </dd>
+            </div>
             <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
               <dt className="font-semibold text-slate-500 dark:text-slate-400">
                 {safeLocale === "ar" ? "مستوى التحقق" : "Verification level"}
               </dt>
               <dd className="mt-1 font-medium text-slate-800 dark:text-slate-200">
-                {safeLocale === "ar" ? "مراجعة تحريرية" : "Editorial review"}
+                {article.relatedBankName
+                  ? safeLocale === "ar" ? "✓ مصدر رسمي" : "✓ Official source"
+                  : article.sourceUrl
+                    ? safeLocale === "ar" ? "✓ رابط المصدر الأصلي" : "✓ Original source linked"
+                  : safeLocale === "ar" ? "مراجعة تحريرية" : "Editorial review"}
               </dd>
             </div>
 
             <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
               <dt className="font-semibold text-slate-500 dark:text-slate-400">
-                {safeLocale === "ar" ? "آخر تحديث" : "Last updated"}
+                {safeLocale === "ar" ? "آخر تحقق" : "Last verified"}
               </dt>
               <dd className="mt-1 font-medium text-slate-800 dark:text-slate-200">
                 {article.updatedAt ? formatDate(article.updatedAt, safeLocale) : "-"}

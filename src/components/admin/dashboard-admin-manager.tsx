@@ -37,6 +37,7 @@ type ArticleDetailItem = {
   publishAt: string | null;
   expiresAt: string | null;
   isBreaking: number | boolean;
+  isFeatured: number | boolean;
   isSponsored: number | boolean;
   isOpinion: number | boolean;
   isPressRelease: number | boolean;
@@ -911,7 +912,7 @@ export function DashboardAdminManager({
       publishAt: toDateTimeLocalValue(base.publishAt),
       expiresAt: toDateTimeLocalValue(base.expiresAt),
       isBreaking: truthyFlag(base.isBreaking),
-      isFeatured: truthyFlag(base.isSponsored),
+      isFeatured: truthyFlag(base.isFeatured),
       isOpinion: truthyFlag(base.isOpinion),
       isPressRelease: truthyFlag(base.isPressRelease),
       translations: nextTranslations,

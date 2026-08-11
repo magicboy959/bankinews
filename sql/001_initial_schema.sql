@@ -197,6 +197,7 @@ CREATE TABLE IF NOT EXISTS articles (
   related_bank_id BIGINT UNSIGNED NULL,
   reading_time_minutes INT UNSIGNED NOT NULL DEFAULT 1,
   is_breaking TINYINT(1) NOT NULL DEFAULT 0,
+  is_featured TINYINT(1) NOT NULL DEFAULT 0,
   is_sponsored TINYINT(1) NOT NULL DEFAULT 0,
   is_opinion TINYINT(1) NOT NULL DEFAULT 0,
   is_press_release TINYINT(1) NOT NULL DEFAULT 0,

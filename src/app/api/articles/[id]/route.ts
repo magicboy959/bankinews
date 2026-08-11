@@ -20,6 +20,7 @@ type ArticleDetailRow = DbRow & {
   publishAt: string | null;
   expiresAt: string | null;
   isBreaking: number | boolean;
+  isFeatured: number | boolean;
   isSponsored: number | boolean;
   isOpinion: number | boolean;
   isPressRelease: number | boolean;
@@ -40,6 +41,7 @@ type ArticlePreviousRow = DbRow & {
   publishAt: string | null;
   expiresAt: string | null;
   isBreaking: number | boolean;
+  isFeatured: number | boolean;
   isSponsored: number | boolean;
   isOpinion: number | boolean;
   isPressRelease: number | boolean;
@@ -68,6 +70,7 @@ export async function GET(
               a.publish_at AS publishAt,
               a.expires_at AS expiresAt,
               a.is_breaking AS isBreaking,
+              a.is_featured AS isFeatured,
               a.is_sponsored AS isSponsored,
               a.is_opinion AS isOpinion,
               a.is_press_release AS isPressRelease,
@@ -125,8 +128,6 @@ export async function PUT(
       return badRequest(workflowError);
     }
 
-    const promotedFlag = payload.isFeatured || payload.isSponsored;
-
     // Derive slug from payload or auto-generate from title; validate uniqueness.
     const requestedSlug = payload.slug?.trim() ? payload.slug.trim() : slugify(payload.title);
 
@@ -145,7 +146,7 @@ export async function PUT(
                 a.video_url AS videoUrl,
                 a.source_url AS sourceUrl, a.source_attribution AS sourceAttribution,
                 a.related_bank_id AS relatedBankId, a.publish_at AS publishAt, a.expires_at AS expiresAt,
-                a.is_breaking AS isBreaking, a.is_sponsored AS isSponsored,
+                a.is_breaking AS isBreaking, a.is_featured AS isFeatured, a.is_sponsored AS isSponsored,
                 a.is_opinion AS isOpinion, a.is_press_release AS isPressRelease,
                 at.locale, at.title, at.summary, at.content_html AS contentHtml
          FROM articles a
@@ -161,7 +162,7 @@ export async function PUT(
          SET slug = ?, status = ?, article_type = ?, featured_image_url = ?,
            video_url = ?,
              source_url = ?, source_attribution = ?, related_bank_id = ?,
-             is_breaking = ?, is_sponsored = ?, is_opinion = ?, is_press_release = ?,
+             is_breaking = ?, is_featured = ?, is_sponsored = ?, is_opinion = ?, is_press_release = ?,
              publish_at = ?, expires_at = ?,
              updated_at = NOW(),
              published_at = IF(? = 'published', IFNULL(published_at, NOW()), NULL)
@@ -176,7 +177,8 @@ export async function PUT(
           payload.sourceAttribution ?? null,
           payload.relatedBankId ?? null,
           payload.isBreaking ? 1 : 0,
-          promotedFlag ? 1 : 0,
+          payload.isFeatured ? 1 : 0,
+          payload.isSponsored ? 1 : 0,
           payload.isOpinion ? 1 : 0,
           payload.isPressRelease ? 1 : 0,
           payload.publishAt ?? null,
@@ -225,7 +227,8 @@ export async function PUT(
           publishAt: { from: previous?.publishAt ?? null, to: payload.publishAt ?? null },
           expiresAt: { from: previous?.expiresAt ?? null, to: payload.expiresAt ?? null },
           isBreaking: { from: previous?.isBreaking ?? null, to: payload.isBreaking ? 1 : 0 },
-          isSponsored: { from: previous?.isSponsored ?? null, to: promotedFlag ? 1 : 0 },
+          isFeatured: { from: previous?.isFeatured ?? null, to: payload.isFeatured ? 1 : 0 },
+          isSponsored: { from: previous?.isSponsored ?? null, to: payload.isSponsored ? 1 : 0 },
           isOpinion: { from: previous?.isOpinion ?? null, to: payload.isOpinion ? 1 : 0 },
           isPressRelease: { from: previous?.isPressRelease ?? null, to: payload.isPressRelease ? 1 : 0 },
           relatedBankId: { from: previous?.relatedBankId ?? null, to: payload.relatedBankId ?? null },

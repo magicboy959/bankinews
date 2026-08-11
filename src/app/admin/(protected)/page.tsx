@@ -157,7 +157,7 @@ export default async function AdminOverviewPage({
               a.updated_at AS updatedAt,
               a.publish_at AS publishAt,
               a.is_breaking AS isBreaking,
-              a.is_sponsored AS isFeatured
+              a.is_featured AS isFeatured
        FROM articles a
        LEFT JOIN article_translations at ON at.article_id = a.id AND at.locale = 'ar'
        WHERE a.deleted_at IS NULL
@@ -170,7 +170,7 @@ export default async function AdminOverviewPage({
               a.updated_at AS updatedAt,
               a.publish_at AS publishAt,
               a.is_breaking AS isBreaking,
-              a.is_sponsored AS isFeatured
+              a.is_featured AS isFeatured
        FROM articles a
        LEFT JOIN article_translations at ON at.article_id = a.id AND at.locale = 'ar'
        WHERE a.status IN ('draft', 'review') AND a.deleted_at IS NULL
@@ -183,7 +183,7 @@ export default async function AdminOverviewPage({
               a.updated_at AS updatedAt,
               a.publish_at AS publishAt,
               a.is_breaking AS isBreaking,
-              a.is_sponsored AS isFeatured
+              a.is_featured AS isFeatured
        FROM articles a
        LEFT JOIN article_translations at ON at.article_id = a.id AND at.locale = 'ar'
        WHERE a.status = 'scheduled' AND a.deleted_at IS NULL

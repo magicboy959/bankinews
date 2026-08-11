@@ -60,63 +60,59 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <div className="space-y-8 md:space-y-10">
-      <section className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4 shadow-[0_10px_30px_rgba(2,6,23,0.08)]">
+      {data.featured ? <section className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4 shadow-[0_10px_30px_rgba(2,6,23,0.08)]">
         <p className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-red-700">{t.labels.breaking}</p>
         <div className="text-sm text-[var(--text-muted)]">
-          {data.featured ? data.featured.title : safeLocale === "ar" ? "لا توجد أخبار عاجلة حالياً" : "No breaking item at the moment"}
+          {data.featured.title}
         </div>
-      </section>
+      </section> : null}
 
       {data.heroSlides.length ? <HeroCarousel locale={safeLocale} slides={data.heroSlides} /> : null}
 
-      <section>
+      {data.latest.length ? <section>
         <SectionHeading title={t.labels.latest} />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {data.latest.map((article) => (
             <ArticleCardView key={article.id} locale={safeLocale} article={article} />
           ))}
         </div>
-      </section>
+      </section> : null}
 
-      <section>
+      {data.fintech.length ? <section>
         <SectionHeading title={safeLocale === "ar" ? "التحول الرقمي والخدمات الحديثة" : "Digital Banking & Fintech"} />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {data.fintech.map((article) => (
             <ArticleCardView key={`fin-${article.id}`} locale={safeLocale} article={article} />
           ))}
         </div>
-      </section>
+      </section> : null}
 
-      <section className="grid gap-6 md:grid-cols-2">
-        <div>
+      {data.mostRead.length || data.editorsPicks.length ? <section className="grid gap-6 md:grid-cols-2">
+        {data.mostRead.length ? <div>
           <SectionHeading title={t.labels.mostRead} />
           <div className="space-y-3">
             {data.mostRead.map((article) => (
               <ArticleCardView key={`most-${article.id}`} locale={safeLocale} article={article} compact />
             ))}
           </div>
-        </div>
-        <div>
+        </div> : null}
+        {data.editorsPicks.length ? <div>
           <SectionHeading title={t.labels.editorsPicks} />
           <div className="space-y-3">
             {data.editorsPicks.map((article) => (
               <ArticleCardView key={`pick-${article.id}`} locale={safeLocale} article={article} compact />
             ))}
           </div>
-        </div>
-      </section>
+        </div> : null}
+      </section> : null}
 
-      <section className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 shadow-[0_10px_30px_rgba(2,6,23,0.08)]">
+      {data.featuredBank ? <section className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 shadow-[0_10px_30px_rgba(2,6,23,0.08)]">
         <SectionHeading title={t.labels.featuredBank} />
-        {data.featuredBank ? (
           <div>
             <p className="text-lg font-bold text-[var(--foreground)]">{data.featuredBank.name}</p>
             <p className="mt-2 text-sm text-[var(--foreground)]/70">{data.featuredBank.shortDescription}</p>
           </div>
-        ) : (
-          <p className="text-sm text-[var(--foreground)]/70">{safeLocale === "ar" ? "لا يوجد بنك مميز حالياً" : "No featured bank yet"}</p>
-        )}
-      </section>
+      </section> : null}
 
       <section className="grid gap-5 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-5 shadow-[0_10px_30px_rgba(2,6,23,0.08)] md:grid-cols-2 md:p-6">
         <div>

@@ -29,6 +29,7 @@ type ArticleListRow = DbRow & {
   updatedAt: string;
   readingTimeMinutes: number;
   isBreaking: number | boolean;
+  isFeatured: number | boolean;
   isSponsored: number | boolean;
   title: string;
   summary: string;
@@ -141,7 +142,7 @@ export async function GET(request: Request) {
       SELECT a.id, a.slug, a.status, a.article_type AS articleType,
               a.featured_image_url AS featuredImageUrl, a.video_url AS videoUrl, a.published_at AS publishedAt,
              a.updated_at AS updatedAt, a.reading_time_minutes AS readingTimeMinutes,
-             a.is_breaking AS isBreaking, a.is_sponsored AS isSponsored,
+             a.is_breaking AS isBreaking, a.is_featured AS isFeatured, a.is_sponsored AS isSponsored,
              at.title, at.summary
       FROM articles a
       JOIN article_translations at ON at.article_id = a.id AND at.locale = ?
@@ -194,7 +195,6 @@ export async function POST(request: Request) {
     }
 
     const baseSlug = resolveArticleSlug(payload);
-    const promotedFlag = payload.isFeatured || payload.isSponsored;
     const authorId = await resolveAuthorId(user);
 
     const existing = await dbQuery<CountRow[]>(
@@ -219,9 +219,9 @@ export async function POST(request: Request) {
         INSERT INTO articles
         (slug, status, article_type, featured_image_url, video_url, source_url, source_attribution,
          related_bank_id, author_id, reading_time_minutes,
-         is_breaking, is_sponsored, is_opinion, is_press_release,
+         is_breaking, is_featured, is_sponsored, is_opinion, is_press_release,
          publish_at, expires_at, published_at, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, IF(? = 'published', NOW(), NULL), NOW(), NOW())
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, IF(? = 'published', NOW(), NULL), NOW(), NOW())
         `,
         [
           slug,
@@ -235,7 +235,8 @@ export async function POST(request: Request) {
           authorId,
           estimateReadingTime(payload.contentHtml),
           payload.isBreaking ? 1 : 0,
-          promotedFlag ? 1 : 0,
+          payload.isFeatured ? 1 : 0,
+          payload.isSponsored ? 1 : 0,
           payload.isOpinion ? 1 : 0,
           payload.isPressRelease ? 1 : 0,
           payload.publishAt ?? null,

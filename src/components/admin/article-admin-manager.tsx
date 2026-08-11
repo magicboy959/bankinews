@@ -24,6 +24,7 @@ type ArticleDetailItem = {
   articleType: string;
   featuredImageUrl: string | null;
   isBreaking: number | boolean;
+  isFeatured: number | boolean;
   isSponsored: number | boolean;
   isOpinion: number | boolean;
   isPressRelease: number | boolean;
@@ -63,6 +64,7 @@ type ArticleFormState = {
   status: ArticleStatus;
   featuredImageUrl: string;
   isBreaking: boolean;
+  isFeatured: boolean;
   isSponsored: boolean;
   isOpinion: boolean;
   isPressRelease: boolean;
@@ -77,6 +79,7 @@ const emptyForm: ArticleFormState = {
   status: "draft",
   featuredImageUrl: "",
   isBreaking: false,
+  isFeatured: false,
   isSponsored: false,
   isOpinion: false,
   isPressRelease: false,
@@ -98,6 +101,7 @@ function historyFieldLabel(key: string, locale: Locale): string {
     publishAt: { ar: "موعد النشر", en: "Publish at" },
     expiresAt: { ar: "تاريخ الانتهاء", en: "Expires at" },
     isBreaking: { ar: "عاجل", en: "Breaking" },
+    isFeatured: { ar: "اختيار التحرير", en: "Editor's pick" },
     isSponsored: { ar: "برعاية", en: "Sponsored" },
     isOpinion: { ar: "رأي", en: "Opinion" },
     isPressRelease: { ar: "بيان صحفي", en: "Press release" },
@@ -213,6 +217,7 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
       status: baseRow.status,
       featuredImageUrl: baseRow.featuredImageUrl ?? "",
       isBreaking: truthyFlag(baseRow.isBreaking),
+      isFeatured: truthyFlag(baseRow.isFeatured),
       isSponsored: truthyFlag(baseRow.isSponsored),
       isOpinion: truthyFlag(baseRow.isOpinion),
       isPressRelease: truthyFlag(baseRow.isPressRelease),
@@ -354,6 +359,7 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
 
         <div className="mt-3 flex flex-wrap gap-4 text-sm">
           <label><input type="checkbox" checked={createForm.isBreaking} onChange={(e) => onChange(setCreateForm, "isBreaking", e.target.checked)} /> <span className="ml-1">Breaking</span></label>
+          <label><input type="checkbox" checked={createForm.isFeatured} onChange={(e) => onChange(setCreateForm, "isFeatured", e.target.checked)} /> <span className="ml-1">Editor&apos;s Pick</span></label>
           <label><input type="checkbox" checked={createForm.isSponsored} onChange={(e) => onChange(setCreateForm, "isSponsored", e.target.checked)} /> <span className="ml-1">Sponsored</span></label>
           <label><input type="checkbox" checked={createForm.isOpinion} onChange={(e) => onChange(setCreateForm, "isOpinion", e.target.checked)} /> <span className="ml-1">Opinion</span></label>
           <label><input type="checkbox" checked={createForm.isPressRelease} onChange={(e) => onChange(setCreateForm, "isPressRelease", e.target.checked)} /> <span className="ml-1">Press Release</span></label>
@@ -475,6 +481,7 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
 
           <div className="mt-3 flex flex-wrap gap-4 text-sm">
             <label><input type="checkbox" checked={editForm.isBreaking} onChange={(e) => onChange(setEditForm, "isBreaking", e.target.checked)} /> <span className="ml-1">Breaking</span></label>
+            <label><input type="checkbox" checked={editForm.isFeatured} onChange={(e) => onChange(setEditForm, "isFeatured", e.target.checked)} /> <span className="ml-1">Editor&apos;s Pick</span></label>
             <label><input type="checkbox" checked={editForm.isSponsored} onChange={(e) => onChange(setEditForm, "isSponsored", e.target.checked)} /> <span className="ml-1">Sponsored</span></label>
             <label><input type="checkbox" checked={editForm.isOpinion} onChange={(e) => onChange(setEditForm, "isOpinion", e.target.checked)} /> <span className="ml-1">Opinion</span></label>
             <label><input type="checkbox" checked={editForm.isPressRelease} onChange={(e) => onChange(setEditForm, "isPressRelease", e.target.checked)} /> <span className="ml-1">Press Release</span></label>

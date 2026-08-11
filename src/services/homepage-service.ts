@@ -52,7 +52,7 @@ function normalizeHeroSlides(value: unknown) {
 }
 
 async function fetchLatestArticles(locale: Locale, limit = 8): Promise<ArticleCard[]> {
-  const rows = await dbQuery<any[]>(
+  const rows = await dbQuery<Array<DbRow & ArticleCard>>(
     `
       SELECT a.id, a.slug, at.locale, at.title, at.summary, a.featured_image_url AS featuredImageUrl,
              a.published_at AS publishedAt, a.reading_time_minutes AS readingTimeMinutes,
@@ -74,7 +74,7 @@ async function fetchLatestArticles(locale: Locale, limit = 8): Promise<ArticleCa
 }
 
 async function fetchFeaturedBank(locale: Locale): Promise<BankCard | null> {
-  const rows = await dbQuery<any[]>(
+  const rows = await dbQuery<Array<DbRow & BankCard>>(
     `
       SELECT b.id, b.slug, bt.name, bt.short_description AS shortDescription, b.logo_url AS logoUrl
       FROM banks b
@@ -86,6 +86,87 @@ async function fetchFeaturedBank(locale: Locale): Promise<BankCard | null> {
     [locale]
   );
   return rows[0] ?? null;
+}
+
+async function fetchBreakingArticle(locale: Locale): Promise<ArticleCard | null> {
+  const rows = await dbQuery<Array<DbRow & ArticleCard>>(
+    `SELECT a.id, a.slug, at.locale, at.title, at.summary, a.featured_image_url AS featuredImageUrl,
+            a.published_at AS publishedAt, a.reading_time_minutes AS readingTimeMinutes,
+            a.is_breaking AS isBreaking, a.is_sponsored AS isSponsored,
+            ct.title AS categoryName, c.slug AS categorySlug
+     FROM articles a
+     JOIN article_translations at ON at.article_id = a.id AND at.locale = ?
+     LEFT JOIN article_categories ac ON ac.article_id = a.id
+     LEFT JOIN categories c ON c.id = ac.category_id AND c.deleted_at IS NULL
+     LEFT JOIN category_translations ct ON ct.category_id = c.id AND ct.locale = ?
+     WHERE a.status = 'published' AND a.deleted_at IS NULL AND a.is_breaking = 1
+     ORDER BY a.published_at DESC
+     LIMIT 1`,
+    [locale, locale]
+  );
+  return rows[0] ?? null;
+}
+
+async function fetchArticlesByCategory(locale: Locale, categorySlug: string, limit: number): Promise<ArticleCard[]> {
+  const rows = await dbQuery<Array<DbRow & ArticleCard>>(
+    `SELECT a.id, a.slug, at.locale, at.title, at.summary, a.featured_image_url AS featuredImageUrl,
+            a.published_at AS publishedAt, a.reading_time_minutes AS readingTimeMinutes,
+            a.is_breaking AS isBreaking, a.is_sponsored AS isSponsored,
+            ct.title AS categoryName, c.slug AS categorySlug
+     FROM articles a
+     JOIN article_translations at ON at.article_id = a.id AND at.locale = ?
+     JOIN article_categories ac ON ac.article_id = a.id
+     JOIN categories c ON c.id = ac.category_id AND c.slug = ? AND c.deleted_at IS NULL
+     LEFT JOIN category_translations ct ON ct.category_id = c.id AND ct.locale = ?
+     WHERE a.status = 'published' AND a.deleted_at IS NULL
+     ORDER BY a.published_at DESC
+     LIMIT ?`,
+    [locale, categorySlug, locale, limit]
+  );
+  return rows as ArticleCard[];
+}
+
+async function fetchMostReadArticles(locale: Locale, limit: number): Promise<ArticleCard[]> {
+  const rows = await dbQuery<Array<DbRow & ArticleCard & { viewCount: number }>>(
+    `SELECT a.id, a.slug, at.locale, at.title, at.summary, a.featured_image_url AS featuredImageUrl,
+            a.published_at AS publishedAt, a.reading_time_minutes AS readingTimeMinutes,
+            a.is_breaking AS isBreaking, a.is_sponsored AS isSponsored,
+            ct.title AS categoryName, c.slug AS categorySlug,
+            COUNT(DISTINCT av.id) AS viewCount
+     FROM article_views av
+     JOIN articles a ON a.id = av.article_id AND a.status = 'published' AND a.deleted_at IS NULL
+     JOIN article_translations at ON at.article_id = a.id AND at.locale = ?
+     LEFT JOIN article_categories ac ON ac.article_id = a.id
+     LEFT JOIN categories c ON c.id = ac.category_id AND c.deleted_at IS NULL
+     LEFT JOIN category_translations ct ON ct.category_id = c.id AND ct.locale = ?
+     WHERE av.viewed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+     GROUP BY a.id, a.slug, at.locale, at.title, at.summary, a.featured_image_url,
+              a.published_at, a.reading_time_minutes, a.is_breaking, a.is_sponsored,
+              ct.title, c.slug
+     ORDER BY viewCount DESC, a.published_at DESC
+     LIMIT ?`,
+    [locale, locale, limit]
+  );
+  return rows as ArticleCard[];
+}
+
+async function fetchEditorsPicks(locale: Locale, limit: number): Promise<ArticleCard[]> {
+  const rows = await dbQuery<Array<DbRow & ArticleCard>>(
+    `SELECT a.id, a.slug, at.locale, at.title, at.summary, a.featured_image_url AS featuredImageUrl,
+            a.published_at AS publishedAt, a.reading_time_minutes AS readingTimeMinutes,
+            a.is_breaking AS isBreaking, a.is_sponsored AS isSponsored,
+            ct.title AS categoryName, c.slug AS categorySlug
+     FROM articles a
+     JOIN article_translations at ON at.article_id = a.id AND at.locale = ?
+     LEFT JOIN article_categories ac ON ac.article_id = a.id
+     LEFT JOIN categories c ON c.id = ac.category_id AND c.deleted_at IS NULL
+     LEFT JOIN category_translations ct ON ct.category_id = c.id AND ct.locale = ?
+     WHERE a.status = 'published' AND a.deleted_at IS NULL AND a.is_featured = 1
+     ORDER BY a.published_at DESC
+     LIMIT ?`,
+    [locale, locale, limit]
+  );
+  return rows as ArticleCard[];
 }
 
 async function fetchHeroSlides(locale: Locale, latest: ArticleCard[]) {
@@ -120,9 +201,13 @@ async function fetchHeroSlides(locale: Locale, latest: ArticleCard[]) {
 
 export async function getHomepageData(locale: Locale) {
   try {
-    const [latest, featuredBank] = await Promise.all([
+    const [latest, featuredBank, breakingArticle, fintech, mostRead, editorsPicks] = await Promise.all([
       fetchLatestArticles(locale, 12),
       fetchFeaturedBank(locale),
+      fetchBreakingArticle(locale),
+      fetchArticlesByCategory(locale, "digital-banking", 4),
+      fetchMostReadArticles(locale, 5),
+      fetchEditorsPicks(locale, 4),
     ]);
 
     const heroSlides = await fetchHeroSlides(locale, latest);
@@ -130,12 +215,12 @@ export async function getHomepageData(locale: Locale) {
     return {
       latest,
       heroSlides,
-      featured: latest[0] ?? null,
+      featured: breakingArticle,
       secondary: latest.slice(1, 4),
-      fintech: latest.slice(4, 8),
+      fintech,
       guides: latest.filter((a) => a.summary.length > 0).slice(0, 4),
-      mostRead: latest.slice(0, 5),
-      editorsPicks: latest.slice(5, 9),
+      mostRead,
+      editorsPicks,
       featuredBank,
     };
   } catch {

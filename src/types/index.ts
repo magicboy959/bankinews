@@ -58,8 +58,8 @@ export interface ArticleCard {
   featuredImageUrl: string | null;
   publishedAt: string | null;
   readingTimeMinutes: number;
-  isBreaking: boolean;
-  isSponsored: boolean;
+  isBreaking: boolean | number;
+  isSponsored: boolean | number;
 }
 
 export interface BankCard {

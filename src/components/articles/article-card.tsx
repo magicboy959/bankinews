@@ -8,15 +8,16 @@ export function ArticleCardView({
   locale,
   article,
   compact = false,
-  categorySlug,
 }: {
   locale: Locale;
   article: ArticleCard;
   compact?: boolean;
-  categorySlug?: string;
 }) {
   const t = dictionary[locale];
   const href = `/${locale}/news/${article.slug}`;
+  const isBreaking = article.isBreaking === true || article.isBreaking === 1;
+  const isSponsored = article.isSponsored === true || article.isSponsored === 1;
+  const readingTime = locale === "ar" ? `${article.readingTimeMinutes} دقائق قراءة` : `${article.readingTimeMinutes} min read`;
 
   if (compact) {
     return (
@@ -36,7 +37,7 @@ export function ArticleCardView({
             <Link href={href}>{article.title}</Link>
           </h3>
           <p className="mt-1 text-xs text-[var(--text-subtle)]">
-            {article.publishedAt ? formatDate(article.publishedAt, locale) : "-"} · {article.readingTimeMinutes} min
+            {article.publishedAt ? formatDate(article.publishedAt, locale) : "-"} · {readingTime}
           </p>
         </div>
       </article>
@@ -60,12 +61,12 @@ export function ArticleCardView({
 
       <div className="p-4">
         <div className="mb-2 flex flex-wrap gap-2 text-[11px] font-bold uppercase tracking-wide">
-          {article.isBreaking && (
+          {isBreaking ? (
             <span className="rounded bg-red-100 px-2 py-0.5 text-red-700">{t.labels.breaking}</span>
-          )}
-          {article.isSponsored && (
+          ) : null}
+          {isSponsored ? (
             <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-700">{t.labels.sponsored}</span>
-          )}
+          ) : null}
           {article.categoryName && (
             <Link
               href={`/${locale}/category/${article.categorySlug ?? article.categoryName.toLowerCase().replace(/\s+/g, "-")}`}
@@ -83,7 +84,7 @@ export function ArticleCardView({
 
         <div className="mt-3 flex items-center justify-between text-xs text-[var(--text-subtle)]">
           <span>{article.publishedAt ? formatDate(article.publishedAt, locale) : "-"}</span>
-          <span>{article.readingTimeMinutes} min</span>
+          <span>{readingTime}</span>
         </div>
       </div>
     </article>
