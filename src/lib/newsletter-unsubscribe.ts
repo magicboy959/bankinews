@@ -2,7 +2,7 @@ import { createHmac } from "node:crypto";
 import type { Locale } from "@/lib/i18n/config";
 
 function getBaseUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://bankinews.com").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://www.bankinews.com").replace(/\/$/, "");
 }
 
 function getSecret() {

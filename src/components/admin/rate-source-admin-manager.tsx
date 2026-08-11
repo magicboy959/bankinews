@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type SourceTrustTier = "high" | "medium" | "low" | "unverified";
@@ -199,12 +200,12 @@ export function RateSourceAdminManager({
             Search, filter, and update trust settings for exchange-rate sources.
           </p>
         </div>
-        <a
+        <Link
           href="/admin/exchange-rates"
           className="inline-flex w-fit items-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-elevated)]"
         >
           Back to Exchange Rates
-        </a>
+        </Link>
       </div>
 
       {error && <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}

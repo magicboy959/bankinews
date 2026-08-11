@@ -31,7 +31,7 @@ function wrapText(title: string, intro: string, bulletItems: string[], outro: st
   return [title, "", intro, "", ...bulletItems.map((item) => `- ${item}`), "", outro, "", `${ctaLabel}: ${ctaUrl}`].join("\n");
 }
 
-const siteUrl = (process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://bankinews.com").replace(/\/$/, "");
+const siteUrl = (process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://www.bankinews.com").replace(/\/$/, "");
 
 export const marketingTemplates: MarketingTemplate[] = [
   {

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.bankinews.com";
   const locales = ["ar", "en"];
 
   const staticPaths = [
@@ -9,11 +9,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/news",
     "/banks",
     "/products",
+    "/cards-atms",
+    "/money-transfers",
+    "/fintech",
     "/exchange-rates",
     "/jobs",
     "/guides",
     "/about",
     "/contact",
+    "/privacy-policy",
+    "/terms",
+    "/data-deletion",
+    "/editorial-policy",
   ];
 
   return locales.flatMap((locale) =>

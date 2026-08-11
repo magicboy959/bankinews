@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as TestWelcomeRequest;
     const locale = normalizeLocale(body.locale);
-    const siteUrl = (process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://bankinews.com").replace(/\/$/, "");
+    const siteUrl = (process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://www.bankinews.com").replace(/\/$/, "");
     const message = getNewsletterWelcomeMessage(locale, siteUrl);
 
     const result = await sendSmtpEmail({

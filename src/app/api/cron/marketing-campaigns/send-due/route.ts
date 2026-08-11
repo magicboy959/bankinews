@@ -1,5 +1,6 @@
 import { dbQuery } from "@/lib/db/query";
-import { ok, serverError } from "@/lib/http";
+import { isAuthorizedCronRequest } from "@/lib/cron-auth";
+import { ok, serverError, unauthorized } from "@/lib/http";
 import { sendStoredMarketingCampaign } from "@/lib/marketing-campaigns";
 
 type DueCampaignRow = {
@@ -7,12 +8,10 @@ type DueCampaignRow = {
 };
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
   const expectedSecret = process.env.CRON_SECRET?.trim();
-  const providedSecret = url.searchParams.get("secret")?.trim() ?? "";
-
-  if (expectedSecret && providedSecret !== expectedSecret) {
-    return serverError("Unauthorized cron request");
+  const authorization = request.headers.get("authorization")?.trim() ?? "";
+  if (!isAuthorizedCronRequest(authorization, expectedSecret)) {
+    return unauthorized("Unauthorized cron request");
   }
 
   try {

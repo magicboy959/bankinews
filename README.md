@@ -108,6 +108,18 @@ npm run start
 - Use a dedicated limited-privilege DB user.
 - Configure all secrets in Vercel Environment Variables.
 
+### Production release checklist
+
+1. Rotate any credential that has appeared in logs, chat, screenshots, or source history.
+2. Set `NEXT_PUBLIC_APP_URL=https://www.bankinews.com` for Production before building.
+3. Set unique secrets of at least 32 characters for `AUTH_SECRET` and `CRON_SECRET`.
+4. Configure the database variables and run `npm run db:migrate` against the production database.
+5. Configure only the publishing integrations that are ready; keep all access tokens server-only and never prefix them with `NEXT_PUBLIC_`.
+6. Run `npm run check:release` with the production environment loaded.
+7. Deploy, then smoke-test `/ar`, `/ar/news`, `/ar/products`, `/ar/fintech`, `/robots.txt`, `/sitemap.xml`, Admin login, newsletter signup, and read-only social connection checks.
+
+Vercel Cron authenticates `/api/cron/marketing-campaigns/send-due` with `Authorization: Bearer $CRON_SECRET`. Never place the cron secret in `vercel.json` or a query string.
+
 ## External MySQL Notes
 
 - Use pooled connections.

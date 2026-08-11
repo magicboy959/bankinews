@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "test": "tsx --test src/lib/cron-auth.test.ts src/lib/validation/editorial-workflow.test.ts src/lib/validation/schemas.test.ts",
+    "check:production-env": "node scripts/check-production-env.mjs",
+    "check:release": "npm run check:production-env && npm run lint && npm test && npm run build",
     "db:migrate": "node --env-file=.env scripts/migrate.mjs",
     "db:seed": "node --env-file=.env scripts/seed.mjs",
     "db:create-admin": "node --env-file=.env scripts/create-admin.mjs"
@@ -39,6 +42,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^5.9.3"
   }
 }

@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       [parsed.data.articleId, parsed.data.locale, parsed.data.textMode, parsed.data.customText ?? null, user.id]
     );
 
-    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://www.bankinews.com").replace(/\/$/, "");
     const makeAbsolute = (value: string | null) => value ? new URL(value, `${baseUrl}/`).toString() : null;
     const article: DistributionArticle = {
       title: row.title,

@@ -9,7 +9,7 @@ function safeRedirectTarget(value: string | null) {
 
   try {
     const decoded = decodeURIComponent(value);
-    const url = new URL(decoded, process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://bankinews.com");
+    const url = new URL(decoded, process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://www.bankinews.com");
     return url.toString();
   } catch {
     return null;
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   const targetUrl = safeRedirectTarget(url.searchParams.get("url"));
 
   if (!Number.isInteger(campaignId) || campaignId < 1 || !Number.isInteger(subscriberId) || subscriberId < 1 || !targetUrl) {
-    return NextResponse.redirect(process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://bankinews.com", 302);
+    return NextResponse.redirect(process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://www.bankinews.com", 302);
   }
 
   try {

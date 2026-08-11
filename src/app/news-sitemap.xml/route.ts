@@ -1,7 +1,11 @@
 import { getPublishedArticles } from "@/services/article-service";
 
+function cdata(value: string) {
+  return value.replaceAll("]]>", "]]]]><![CDATA[>");
+}
+
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.bankinews.com";
   const arItems = await getPublishedArticles("ar", 300);
   const enItems = await getPublishedArticles("en", 300);
   const items = [...arItems, ...enItems];
@@ -18,7 +22,7 @@ ${items
         <news:language>${item.locale}</news:language>
       </news:publication>
       <news:publication_date>${item.publishedAt ? new Date(item.publishedAt).toISOString() : new Date().toISOString()}</news:publication_date>
-      <news:title><![CDATA[${item.title}]]></news:title>
+      <news:title><![CDATA[${cdata(item.title)}]]></news:title>
     </news:news>
   </url>`
   )

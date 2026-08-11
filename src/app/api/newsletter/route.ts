@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     const preferredLocale: Locale = parsed.data.preferredLanguage === "en" ? "en" : "ar";
-    const siteUrl = (process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://bankinews.com").replace(/\/$/, "");
+    const siteUrl = (process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://www.bankinews.com").replace(/\/$/, "");
     const message = getNewsletterWelcomeMessageWithUnsubscribe(preferredLocale, siteUrl, subscriber);
 
     let confirmationEmailSent = false;

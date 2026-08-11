@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { dbQuery, dbExecute } from "@/lib/db/query";
 import type { DbRow } from "@/lib/db/pool";
 import { verifyNewsletterUnsubscribeToken } from "@/lib/newsletter-unsubscribe";
@@ -57,7 +57,7 @@ export default async function UnsubscribePage({
         {ok ? "You will no longer receive campaign emails from Banki News." : "If you need help, contact our editorial team from the website."}
       </p>
       <div className="mt-8">
-        <a href="/ar" className="rounded bg-[#0A2342] px-4 py-2 text-sm font-semibold text-white">Return to site</a>
+        <Link href="/ar" className="rounded bg-[#0A2342] px-4 py-2 text-sm font-semibold text-white">Return to site</Link>
       </div>
     </div>
   );

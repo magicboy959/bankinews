@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     const article = rows[0];
     if (!article) return badRequest("Article or translation not found.");
 
-    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://www.bankinews.com").replace(/\/$/, "");
     const articleUrl = `${baseUrl}/${parsed.data.locale}/news/${article.slug}`;
 
     if (parsed.data.textMode === "custom") {

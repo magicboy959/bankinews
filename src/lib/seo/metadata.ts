@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { Locale } from "@/lib/i18n/config";
 
 const siteName = "BankiNews Sudan";
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.bankinews.com";
 
 function buildAbsoluteUrl(value: string): string {
   if (/^https?:\/\//i.test(value)) {
