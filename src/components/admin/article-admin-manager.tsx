@@ -15,6 +15,8 @@ type ArticleListItem = {
   title: string | null;
   publishedAt: string | null;
   updatedAt: string;
+  sourceVerificationStatus: "unverified" | "editorial_review" | "official";
+  sourceLastVerifiedAt: string | null;
 };
 
 type ArticleDetailItem = {
@@ -23,6 +25,10 @@ type ArticleDetailItem = {
   status: ArticleStatus;
   articleType: string;
   featuredImageUrl: string | null;
+  sourceUrl: string | null;
+  sourceAttribution: string | null;
+  sourceVerificationStatus: "unverified" | "editorial_review" | "official";
+  sourceLastVerifiedAt: string | null;
   isBreaking: number | boolean;
   isFeatured: number | boolean;
   isSponsored: number | boolean;
@@ -63,6 +69,10 @@ type ArticleFormState = {
   articleType: string;
   status: ArticleStatus;
   featuredImageUrl: string;
+  sourceUrl: string;
+  sourceAttribution: string;
+  sourceVerificationStatus: "unverified" | "editorial_review" | "official";
+  sourceLastVerifiedAt: string;
   isBreaking: boolean;
   isFeatured: boolean;
   isSponsored: boolean;
@@ -78,6 +88,10 @@ const emptyForm: ArticleFormState = {
   articleType: "news",
   status: "draft",
   featuredImageUrl: "",
+  sourceUrl: "",
+  sourceAttribution: "",
+  sourceVerificationStatus: "unverified",
+  sourceLastVerifiedAt: "",
   isBreaking: false,
   isFeatured: false,
   isSponsored: false,
@@ -97,6 +111,8 @@ function historyFieldLabel(key: string, locale: Locale): string {
     summary: { ar: "الملخص", en: "Summary" },
     sourceUrl: { ar: "رابط المصدر", en: "Source URL" },
     sourceAttribution: { ar: "الإسناد", en: "Source attribution" },
+    sourceVerificationStatus: { ar: "حالة المصدر", en: "Source verification" },
+    sourceLastVerifiedAt: { ar: "آخر تحقق", en: "Last verified" },
     featuredImageUrl: { ar: "الصورة الرئيسية", en: "Featured image" },
     publishAt: { ar: "موعد النشر", en: "Publish at" },
     expiresAt: { ar: "تاريخ الانتهاء", en: "Expires at" },
@@ -123,11 +139,25 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
   const [error, setError] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [editHistory, setEditHistory] = useState<ArticleHistoryItem[]>([]);
+  const [verificationFilter, setVerificationFilter] = useState<"all" | "unverified" | "verified" | "stale">("all");
 
-  const sortedRows = useMemo(
-    () => [...initialRows].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
-    [initialRows]
+  const sortedRows = useMemo(() => {
+    const staleBefore = new Date();
+    staleBefore.setDate(staleBefore.getDate() - 180);
+
+    return initialRows
+      .filter((row) => {
+        if (verificationFilter === "unverified") return row.sourceVerificationStatus === "unverified";
+        if (verificationFilter === "verified") return row.sourceVerificationStatus !== "unverified";
+        if (verificationFilter === "stale") {
+          return row.sourceVerificationStatus !== "unverified" && (!row.sourceLastVerifiedAt || new Date(row.sourceLastVerifiedAt) < staleBefore);
+        }
+        return true;
+      })
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }, [initialRows, verificationFilter]
   );
+  const unverifiedPublishedCount = initialRows.filter((row) => row.status === "published" && row.sourceVerificationStatus === "unverified").length;
 
   function onChange(
     setter: React.Dispatch<React.SetStateAction<ArticleFormState>>,
@@ -154,6 +184,9 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
       contentHtml: createForm.contentHtml.trim(),
       articleType: createForm.articleType.trim(),
       featuredImageUrl: createForm.featuredImageUrl.trim() || null,
+      sourceUrl: createForm.sourceUrl.trim() || null,
+      sourceAttribution: createForm.sourceAttribution.trim() || null,
+      sourceLastVerifiedAt: createForm.sourceLastVerifiedAt || null,
     };
 
     const response = await fetch("/api/articles", {
@@ -216,6 +249,10 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
       articleType: baseRow.articleType,
       status: baseRow.status,
       featuredImageUrl: baseRow.featuredImageUrl ?? "",
+      sourceUrl: baseRow.sourceUrl ?? "",
+      sourceAttribution: baseRow.sourceAttribution ?? "",
+      sourceVerificationStatus: baseRow.sourceVerificationStatus ?? "unverified",
+      sourceLastVerifiedAt: baseRow.sourceLastVerifiedAt ? String(baseRow.sourceLastVerifiedAt).slice(0, 10) : "",
       isBreaking: truthyFlag(baseRow.isBreaking),
       isFeatured: truthyFlag(baseRow.isFeatured),
       isSponsored: truthyFlag(baseRow.isSponsored),
@@ -240,6 +277,9 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
       contentHtml: editForm.contentHtml.trim(),
       articleType: editForm.articleType.trim(),
       featuredImageUrl: editForm.featuredImageUrl.trim() || null,
+      sourceUrl: editForm.sourceUrl.trim() || null,
+      sourceAttribution: editForm.sourceAttribution.trim() || null,
+      sourceLastVerifiedAt: editForm.sourceLastVerifiedAt || null,
     };
 
     const response = await fetch(`/api/articles/${editingId}`, {
@@ -326,6 +366,12 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
       <h1 className="text-2xl font-black text-[var(--foreground)]">Articles</h1>
       <p className="mt-2 text-[var(--text-muted)]">Create, edit, and delete articles from the admin panel.</p>
 
+      {unverifiedPublishedCount > 0 ? (
+        <p className="mt-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
+          {unverifiedPublishedCount} published article{unverifiedPublishedCount === 1 ? "" : "s"} still require source verification.
+        </p>
+      ) : null}
+
       {error && <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       <form onSubmit={handleCreate} className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
@@ -356,6 +402,14 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
           />
         </div>
         <input className="mt-3 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Featured image URL (optional)" value={createForm.featuredImageUrl} onChange={(e) => onChange(setCreateForm, "featuredImageUrl", e.target.value)} />
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" placeholder="Original source URL" value={createForm.sourceUrl} onChange={(e) => onChange(setCreateForm, "sourceUrl", e.target.value)} />
+          <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" placeholder="Source attribution" value={createForm.sourceAttribution} onChange={(e) => onChange(setCreateForm, "sourceAttribution", e.target.value)} />
+          <select className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" value={createForm.sourceVerificationStatus} onChange={(e) => onChange(setCreateForm, "sourceVerificationStatus", e.target.value)}>
+            <option value="unverified">Unverified</option><option value="editorial_review">Editorial review</option><option value="official">Official source</option>
+          </select>
+          <input type="date" className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" value={createForm.sourceLastVerifiedAt} onChange={(e) => onChange(setCreateForm, "sourceLastVerifiedAt", e.target.value)} />
+        </div>
 
         <div className="mt-3 flex flex-wrap gap-4 text-sm">
           <label><input type="checkbox" checked={createForm.isBreaking} onChange={(e) => onChange(setCreateForm, "isBreaking", e.target.checked)} /> <span className="ml-1">Breaking</span></label>
@@ -370,7 +424,14 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
         </button>
       </form>
 
-      <div className="mt-6 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <span className="text-sm font-semibold text-[var(--text-muted)]">Verification:</span>
+        {(["all", "unverified", "verified", "stale"] as const).map((filter) => (
+          <button key={filter} type="button" onClick={() => setVerificationFilter(filter)} className={`rounded px-3 py-1.5 text-xs font-semibold ${verificationFilter === filter ? "bg-[#0A2342] text-white" : "border border-[var(--border)] text-[var(--text-muted)]"}`}>{filter}</button>
+        ))}
+      </div>
+
+      <div className="mt-3 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--surface)]">
         <table className="min-w-full text-sm">
           <thead className="bg-[var(--surface-strong)] text-left text-[var(--text-muted)]">
             <tr>
@@ -378,6 +439,7 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
               <th className="px-3 py-2 font-semibold">Title</th>
               <th className="px-3 py-2 font-semibold">Type</th>
               <th className="px-3 py-2 font-semibold">Status</th>
+              <th className="px-3 py-2 font-semibold">Source verification</th>
               <th className="px-3 py-2 font-semibold">Updated</th>
               <th className="px-3 py-2 font-semibold">Actions</th>
             </tr>
@@ -389,6 +451,10 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
                 <td className="px-3 py-2 text-[var(--foreground)]">{row.title ?? row.slug}</td>
                 <td className="px-3 py-2 text-[var(--text-muted)]">{row.articleType}</td>
                 <td className="px-3 py-2"><span className="rounded bg-[var(--surface-strong)] px-2 py-0.5 text-xs font-semibold text-[var(--text-muted)]">{row.status}</span></td>
+                <td className="px-3 py-2">
+                  <span className={`rounded px-2 py-0.5 text-xs font-semibold ${row.sourceVerificationStatus === "official" ? "bg-emerald-100 text-emerald-800" : row.sourceVerificationStatus === "editorial_review" ? "bg-cyan-100 text-cyan-800" : "bg-amber-100 text-amber-800"}`}>{row.sourceVerificationStatus.replaceAll("_", " ")}</span>
+                  <p className="mt-1 text-xs text-[var(--text-subtle)]">{row.sourceLastVerifiedAt ? new Date(row.sourceLastVerifiedAt).toLocaleDateString() : "No verification date"}</p>
+                </td>
                 <td className="px-3 py-2 text-[var(--text-muted)]">{new Date(row.updatedAt).toLocaleString()}</td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2">
@@ -478,6 +544,14 @@ export function ArticleAdminManager({ initialRows }: { initialRows: ArticleListI
             />
           </div>
           <input className="mt-3 w-full rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Featured image URL (optional)" value={editForm.featuredImageUrl} onChange={(e) => onChange(setEditForm, "featuredImageUrl", e.target.value)} />
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" placeholder="Original source URL" value={editForm.sourceUrl} onChange={(e) => onChange(setEditForm, "sourceUrl", e.target.value)} />
+            <input className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" placeholder="Source attribution" value={editForm.sourceAttribution} onChange={(e) => onChange(setEditForm, "sourceAttribution", e.target.value)} />
+            <select className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" value={editForm.sourceVerificationStatus} onChange={(e) => onChange(setEditForm, "sourceVerificationStatus", e.target.value)}>
+              <option value="unverified">Unverified</option><option value="editorial_review">Editorial review</option><option value="official">Official source</option>
+            </select>
+            <input type="date" className="rounded border border-[var(--border)] bg-[var(--surface-elevated)] px-3 py-2 text-[var(--foreground)]" value={editForm.sourceLastVerifiedAt} onChange={(e) => onChange(setEditForm, "sourceLastVerifiedAt", e.target.value)} />
+          </div>
 
           <div className="mt-3 flex flex-wrap gap-4 text-sm">
             <label><input type="checkbox" checked={editForm.isBreaking} onChange={(e) => onChange(setEditForm, "isBreaking", e.target.checked)} /> <span className="ml-1">Breaking</span></label>

@@ -3,19 +3,30 @@ import { dbQuery } from "@/lib/db/query";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { LanguageUnavailableNotice } from "@/components/ui/language-unavailable-notice";
 
+type PublicBankProfile = {
+  slug: string;
+  officialWebsite: string | null;
+  headquarters: string | null;
+  swiftCode: string | null;
+  customerServiceNumbers: string | null;
+  name: string;
+  shortDescription: string;
+  fullDescription: string | null;
+};
+
 export default async function BankProfilePage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
   const safeLocale: Locale = isLocale(locale) ? locale : "ar";
 
-  let bank: any = null;
+  let bank: PublicBankProfile | null = null;
   try {
-    const rows = await dbQuery<any[]>(
+    const rows = await dbQuery<PublicBankProfile[]>(
       `SELECT b.slug, b.official_website AS officialWebsite, b.headquarters, b.swift_code AS swiftCode,
               b.customer_service_numbers AS customerServiceNumbers,
               bt.name, bt.short_description AS shortDescription, bt.full_description AS fullDescription
        FROM banks b
        JOIN bank_translations bt ON bt.bank_id = b.id AND bt.locale = ?
-       WHERE b.slug = ? AND b.deleted_at IS NULL
+       WHERE b.slug = ? AND b.show_on_website = 1 AND b.deleted_at IS NULL
        LIMIT 1`,
       [safeLocale, slug]
     );
@@ -25,23 +36,26 @@ export default async function BankProfilePage({ params }: { params: Promise<{ lo
   }
 
   if (!bank) {
+    let hasArabicFallback = false;
     if (safeLocale === "en") {
       try {
         const fallbackRows = await dbQuery<Array<{ slug: string }>>(
           `SELECT b.slug
            FROM banks b
            JOIN bank_translations bt ON bt.bank_id = b.id AND bt.locale = 'ar'
-           WHERE b.slug = ? AND b.deleted_at IS NULL
+           WHERE b.slug = ? AND b.show_on_website = 1 AND b.deleted_at IS NULL
            LIMIT 1`,
           [slug]
         );
 
-        if (fallbackRows.length) {
-          return <LanguageUnavailableNotice arabicHref={`/ar/banks/${slug}`} contextLabel="bank profile" />;
-        }
+        hasArabicFallback = fallbackRows.length > 0;
       } catch {
         // Keep default notFound behavior if fallback check fails.
       }
+    }
+
+    if (hasArabicFallback) {
+      return <LanguageUnavailableNotice arabicHref={`/ar/banks/${slug}`} contextLabel="bank profile" />;
     }
 
     notFound();

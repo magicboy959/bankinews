@@ -145,6 +145,12 @@ The platform stores media metadata in MySQL and is ready for Cloudinary credenti
 - Set GOOGLE_AI_API_KEY to enable Google AI article editing and Image Studio photo generation/editing
 - Optionally set GOOGLE_AI_TEXT_MODEL and GOOGLE_AI_IMAGE_MODEL to override the default Gemini models
 
+## Publish Everywhere
+
+The Admin **Publish Everywhere** screen can publish an article to the website, Facebook Page, Instagram professional account, X, Telegram channel, and LinkedIn organization from one reviewed preview. Configure the platform credentials documented in `.env.example`.
+
+WhatsApp Channel updates use a manual copy/open handoff because Meta's official WhatsApp Business API does not provide an endpoint for publishing WhatsApp Channel updates. Unofficial WhatsApp Web automation is intentionally not used.
+
 ## Recommended Next Enhancements
 
 - Add full TipTap admin editor UX

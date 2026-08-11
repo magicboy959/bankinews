@@ -92,7 +92,7 @@ async function fetchFeaturedBank(locale: Locale): Promise<BankCard | null> {
       SELECT b.id, b.slug, bt.name, bt.short_description AS shortDescription, b.logo_url AS logoUrl
       FROM banks b
       JOIN bank_translations bt ON bt.bank_id = b.id AND bt.locale = ?
-      WHERE b.is_featured = 1 AND b.deleted_at IS NULL
+      WHERE b.is_featured = 1 AND b.show_on_website = 1 AND b.deleted_at IS NULL
       ORDER BY b.updated_at DESC
       LIMIT 1
     `,

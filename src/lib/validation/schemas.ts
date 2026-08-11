@@ -112,7 +112,17 @@ export const bankSchema = z.object({
   officialWebsite: z.url().optional().nullable(),
   headquarters: z.string().max(255).optional().nullable(),
   swiftCode: z.string().max(40).optional().nullable(),
-  showOnWebsite: z.boolean().default(true),
+  showOnWebsite: z.boolean().default(false),
+}).superRefine((bank, ctx) => {
+  if (!bank.showOnWebsite) return;
+
+  if (!bank.officialWebsite || new URL(bank.officialWebsite).hostname.toLowerCase() === "example.com") {
+    ctx.addIssue({ code: "custom", path: ["officialWebsite"], message: "A real official website is required before making a bank profile public" });
+  }
+
+  if (/\b(demo|sample|placeholder)\b/i.test(bank.shortDescription) || /تجريبي|توضيحي/.test(bank.shortDescription)) {
+    ctx.addIssue({ code: "custom", path: ["shortDescription"], message: "Placeholder descriptions cannot be published" });
+  }
 });
 
 export const productSchema = z.object({

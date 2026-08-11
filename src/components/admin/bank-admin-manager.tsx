@@ -10,6 +10,9 @@ type BankListItem = {
   headquarters: string | null;
   swiftCode: string | null;
   showOnWebsite: number | boolean;
+  officialWebsite: string | null;
+  shortDescription: string | null;
+  lastUpdatedDate: string | null;
   updatedAt: string;
 };
 
@@ -51,8 +54,19 @@ const emptyForm: BankFormState = {
   officialWebsite: "",
   headquarters: "",
   swiftCode: "",
-  showOnWebsite: true,
+  showOnWebsite: false,
 };
+
+function profileReadiness(row: BankListItem): { ready: boolean; label: string } {
+  if (!row.officialWebsite || row.officialWebsite.includes("example.com")) return { ready: false, label: "Needs official website" };
+  if (!row.shortDescription || row.shortDescription.length < 100) return { ready: false, label: "Needs fuller description" };
+  if (!row.lastUpdatedDate) return { ready: false, label: "Needs review date" };
+  const reviewedAt = new Date(row.lastUpdatedDate);
+  const staleBefore = new Date();
+  staleBefore.setDate(staleBefore.getDate() - 180);
+  if (reviewedAt < staleBefore) return { ready: false, label: "Review is stale" };
+  return { ready: true, label: "Ready" };
+}
 
 export function BankAdminManager({ initialRows }: { initialRows: BankListItem[] }) {
   const router = useRouter();
@@ -273,6 +287,7 @@ export function BankAdminManager({ initialRows }: { initialRows: BankListItem[] 
               <th className="px-3 py-2 font-semibold">HQ</th>
               <th className="px-3 py-2 font-semibold">SWIFT</th>
               <th className="px-3 py-2 font-semibold">Website</th>
+              <th className="px-3 py-2 font-semibold">Profile readiness</th>
               <th className="px-3 py-2 font-semibold">Actions</th>
             </tr>
           </thead>
@@ -286,6 +301,12 @@ export function BankAdminManager({ initialRows }: { initialRows: BankListItem[] 
                 <td className="px-3 py-2 text-[var(--text-muted)]">{row.swiftCode ?? "-"}</td>
                 <td className="px-3 py-2 text-[var(--text-muted)]">
                   {Boolean(row.showOnWebsite) ? <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Visible</span> : <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">Hidden</span>}
+                </td>
+                <td className="px-3 py-2">
+                  {(() => {
+                    const readiness = profileReadiness(row);
+                    return <span className={`rounded px-2 py-0.5 text-xs font-semibold ${readiness.ready ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>{readiness.label}</span>;
+                  })()}
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex gap-2">

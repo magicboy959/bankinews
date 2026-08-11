@@ -3,7 +3,9 @@ import { dictionary } from "@/lib/i18n/dictionary";
 import type { Locale } from "@/lib/i18n/config";
 import { NewsletterForm } from "@/components/ui/newsletter-form";
 
-export function SiteFooter({ locale }: { locale: Locale }) {
+type SocialLink = { label: string; href: string };
+
+export function SiteFooter({ locale, socialLinks = [] }: { locale: Locale; socialLinks?: SocialLink[] }) {
   const t = dictionary[locale];
 
   return (
@@ -22,6 +24,15 @@ export function SiteFooter({ locale }: { locale: Locale }) {
               ? "منصة أخبار ومعلومات مصرفية للسودان تغطي البنوك والخدمات المالية والتكنولوجيا المالية."
               : "A Sudan-focused banking and financial news portal covering banks, fintech, and economic trends."}
           </p>
+          {socialLinks.length ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {socialLinks.map((link) => (
+                <a key={`${link.label}-${link.href}`} href={link.href} target="_blank" rel="noreferrer" className="rounded-full border border-slate-600 px-3 py-1 text-xs font-bold uppercase text-slate-200 transition hover:border-cyan-300 hover:text-cyan-300">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          ) : null}
         </div>
         <div>
           <p className="font-bold text-white">{locale === "ar" ? "روابط مهمة" : "Important Links"}</p>

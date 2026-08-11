@@ -60,7 +60,7 @@ type EmailTestResult = {
   locale: "ar" | "en";
 };
 
-type SocialPlatform = "facebook" | "x" | "linkedin" | "instagram" | "youtube";
+type SocialPlatform = "facebook" | "x" | "linkedin" | "instagram" | "telegram" | "youtube";
 
 type SocialLinkDraft = {
   platform: SocialPlatform;
@@ -82,14 +82,16 @@ const socialPlatformOptions: Array<{ value: SocialPlatform; label: string }> = [
   { value: "x", label: "X" },
   { value: "linkedin", label: "LinkedIn" },
   { value: "instagram", label: "Instagram" },
+  { value: "telegram", label: "Telegram" },
   { value: "youtube", label: "YouTube" },
 ];
 
 const socialLinksPresetRows: SocialLinkDraft[] = [
-  { platform: "linkedin", href: "https://linkedin.com/company/example" },
-  { platform: "x", href: "https://x.com/example" },
-  { platform: "facebook", href: "https://facebook.com/example" },
-  { platform: "instagram", href: "https://instagram.com/example" },
+  { platform: "linkedin", href: "https://www.linkedin.com/company/bankinews-sudan/" },
+  { platform: "x", href: "https://x.com/BankiNewsSd" },
+  { platform: "facebook", href: "https://www.facebook.com/banki.news.sd/" },
+  { platform: "instagram", href: "https://www.instagram.com/bankinews_sd" },
+  { platform: "telegram", href: "https://t.me/bankinews_sd" },
 ];
 
 const heroSlidesPresetRows: HeroSlideDraft[] = [
@@ -172,6 +174,7 @@ function toPlatformLabel(value: string): SocialPlatform {
   if (lower === "x" || lower.includes("twitter")) return "x";
   if (lower === "in" || lower.includes("linkedin")) return "linkedin";
   if (lower === "ig" || lower.includes("instagram")) return "instagram";
+  if (lower === "tg" || lower.includes("telegram")) return "telegram";
   return "youtube";
 }
 

@@ -18,7 +18,7 @@ type SocialLink = {
   href: string;
 };
 
-type SocialPlatform = "facebook" | "x" | "linkedin" | "instagram" | "youtube" | "other";
+type SocialPlatform = "facebook" | "x" | "linkedin" | "instagram" | "telegram" | "youtube" | "other";
 
 function detectSocialPlatform(link: SocialLink): SocialPlatform {
   const label = link.label.toLowerCase();
@@ -28,6 +28,7 @@ function detectSocialPlatform(link: SocialLink): SocialPlatform {
   if (label.includes("facebook") || label === "fb" || href.includes("facebook.com")) return "facebook";
   if (label === "x" || label.includes("twitter") || href.includes("x.com") || href.includes("twitter.com")) return "x";
   if (label.includes("linkedin") || label === "in" || href.includes("linkedin.com")) return "linkedin";
+  if (label.includes("telegram") || label === "tg" || href.includes("t.me")) return "telegram";
   if (label.includes("youtube") || label === "yt" || href.includes("youtube.com") || href.includes("youtu.be")) return "youtube";
 
   return "other";
@@ -39,6 +40,7 @@ function socialButtonClass(platform: SocialPlatform, mobile = false): string {
     if (platform === "facebook") return "border-blue-300 bg-blue-500/20 text-blue-100";
     if (platform === "x") return "border-slate-300 bg-slate-100/15 text-slate-100";
     if (platform === "linkedin") return "border-cyan-300 bg-cyan-500/20 text-cyan-100";
+    if (platform === "telegram") return "border-sky-300 bg-sky-500/20 text-sky-100";
     if (platform === "youtube") return "border-red-300 bg-red-500/20 text-red-100";
     return "border-slate-400 bg-white/10 text-slate-100";
   }
@@ -47,6 +49,7 @@ function socialButtonClass(platform: SocialPlatform, mobile = false): string {
   if (platform === "facebook") return "border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100";
   if (platform === "x") return "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 hover:bg-slate-200";
   if (platform === "linkedin") return "border-cyan-200 bg-cyan-50 text-cyan-700 hover:border-cyan-300 hover:bg-cyan-100";
+  if (platform === "telegram") return "border-sky-200 bg-sky-50 text-sky-700 hover:border-sky-300 hover:bg-sky-100";
   if (platform === "youtube") return "border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100";
   return "border-slate-300 bg-white text-slate-700 hover:border-[#0A2342] hover:text-[#0A2342] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-300 dark:hover:text-white";
 }
@@ -68,6 +71,14 @@ function SocialIcon({ platform }: { platform: SocialPlatform }) {
     return (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-current">
         <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm11.25 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
+      </svg>
+    );
+  }
+
+  if (platform === "telegram") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+        <path d="M21.8 3.2a1.5 1.5 0 0 0-1.53-.2L2.91 9.7c-1.18.46-1.17 1.12-.22 1.41l4.45 1.39 1.72 5.38c.22.62.11.87.75.87.5 0 .72-.23 1-.5l2.16-2.1 4.5 3.32c.83.46 1.43.22 1.64-.77l2.97-14c.3-1.2-.45-1.75-.08-1.5ZM8.88 12.18l8.69-5.48c.43-.26.82-.12.5.16l-7.17 6.47-.28 3.01-1.74-4.16Z" />
       </svg>
     );
   }

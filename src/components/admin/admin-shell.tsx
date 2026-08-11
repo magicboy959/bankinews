@@ -7,6 +7,7 @@ import type { SessionUser } from "@/types";
 const links = [
   ["Dashboard", "/admin"],
   ["Articles", "/admin/articles"],
+  ["Publish Everywhere", "/admin/distribution"],
   ["Hero", "/admin/hero"],
   ["Marketing", "/admin/marketing"],
   ["Comments", "/admin/comments"],

@@ -11,6 +11,7 @@ import { NewsletterForm } from "@/components/ui/newsletter-form";
 import { getYouTubeEmbedUrl } from "@/lib/media";
 import { buildArticleMetadata } from "@/lib/seo/metadata";
 import { formatDate } from "@/lib/utils";
+import { getSocialLinks } from "@/services/settings-service";
 
 export async function generateMetadata({
   params,
@@ -94,6 +95,7 @@ export default async function ArticlePage({
 
   const related = (await getPublishedArticles(safeLocale, 6)).filter((a) => a.slug !== slug);
   const correctionHistory = await getArticleCorrectionHistory(article.id);
+  const socialLinks = await getSocialLinks();
   const youtubeEmbedUrl = getYouTubeEmbedUrl((article as { videoUrl?: string | null }).videoUrl);
   const isSponsored = article.isSponsored === true || article.isSponsored === 1;
   const isOpinion = article.isOpinion === true || article.isOpinion === 1;
@@ -202,6 +204,35 @@ export default async function ArticlePage({
             <ArticleContent html={article.contentHtml} />
           </ArticleReaderExperience>
         </div>
+
+        {socialLinks.length ? (
+          <section className="mt-8 overflow-hidden rounded-xl border border-[#005F73]/25 bg-gradient-to-br from-[#005F73]/10 to-cyan-500/5 p-5 text-center">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#005F73]">
+              {safeLocale === "ar" ? "ابقَ على اطلاع" : "Stay informed"}
+            </p>
+            <h2 className="mt-2 text-xl font-black text-[var(--foreground)]">
+              {safeLocale === "ar" ? "تابع بنكي نيوز على منصات التواصل" : "Follow Banki News on social media"}
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--text-muted)]">
+              {safeLocale === "ar"
+                ? "تابع قنواتنا لتصلك آخر الأخبار المصرفية والاقتصادية فور نشرها."
+                : "Follow our channels for the latest banking and economic news as soon as it is published."}
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {socialLinks.map((link) => (
+                <a
+                  key={`${link.label}-${link.href}`}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-10 items-center rounded-full border border-[#005F73]/25 bg-[var(--surface)] px-4 py-2 text-sm font-bold capitalize text-[#005F73] transition hover:-translate-y-0.5 hover:border-[#005F73] hover:bg-[#005F73] hover:text-white"
+                >
+                  {safeLocale === "ar" ? `تابعنا على ${link.label}` : `Follow on ${link.label}`}
+                </a>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="mt-8 rounded-xl border border-cyan-500/25 bg-cyan-500/10 p-4">
           <p className="text-sm font-semibold text-[var(--text-muted)]">

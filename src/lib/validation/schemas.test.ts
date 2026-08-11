@@ -50,3 +50,16 @@ test("articleCreateSchema clears temporary data URLs from optional URL fields", 
   assert.equal(result.data.featuredImageUrl, null);
   assert.equal(result.data.sourceUrl, null);
 });
+
+test("bankSchema prevents placeholder profiles from being public", async () => {
+  const { bankSchema } = await import("./schemas");
+  const result = bankSchema.safeParse({
+    slug: "demo-bank",
+    name: "Demo Bank",
+    shortDescription: "This is a placeholder description for a demo banking profile.",
+    officialWebsite: "https://example.com",
+    showOnWebsite: true,
+  });
+
+  assert.equal(result.success, false);
+});
