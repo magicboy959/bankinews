@@ -40,6 +40,8 @@ export function SiteFooter({ locale, socialLinks = [] }: { locale: Locale; socia
             <li><Link href={`/${locale}/about`} className="transition hover:text-cyan-300">{t.nav.about}</Link></li>
             <li><Link href={`/${locale}/contact`} className="transition hover:text-cyan-300">{t.nav.contact}</Link></li>
             <li><Link href={`/${locale}/privacy-policy`} className="transition hover:text-cyan-300">{locale === "ar" ? "سياسة الخصوصية" : "Privacy Policy"}</Link></li>
+            <li><Link href={`/${locale}/terms`} className="transition hover:text-cyan-300">{locale === "ar" ? "شروط الاستخدام" : "Terms of Use"}</Link></li>
+            <li><Link href={`/${locale}/data-deletion`} className="transition hover:text-cyan-300">{locale === "ar" ? "حذف بيانات المستخدم" : "User Data Deletion"}</Link></li>
             <li><Link href={`/${locale}/editorial-policy`} className="transition hover:text-cyan-300">{locale === "ar" ? "السياسة التحريرية" : "Editorial Policy"}</Link></li>
           </ul>
         </div>

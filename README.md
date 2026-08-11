@@ -149,6 +149,8 @@ The platform stores media metadata in MySQL and is ready for Cloudinary credenti
 
 The Admin **Publish Everywhere** screen can publish an article to the website, Facebook Page, Instagram professional account, X, Telegram channel, and LinkedIn organization from one reviewed preview. Configure the platform credentials documented in `.env.example`.
 
+Facebook uses `META_PAGE_ID` and `META_PAGE_ACCESS_TOKEN`. Instagram is configured independently with `INSTAGRAM_USER_ID` and `INSTAGRAM_ACCESS_TOKEN`; never expose either access token through a `NEXT_PUBLIC_*` variable.
+
 WhatsApp Channel updates use a manual copy/open handoff because Meta's official WhatsApp Business API does not provide an endpoint for publishing WhatsApp Channel updates. Unofficial WhatsApp Web automation is intentionally not used.
 
 ## Recommended Next Enhancements

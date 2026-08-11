@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth/guard";
 import { dbQuery } from "@/lib/db/query";
 import type { DbRow } from "@/lib/db/pool";
 import { badRequest, forbidden, ok, serverError } from "@/lib/http";
-import { distributionChannels, type DistributionChannel, type SocialPost } from "@/lib/social-distribution";
+import { distributionChannels, formatFacebookPost, formatTelegramPost, type DistributionChannel, type SocialPost } from "@/lib/social-distribution";
 
 type ArticleRow = DbRow & { title: string; summary: string; slug: string };
 
@@ -20,6 +20,8 @@ function cleanJson(value: string) {
 }
 
 function withArticleUrl(text: string, url: string, channel: DistributionChannel) {
+  if (channel === "telegram") return formatTelegramPost(text, url, 1024);
+  if (channel === "facebook") return formatFacebookPost(text, url);
   const joined = text.includes(url) ? text : `${text.trim()}\n\n${url}`;
   return channel === "x" ? joined.slice(0, 280) : joined;
 }

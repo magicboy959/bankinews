@@ -41,6 +41,61 @@ function configured(value: string | undefined) {
   return Boolean(value?.trim() && value.trim() !== "replace_me");
 }
 
+export function formatTelegramPost(text: string, articleUrl: string, limit = 4096) {
+  let domain = articleUrl;
+  try {
+    domain = new URL(articleUrl).origin;
+  } catch {
+    // Keep the supplied URL as the domain fallback.
+  }
+
+  const followLinks = [
+    ["Facebook", process.env.NEXT_PUBLIC_FACEBOOK_PROFILE_URL?.trim() || "https://www.facebook.com/banki.news.sd/"],
+    ["Instagram", process.env.NEXT_PUBLIC_INSTAGRAM_PROFILE_URL?.trim() || "https://www.instagram.com/bankinews_sd"],
+    ["X", process.env.NEXT_PUBLIC_X_PROFILE_URL?.trim() || "https://x.com/BankiNewsSd"],
+    ["LinkedIn", process.env.NEXT_PUBLIC_LINKEDIN_PROFILE_URL?.trim() || "https://www.linkedin.com/company/bankinews-sudan/"],
+  ];
+  const footer = [
+    "📰 اقرأ المقال كاملاً على بنكي نيوز:",
+    articleUrl,
+    "",
+    `🌐 الموقع الرسمي: ${domain}`,
+    "",
+    "تابع بنكي نيوز على منصات التواصل:",
+    ...followLinks.map(([label, href]) => `• ${label}: ${href}`),
+  ].join("\n");
+  const cleanText = text.split("📰 اقرأ المقال كاملاً على بنكي نيوز:")[0].replaceAll(articleUrl, "").trim();
+  const available = Math.max(0, limit - footer.length - 2);
+  const lead = cleanText.length > available ? `${cleanText.slice(0, Math.max(0, available - 1)).trimEnd()}…` : cleanText;
+
+  return lead ? `${lead}\n\n${footer}` : footer.slice(0, limit);
+}
+
+export function formatFacebookPost(text: string, articleUrl: string) {
+  let domain = articleUrl;
+  try {
+    domain = new URL(articleUrl).origin;
+  } catch {
+    // Keep the supplied URL as the domain fallback.
+  }
+
+  const footer = [
+    "📰 شاهد المقال كاملاً على بنكي نيوز:",
+    articleUrl,
+    "",
+    `🌐 الموقع الرسمي: ${domain}`,
+    "",
+    "تابع بنكي نيوز على منصات التواصل:",
+    `• Instagram: ${process.env.NEXT_PUBLIC_INSTAGRAM_PROFILE_URL?.trim() || "https://www.instagram.com/bankinews_sd"}`,
+    `• X: ${process.env.NEXT_PUBLIC_X_PROFILE_URL?.trim() || "https://x.com/BankiNewsSd"}`,
+    `• Telegram: ${process.env.NEXT_PUBLIC_TELEGRAM_PROFILE_URL?.trim() || "https://t.me/bankinews_sd"}`,
+    `• LinkedIn: ${process.env.NEXT_PUBLIC_LINKEDIN_PROFILE_URL?.trim() || "https://www.linkedin.com/company/bankinews-sudan/"}`,
+  ].join("\n");
+  const cleanText = text.split("📰 شاهد المقال كاملاً على بنكي نيوز:")[0].replaceAll(articleUrl, "").trim();
+
+  return cleanText ? `${cleanText}\n\n${footer}` : footer;
+}
+
 export function getDistributionChannelStatus() {
   return {
     website: { configured: true, mode: "automatic" as const },
@@ -50,7 +105,7 @@ export function getDistributionChannelStatus() {
       profileUrl: process.env.NEXT_PUBLIC_FACEBOOK_PROFILE_URL?.trim() || "https://www.facebook.com/banki.news.sd/",
     },
     instagram: {
-      configured: configured(process.env.INSTAGRAM_USER_ID) && configured(process.env.META_PAGE_ACCESS_TOKEN),
+      configured: configured(process.env.INSTAGRAM_USER_ID) && configured(process.env.INSTAGRAM_ACCESS_TOKEN),
       mode: "automatic" as const,
       profileUrl: process.env.NEXT_PUBLIC_INSTAGRAM_PROFILE_URL?.trim() || "https://www.instagram.com/bankinews_sd",
     },
@@ -98,7 +153,7 @@ export async function testDistributionChannel(channel: DistributionChannel): Pro
       return { channel, ok: true, accountLabel: json.name || json.id };
     }
     if (channel === "instagram") {
-      const response = await fetch(metaApiUrl(`${process.env.INSTAGRAM_USER_ID!.trim()}?fields=id,username&access_token=${encodeURIComponent(process.env.META_PAGE_ACCESS_TOKEN!.trim())}`));
+      const response = await fetch(metaApiUrl(`${process.env.INSTAGRAM_USER_ID!.trim()}?fields=id,username&access_token=${encodeURIComponent(process.env.INSTAGRAM_ACCESS_TOKEN!.trim())}`));
       if (!response.ok) return { channel, ok: false, error: await responseError(response) };
       const json = (await response.json()) as { username?: string; id?: string };
       return { channel, ok: true, accountLabel: json.username ? `@${json.username}` : json.id };
@@ -155,7 +210,7 @@ export async function publishToChannel(
 
     if (channel === "facebook") {
       const body = new URLSearchParams({
-        message: text,
+        message: formatFacebookPost(text, article.url),
         link: article.url,
         access_token: process.env.META_PAGE_ACCESS_TOKEN!.trim(),
       });
@@ -167,7 +222,7 @@ export async function publishToChannel(
 
     if (channel === "instagram") {
       if (!article.imageUrl) return { channel, status: "failed", error: "Instagram publishing requires a public article image." };
-      const token = process.env.META_PAGE_ACCESS_TOKEN!.trim();
+      const token = process.env.INSTAGRAM_ACCESS_TOKEN!.trim();
       const containerBody = new URLSearchParams({ image_url: article.imageUrl, caption: text, access_token: token });
       const containerResponse = await fetch(metaApiUrl(`${process.env.INSTAGRAM_USER_ID!.trim()}/media`), { method: "POST", body: containerBody });
       if (!containerResponse.ok) return { channel, status: "failed", error: await responseError(containerResponse) };
@@ -194,9 +249,10 @@ export async function publishToChannel(
     if (channel === "telegram") {
       const token = process.env.TELEGRAM_BOT_TOKEN!.trim();
       const method = article.imageUrl ? "sendPhoto" : "sendMessage";
+      const telegramText = formatTelegramPost(text, article.url, article.imageUrl ? 1024 : 4096);
       const payload = article.imageUrl
-        ? { chat_id: process.env.TELEGRAM_CHANNEL_ID!.trim(), photo: article.imageUrl, caption: text.slice(0, 1024) }
-        : { chat_id: process.env.TELEGRAM_CHANNEL_ID!.trim(), text };
+        ? { chat_id: process.env.TELEGRAM_CHANNEL_ID!.trim(), photo: article.imageUrl, caption: telegramText }
+        : { chat_id: process.env.TELEGRAM_CHANNEL_ID!.trim(), text: telegramText };
       const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
