@@ -79,6 +79,8 @@ export const articleCreateSchema = z.object({
   videoUrl: optionalUrlOrLocalPathSchema,
   sourceUrl: optionalUrlOrLocalPathSchema,
   sourceAttribution: z.string().max(255).optional().nullable(),
+  sourceVerificationStatus: z.enum(["unverified", "editorial_review", "official"]).optional(),
+  sourceLastVerifiedAt: z.iso.date().optional().nullable(),
   relatedBankId: z.number().int().positive().optional().nullable(),
   categoryId: z.number().int().positive().optional().nullable(),
   publishAt: z.iso.datetime({ precision: -1 }).optional().nullable(),

@@ -217,11 +217,11 @@ export async function POST(request: Request) {
       const articleResult = await execute(
         `
         INSERT INTO articles
-        (slug, status, article_type, featured_image_url, video_url, source_url, source_attribution,
+        (slug, status, article_type, featured_image_url, video_url, source_url, source_attribution, source_verification_status, source_last_verified_at,
          related_bank_id, author_id, reading_time_minutes,
          is_breaking, is_featured, is_sponsored, is_opinion, is_press_release,
          publish_at, expires_at, published_at, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, IF(? = 'published', NOW(), NULL), NOW(), NOW())
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, IF(? = 'published', NOW(), NULL), NOW(), NOW())
         `,
         [
           slug,
@@ -231,6 +231,8 @@ export async function POST(request: Request) {
           payload.videoUrl ?? null,
           payload.sourceUrl ?? null,
           payload.sourceAttribution ?? null,
+          payload.sourceVerificationStatus ?? "unverified",
+          payload.sourceLastVerifiedAt ?? null,
           payload.relatedBankId ?? null,
           authorId,
           estimateReadingTime(payload.contentHtml),

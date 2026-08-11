@@ -15,6 +15,8 @@ type ArticleDetailRow = DbRow & {
   videoUrl: string | null;
   sourceUrl: string | null;
   sourceAttribution: string | null;
+  sourceVerificationStatus: "unverified" | "editorial_review" | "official";
+  sourceLastVerifiedAt: string | null;
   relatedBankId: number | null;
   categoryId: number | null;
   publishAt: string | null;
@@ -37,6 +39,8 @@ type ArticlePreviousRow = DbRow & {
   videoUrl: string | null;
   sourceUrl: string | null;
   sourceAttribution: string | null;
+  sourceVerificationStatus: "unverified" | "editorial_review" | "official";
+  sourceLastVerifiedAt: string | null;
   relatedBankId: number | null;
   publishAt: string | null;
   expiresAt: string | null;
@@ -65,6 +69,8 @@ export async function GET(
               a.video_url AS videoUrl,
               a.source_url AS sourceUrl,
               a.source_attribution AS sourceAttribution,
+              a.source_verification_status AS sourceVerificationStatus,
+              a.source_last_verified_at AS sourceLastVerifiedAt,
               a.related_bank_id AS relatedBankId,
               ac.category_id AS categoryId,
               a.publish_at AS publishAt,
@@ -145,6 +151,8 @@ export async function PUT(
         `SELECT a.status, a.article_type AS articleType, a.featured_image_url AS featuredImageUrl,
                 a.video_url AS videoUrl,
                 a.source_url AS sourceUrl, a.source_attribution AS sourceAttribution,
+                a.source_verification_status AS sourceVerificationStatus,
+                a.source_last_verified_at AS sourceLastVerifiedAt,
                 a.related_bank_id AS relatedBankId, a.publish_at AS publishAt, a.expires_at AS expiresAt,
                 a.is_breaking AS isBreaking, a.is_featured AS isFeatured, a.is_sponsored AS isSponsored,
                 a.is_opinion AS isOpinion, a.is_press_release AS isPressRelease,
@@ -161,7 +169,7 @@ export async function PUT(
         `UPDATE articles
          SET slug = ?, status = ?, article_type = ?, featured_image_url = ?,
            video_url = ?,
-             source_url = ?, source_attribution = ?, related_bank_id = ?,
+             source_url = ?, source_attribution = ?, source_verification_status = ?, source_last_verified_at = ?, related_bank_id = ?,
              is_breaking = ?, is_featured = ?, is_sponsored = ?, is_opinion = ?, is_press_release = ?,
              publish_at = ?, expires_at = ?,
              updated_at = NOW(),
@@ -173,8 +181,10 @@ export async function PUT(
           payload.articleType,
           payload.featuredImageUrl ?? null,
           payload.videoUrl ?? null,
-          payload.sourceUrl ?? null,
-          payload.sourceAttribution ?? null,
+          payload.sourceUrl === undefined ? previous?.sourceUrl ?? null : payload.sourceUrl,
+          payload.sourceAttribution === undefined ? previous?.sourceAttribution ?? null : payload.sourceAttribution,
+          payload.sourceVerificationStatus ?? previous?.sourceVerificationStatus ?? "unverified",
+          payload.sourceLastVerifiedAt === undefined ? previous?.sourceLastVerifiedAt ?? null : payload.sourceLastVerifiedAt,
           payload.relatedBankId ?? null,
           payload.isBreaking ? 1 : 0,
           payload.isFeatured ? 1 : 0,
@@ -221,8 +231,10 @@ export async function PUT(
           title: { from: previous?.title ?? null, to: payload.title },
           summary: { from: previous?.summary ?? null, to: payload.summary },
           videoUrl: { from: previous?.videoUrl ?? null, to: payload.videoUrl ?? null },
-          sourceUrl: { from: previous?.sourceUrl ?? null, to: payload.sourceUrl ?? null },
-          sourceAttribution: { from: previous?.sourceAttribution ?? null, to: payload.sourceAttribution ?? null },
+          sourceUrl: { from: previous?.sourceUrl ?? null, to: payload.sourceUrl === undefined ? previous?.sourceUrl ?? null : payload.sourceUrl },
+          sourceAttribution: { from: previous?.sourceAttribution ?? null, to: payload.sourceAttribution === undefined ? previous?.sourceAttribution ?? null : payload.sourceAttribution },
+          sourceVerificationStatus: { from: previous?.sourceVerificationStatus ?? null, to: payload.sourceVerificationStatus ?? previous?.sourceVerificationStatus ?? "unverified" },
+          sourceLastVerifiedAt: { from: previous?.sourceLastVerifiedAt ?? null, to: payload.sourceLastVerifiedAt ?? previous?.sourceLastVerifiedAt ?? null },
           featuredImageUrl: { from: previous?.featuredImageUrl ?? null, to: payload.featuredImageUrl ?? null },
           publishAt: { from: previous?.publishAt ?? null, to: payload.publishAt ?? null },
           expiresAt: { from: previous?.expiresAt ?? null, to: payload.expiresAt ?? null },

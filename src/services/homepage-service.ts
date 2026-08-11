@@ -51,6 +51,19 @@ function normalizeHeroSlides(value: unknown) {
     .filter((slide) => slide.title && slide.summary && slide.imageUrl && slide.href);
 }
 
+function takeDistinctArticles(source: ArticleCard[], usedIds: Set<number>, limit: number): ArticleCard[] {
+  const selected: ArticleCard[] = [];
+
+  for (const article of source) {
+    if (usedIds.has(article.id)) continue;
+    selected.push(article);
+    usedIds.add(article.id);
+    if (selected.length === limit) break;
+  }
+
+  return selected;
+}
+
 async function fetchLatestArticles(locale: Locale, limit = 8): Promise<ArticleCard[]> {
   const rows = await dbQuery<Array<DbRow & ArticleCard>>(
     `
@@ -211,16 +224,23 @@ export async function getHomepageData(locale: Locale) {
     ]);
 
     const heroSlides = await fetchHeroSlides(locale, latest);
+    const usedArticleIds = new Set<number>();
+    if (breakingArticle) usedArticleIds.add(breakingArticle.id);
+
+    const latestStories = takeDistinctArticles(latest, usedArticleIds, 6);
+    const fintechStories = takeDistinctArticles(fintech, usedArticleIds, 4);
+    const mostReadStories = takeDistinctArticles(mostRead, usedArticleIds, 5);
+    const curatedStories = takeDistinctArticles(editorsPicks, usedArticleIds, 4);
 
     return {
-      latest,
+      latest: latestStories,
       heroSlides,
       featured: breakingArticle,
-      secondary: latest.slice(1, 4),
-      fintech,
-      guides: latest.filter((a) => a.summary.length > 0).slice(0, 4),
-      mostRead,
-      editorsPicks,
+      secondary: latestStories.slice(1, 4),
+      fintech: fintechStories,
+      guides: latest.filter((article) => article.summary.length > 0).slice(0, 4),
+      mostRead: mostReadStories,
+      editorsPicks: curatedStories,
       featuredBank,
     };
   } catch {

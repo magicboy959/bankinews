@@ -57,9 +57,18 @@ function toSnippet(value: string) {
 export function MarketingCampaignManager({
   initialCampaigns,
   activeSubscriberCount,
+  contentReadiness,
 }: {
   initialCampaigns: CampaignItem[];
   activeSubscriberCount: number;
+  contentReadiness: {
+    publishedArticles: number;
+    publishedGuides: number;
+    visibleBankProfiles: number;
+    verifiedArticles: number;
+    verifiedGuides: number;
+    maintainedBankProfiles: number;
+  };
 }) {
   const router = useRouter();
   const [subject, setSubject] = useState("");
@@ -82,6 +91,12 @@ export function MarketingCampaignManager({
     () => [...initialCampaigns].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
     [initialCampaigns]
   );
+  const articleTarget = 20;
+  const profileAndGuideTarget = 10;
+  const profileAndGuideCount = contentReadiness.maintainedBankProfiles + contentReadiness.verifiedGuides;
+  const articleProgress = Math.min(100, Math.round((contentReadiness.verifiedArticles / articleTarget) * 100));
+  const referenceProgress = Math.min(100, Math.round((profileAndGuideCount / profileAndGuideTarget) * 100));
+  const readyForPromotion = articleProgress === 100 && referenceProgress === 100;
 
   async function createCampaign(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -224,6 +239,47 @@ export function MarketingCampaignManager({
           Compose newsletter campaigns for your active subscriber list. Active subscribers available: {activeSubscriberCount}.
         </p>
       </div>
+
+      <section className={`rounded-xl border p-5 ${readyForPromotion ? "border-emerald-500/30 bg-emerald-500/10" : "border-amber-500/30 bg-amber-500/10"}`}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-black text-[var(--foreground)]">Promotion Readiness</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              {readyForPromotion
+                ? "The content library has reached the recommended baseline for broader promotion."
+                : "Build more useful on-site reading paths before sending a large campaign. Drafts and small tests remain available."}
+            </p>
+          </div>
+          <span className={`rounded-full px-3 py-1 text-xs font-black ${readyForPromotion ? "bg-emerald-700 text-white" : "bg-amber-600 text-white"}`}>
+            {readyForPromotion ? "Ready" : "Build library first"}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-semibold text-[var(--foreground)]">Verified published articles</span>
+              <span className="text-[var(--text-muted)]">{contentReadiness.verifiedArticles}/{articleTarget}</span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--surface-strong)]">
+              <div className="h-full rounded-full bg-cyan-600" style={{ width: `${articleProgress}%` }} />
+            </div>
+            <p className="mt-2 text-xs text-[var(--text-subtle)]">{contentReadiness.publishedArticles} total published · verification must be within 180 days</p>
+          </div>
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-semibold text-[var(--foreground)]">Maintained bank profiles and verified guides</span>
+              <span className="text-[var(--text-muted)]">{profileAndGuideCount}/{profileAndGuideTarget}</span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--surface-strong)]">
+              <div className="h-full rounded-full bg-cyan-600" style={{ width: `${referenceProgress}%` }} />
+            </div>
+            <p className="mt-2 text-xs text-[var(--text-subtle)]">
+              {contentReadiness.maintainedBankProfiles}/{contentReadiness.visibleBankProfiles} maintained bank profiles · {contentReadiness.verifiedGuides}/{contentReadiness.publishedGuides} verified guides
+            </p>
+          </div>
+        </div>
+      </section>
 
       {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 

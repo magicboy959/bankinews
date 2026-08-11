@@ -126,6 +126,8 @@ export async function getArticleBySlug(locale: Locale, slug: string) {
            a.video_url AS videoUrl,
                a.published_at AS publishedAt, a.updated_at AS updatedAt,
            a.source_url AS sourceUrl, a.source_attribution AS sourceAttribution,
+           a.source_verification_status AS sourceVerificationStatus,
+           a.source_last_verified_at AS sourceLastVerifiedAt,
                a.reading_time_minutes AS readingTimeMinutes,
                a.is_breaking AS isBreaking, a.is_sponsored AS isSponsored,
                a.is_opinion AS isOpinion, a.is_press_release AS isPressRelease,

@@ -7,6 +7,9 @@ type EditorialWorkflowInput = {
   featuredImageUrl?: string | null;
   videoUrl?: string | null;
   sourceUrl?: string | null;
+  sourceAttribution?: string | null;
+  sourceVerificationStatus?: "unverified" | "editorial_review" | "official";
+  sourceLastVerifiedAt?: string | null;
   publishAt?: string | null;
 };
 
@@ -27,6 +30,18 @@ export function validateEditorialWorkflow(input: EditorialWorkflowInput): string
 
   if (!input.sourceUrl) {
     return "Source URL is required before moving this article beyond draft.";
+  }
+
+  if (input.sourceVerificationStatus === "unverified") {
+    return "Source verification must be completed before moving this article beyond draft.";
+  }
+
+  if (input.sourceVerificationStatus && !input.sourceLastVerifiedAt) {
+    return "Source verification date is required before moving this article beyond draft.";
+  }
+
+  if (input.sourceVerificationStatus === "official" && !input.sourceAttribution?.trim()) {
+    return "Official sources require a clear source attribution before publication.";
   }
 
   if (input.videoUrl && !getYouTubeEmbedUrl(input.videoUrl)) {

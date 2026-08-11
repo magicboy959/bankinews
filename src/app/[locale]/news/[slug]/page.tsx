@@ -243,11 +243,11 @@ export default async function ArticlePage({
                 {safeLocale === "ar" ? "مستوى التحقق" : "Verification level"}
               </dt>
               <dd className="mt-1 font-medium text-slate-800 dark:text-slate-200">
-                {article.relatedBankName
+                {article.sourceVerificationStatus === "official"
                   ? safeLocale === "ar" ? "✓ مصدر رسمي" : "✓ Official source"
-                  : article.sourceUrl
-                    ? safeLocale === "ar" ? "✓ رابط المصدر الأصلي" : "✓ Original source linked"
-                  : safeLocale === "ar" ? "مراجعة تحريرية" : "Editorial review"}
+                  : article.sourceVerificationStatus === "editorial_review"
+                    ? safeLocale === "ar" ? "✓ مراجعة تحريرية" : "✓ Editorially reviewed"
+                    : safeLocale === "ar" ? "لم يكتمل التحقق" : "Verification pending"}
               </dd>
             </div>
 
@@ -256,7 +256,7 @@ export default async function ArticlePage({
                 {safeLocale === "ar" ? "آخر تحقق" : "Last verified"}
               </dt>
               <dd className="mt-1 font-medium text-slate-800 dark:text-slate-200">
-                {article.updatedAt ? formatDate(article.updatedAt, safeLocale) : "-"}
+                {article.sourceLastVerifiedAt ? formatDate(article.sourceLastVerifiedAt, safeLocale) : "-"}
               </dd>
             </div>
           </dl>

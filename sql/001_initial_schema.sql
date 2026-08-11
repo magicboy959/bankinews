@@ -193,6 +193,8 @@ CREATE TABLE IF NOT EXISTS articles (
   featured_image_url VARCHAR(500) NULL,
   source_url VARCHAR(500) NULL,
   source_attribution VARCHAR(255) NULL,
+  source_verification_status ENUM('unverified','editorial_review','official') NOT NULL DEFAULT 'unverified',
+  source_last_verified_at DATE NULL,
   author_id BIGINT UNSIGNED NULL,
   related_bank_id BIGINT UNSIGNED NULL,
   reading_time_minutes INT UNSIGNED NOT NULL DEFAULT 1,

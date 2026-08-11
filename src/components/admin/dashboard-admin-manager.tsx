@@ -32,6 +32,8 @@ type ArticleDetailItem = {
   videoUrl: string | null;
   sourceUrl: string | null;
   sourceAttribution: string | null;
+  sourceVerificationStatus: "unverified" | "editorial_review" | "official";
+  sourceLastVerifiedAt: string | null;
   relatedBankId: number | null;
   categoryId: number | null;
   publishAt: string | null;
@@ -180,6 +182,8 @@ type ComposerState = {
   videoUrl: string;
   sourceUrl: string;
   sourceAttribution: string;
+  sourceVerificationStatus: "unverified" | "editorial_review" | "official";
+  sourceLastVerifiedAt: string;
   relatedBankId: string;
   categoryId: string;
   publishAt: string;
@@ -199,6 +203,8 @@ const emptyComposer: ComposerState = {
   videoUrl: "",
   sourceUrl: "",
   sourceAttribution: "",
+  sourceVerificationStatus: "unverified",
+  sourceLastVerifiedAt: "",
   relatedBankId: "",
   categoryId: "",
   publishAt: "",
@@ -682,6 +688,18 @@ export function DashboardAdminManager({
       notes.push({ tone: "warning", message: "Source URL is missing.", action: { type: "focus", target: "sourceUrl" } });
     }
 
+    if (composer.sourceVerificationStatus === "unverified") {
+      notes.push({ tone: "warning", message: "Complete source verification before review or publication.", action: { type: "focus", target: "sourceUrl" } });
+    }
+
+    if (composer.sourceVerificationStatus !== "unverified" && !composer.sourceLastVerifiedAt) {
+      notes.push({ tone: "warning", message: "Record the date when the source was last verified.", action: { type: "focus", target: "sourceUrl" } });
+    }
+
+    if (composer.sourceVerificationStatus === "official" && !composer.sourceAttribution.trim()) {
+      notes.push({ tone: "warning", message: "Official sources require a clear source attribution.", action: { type: "focus", target: "sourceUrl" } });
+    }
+
     if (composer.videoUrl.trim() && !previewEmbedUrl) {
       notes.push({ tone: "warning", message: "Video URL must be a supported YouTube link to embed in the article.", action: { type: "focus", target: "videoUrl" } });
     }
@@ -712,7 +730,7 @@ export function DashboardAdminManager({
     }
 
     return notes;
-  }, [activeLocale, composer.featuredImageUrl, composer.publishAt, composer.sourceUrl, composer.status, composer.translations, composer.videoUrl, imagePreviewState, previewEmbedUrl]);
+  }, [activeLocale, composer.featuredImageUrl, composer.publishAt, composer.sourceAttribution, composer.sourceLastVerifiedAt, composer.sourceUrl, composer.sourceVerificationStatus, composer.status, composer.translations, composer.videoUrl, imagePreviewState, previewEmbedUrl]);
   const requiresStrictQa = composer.status === "review" || composer.status === "scheduled" || composer.status === "published";
   const blockingQaNotes = qaNotes.filter((note) => note.tone === "warning");
   const submitBlockedByQa = requiresStrictQa && blockingQaNotes.length > 0;
@@ -765,6 +783,8 @@ export function DashboardAdminManager({
       videoUrl: normalizeOptionalUrlOrLocalPath(composer.videoUrl),
       sourceUrl: normalizeOptionalUrlOrLocalPath(composer.sourceUrl),
       sourceAttribution: composer.sourceAttribution.trim() || null,
+      sourceVerificationStatus: composer.sourceVerificationStatus,
+      sourceLastVerifiedAt: composer.sourceLastVerifiedAt || null,
       relatedBankId: composer.relatedBankId ? Number(composer.relatedBankId) : null,
       categoryId: composer.categoryId ? Number(composer.categoryId) : null,
       publishAt: toIsoDateTime(composer.publishAt),
@@ -907,6 +927,8 @@ export function DashboardAdminManager({
       videoUrl: base.videoUrl ?? "",
       sourceUrl: base.sourceUrl ?? "",
       sourceAttribution: base.sourceAttribution ?? "",
+      sourceVerificationStatus: base.sourceVerificationStatus ?? "unverified",
+      sourceLastVerifiedAt: base.sourceLastVerifiedAt ? String(base.sourceLastVerifiedAt).slice(0, 10) : "",
       relatedBankId: base.relatedBankId ? String(base.relatedBankId) : "",
       categoryId: base.categoryId ? String(base.categoryId) : "",
       publishAt: toDateTimeLocalValue(base.publishAt),
@@ -1660,6 +1682,15 @@ export function DashboardAdminManager({
             <input ref={videoUrlInputRef} className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="YouTube video URL (optional)" value={composer.videoUrl} onChange={(e) => updateComposer("videoUrl", e.target.value)} />
             <input ref={sourceUrlInputRef} className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Original source URL" value={composer.sourceUrl} onChange={(e) => updateComposer("sourceUrl", e.target.value)} />
             <input className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] placeholder:text-[var(--text-subtle)]" placeholder="Source attribution" value={composer.sourceAttribution} onChange={(e) => updateComposer("sourceAttribution", e.target.value)} />
+            <select className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)]" value={composer.sourceVerificationStatus} onChange={(e) => updateComposer("sourceVerificationStatus", e.target.value as ComposerState["sourceVerificationStatus"])}>
+              <option value="unverified">Source not yet verified</option>
+              <option value="editorial_review">Editorially reviewed</option>
+              <option value="official">Official source</option>
+            </select>
+            <label className="grid gap-1 text-xs font-semibold text-[var(--text-muted)]">
+              Last source verification
+              <input type="date" className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)]" value={composer.sourceLastVerifiedAt} onChange={(e) => updateComposer("sourceLastVerifiedAt", e.target.value)} />
+            </label>
           </div>
 
           <div className="mt-3">
