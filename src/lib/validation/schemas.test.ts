@@ -18,6 +18,21 @@ test("articleCreateSchema accepts local media paths for image and source URLs", 
   assert.equal(result.success, true);
 });
 
+test("articleCreateSchema accepts minute-precision publication dates", () => {
+  const result = articleCreateSchema.safeParse({
+    locale: "ar",
+    title: "اختبار جدولة مقال",
+    summary: "هذا ملخص مناسب لمقال مجدول للنشر.",
+    contentHtml: "<p>محتوى مقال مجدول للنشر.</p>",
+    articleType: "news",
+    status: "scheduled",
+    publishAt: "2026-08-24T12:30Z",
+    expiresAt: "2026-08-31T12:30Z",
+  });
+
+  assert.equal(result.success, true);
+});
+
 test("articleCreateSchema clears invalid optional source URL values", () => {
   const result = articleCreateSchema.safeParse({
     locale: "ar",

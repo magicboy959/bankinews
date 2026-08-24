@@ -264,7 +264,7 @@ function toIsoDateTime(value: string): string | null {
     return null;
   }
 
-  return date.toISOString();
+  return date.toISOString().replace(/:\d{2}\.\d{3}Z$/, "Z");
 }
 
 function normalizeOptionalUrlOrLocalPath(value: string): string | null {
