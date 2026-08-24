@@ -3,7 +3,7 @@ import type { DbRow } from "@/lib/db/pool";
 import { created, ok, badRequest, forbidden, serverError } from "@/lib/http";
 import { articleCreateSchema } from "@/lib/validation/schemas";
 import { requireRole } from "@/lib/auth/guard";
-import { estimateReadingTime, slugify } from "@/lib/utils";
+import { estimateReadingTime, slugify, toMysqlDateTime } from "@/lib/utils";
 import { validateEditorialWorkflow } from "@/lib/validation/editorial-workflow";
 
 type CountRow = DbRow & {
@@ -241,8 +241,8 @@ export async function POST(request: Request) {
           payload.isSponsored ? 1 : 0,
           payload.isOpinion ? 1 : 0,
           payload.isPressRelease ? 1 : 0,
-          payload.publishAt ?? null,
-          payload.expiresAt ?? null,
+          toMysqlDateTime(payload.publishAt),
+          toMysqlDateTime(payload.expiresAt),
           payload.status,
         ]
       );

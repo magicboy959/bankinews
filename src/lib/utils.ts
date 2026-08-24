@@ -24,3 +24,16 @@ export function formatDate(input: string | Date, locale: string): string {
     day: "2-digit",
   }).format(date);
 }
+
+export function toMysqlDateTime(value: string | null | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString().slice(0, 19).replace("T", " ");
+}

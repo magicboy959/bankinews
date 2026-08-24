@@ -4,7 +4,7 @@ import { badRequest, forbidden, notFound, ok, serverError } from "@/lib/http";
 import { requireRole } from "@/lib/auth/guard";
 import { articleCreateSchema } from "@/lib/validation/schemas";
 import { validateEditorialWorkflow } from "@/lib/validation/editorial-workflow";
-import { slugify } from "@/lib/utils";
+import { slugify, toMysqlDateTime } from "@/lib/utils";
 
 type ArticleDetailRow = DbRow & {
   id: number;
@@ -191,8 +191,8 @@ export async function PUT(
           payload.isSponsored ? 1 : 0,
           payload.isOpinion ? 1 : 0,
           payload.isPressRelease ? 1 : 0,
-          payload.publishAt ?? null,
-          payload.expiresAt ?? null,
+          toMysqlDateTime(payload.publishAt),
+          toMysqlDateTime(payload.expiresAt),
           payload.status,
           id,
         ]
