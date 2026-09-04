@@ -114,6 +114,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       <style jsx global>{`
         .ProseMirror {
           min-height: 220px;
+          margin-inline: 2rem;
         }
         .ProseMirror p {
           margin: 0 0 0.75rem;
@@ -135,6 +136,11 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           padding: 0.75rem;
           border-radius: 0.375rem;
           overflow-x: auto;
+        }
+        @media (max-width: 640px) {
+          .ProseMirror {
+            margin-inline: 1rem;
+          }
         }
       `}</style>
     </div>
