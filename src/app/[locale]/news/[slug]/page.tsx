@@ -7,6 +7,7 @@ import { getArticleBySlug, getArticleCorrectionHistory, getPublishedArticleLocal
 import { ArticleContent } from "@/components/articles/article-content";
 import { ArticleCardView } from "@/components/articles/article-card";
 import { ArticleReaderExperience } from "@/components/articles/article-reader-experience";
+import { AdSenseUnit } from "@/components/ads/adsense-unit";
 import { NewsletterForm } from "@/components/ui/newsletter-form";
 import { getYouTubeEmbedUrl } from "@/lib/media";
 import { buildArticleMetadata } from "@/lib/seo/metadata";
@@ -204,6 +205,15 @@ export default async function ArticlePage({
             <ArticleContent html={article.contentHtml} />
           </ArticleReaderExperience>
         </div>
+
+        <AdSenseUnit
+          adFormat="fluid"
+          adLayout="in-article"
+          className="mt-8 rounded-xl border-x"
+          label={safeLocale === "ar" ? "إعلان" : "Advertisement"}
+          slot="4598694240"
+          textAlign="center"
+        />
 
         {socialLinks.length ? (
           <section className="mt-8 overflow-hidden rounded-xl border border-[#005F73]/25 bg-gradient-to-br from-[#005F73]/10 to-cyan-500/5 p-5 text-center">

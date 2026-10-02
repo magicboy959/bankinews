@@ -13,11 +13,24 @@ declare global {
 }
 
 type Props = {
+  adFormat?: "auto" | "fluid";
+  adLayout?: "in-article";
   className?: string;
+  fullWidthResponsive?: boolean;
   label?: string;
+  slot?: string;
+  textAlign?: CSSProperties["textAlign"];
 };
 
-export function AdSenseUnit({ className = "", label = "Advertisement" }: Props) {
+export function AdSenseUnit({
+  adFormat = "auto",
+  adLayout,
+  className = "",
+  fullWidthResponsive = true,
+  label = "Advertisement",
+  slot = HEADING_SLOT,
+  textAlign,
+}: Props) {
   useEffect(() => {
     try {
       window.adsbygoogle = window.adsbygoogle || [];
@@ -37,11 +50,12 @@ export function AdSenseUnit({ className = "", label = "Advertisement" }: Props) 
       </p>
       <ins
         className="adsbygoogle"
-        style={{ display: "block" } as CSSProperties}
+        style={{ display: "block", textAlign } as CSSProperties}
+        data-ad-layout={adLayout}
         data-ad-client={ADSENSE_CLIENT}
-        data-ad-slot={HEADING_SLOT}
-        data-ad-format="auto"
-        data-full-width-responsive="true"
+        data-ad-slot={slot}
+        data-ad-format={adFormat}
+        data-full-width-responsive={fullWidthResponsive ? "true" : undefined}
       />
     </section>
   );
