@@ -13,7 +13,7 @@ declare global {
 }
 
 type Props = {
-  adFormat?: "auto" | "fluid";
+  adFormat?: "auto" | "autorelaxed" | "fluid";
   adLayout?: "in-article";
   className?: string;
   fullWidthResponsive?: boolean;

@@ -368,6 +368,12 @@ export default async function ArticlePage({
             <ArticleCardView key={card.id} locale={safeLocale} article={card} compact />
           ))}
         </div>
+        <AdSenseUnit
+          adFormat="autorelaxed"
+          className="mt-6 rounded-xl border-x lg:sticky lg:top-28"
+          label={safeLocale === "ar" ? "إعلان" : "Advertisement"}
+          slot="8154795870"
+        />
       </aside>
     </div>
   );
