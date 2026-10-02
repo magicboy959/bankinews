@@ -35,6 +35,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Script id="mcjs" strategy="beforeInteractive">
           {`!function(c,h,i,m,p){m=c.createElement(h),p=c.getElementsByTagName(h)[0],m.async=1,m.src=i,p.parentNode.insertBefore(m,p)}(document,"script","https://chimpstatic.com/mcjs-connected/js/users/259a9ab84fc2af74b8183a97e/9ce7c291afe92b121829c05ee.js");`}
         </Script>
+        <Script
+          id="google-adsense"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9103161376908785"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </head>
       <body className="min-h-full flex flex-col">
         {children}
