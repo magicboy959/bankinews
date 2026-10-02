@@ -18,6 +18,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "BankiNews Sudan",
   description: "Bilingual Sudan banking, fintech, and economy news portal",
+  alternates: {
+    types: {
+      "application/rss+xml": "/rss.xml",
+    },
+  },
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg",

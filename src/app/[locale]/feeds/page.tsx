@@ -66,70 +66,77 @@ export default async function FeedsPage({
           {safeLocale === "ar" ? "لا توجد مواد منشورة حالياً." : "No published items yet."}
         </p>
       ) : (
-        <div className="space-y-4">
+        <ol className="feed-list space-y-4" aria-label={safeLocale === "ar" ? "خلاصة الأخبار" : "News feed"}>
           {articles.map((article, index) => {
             const href = `/${safeLocale}/news/${article.slug}`;
             const isSponsored = article.isSponsored === true || article.isSponsored === 1;
 
             return (
-              <div key={article.id} className="space-y-4">
-                <article className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4 shadow-[0_10px_30px_rgba(2,6,23,0.06)] transition hover:border-[color:var(--accent)]/40">
-                  <div className="flex gap-4">
+              <li key={article.id} className="feed-item space-y-4">
+                <article
+                  className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-4 shadow-[0_10px_30px_rgba(2,6,23,0.06)] transition hover:border-[color:var(--accent)]/40"
+                  itemScope
+                  itemType="https://schema.org/NewsArticle"
+                >
+                  <Link href={href} className="grid gap-4 sm:grid-cols-[144px_1fr]">
                     {article.featuredImageUrl ? (
-                      <Link href={href} className="hidden shrink-0 sm:block">
-                        <img
-                          src={article.featuredImageUrl}
-                          alt={article.title}
-                          loading="lazy"
-                          className="h-28 w-36 rounded-lg object-cover"
-                        />
-                      </Link>
-                    ) : null}
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-2 flex flex-wrap gap-2 text-[11px] font-bold uppercase tracking-wide">
+                      <img
+                        src={article.featuredImageUrl}
+                        alt={article.title}
+                        loading="lazy"
+                        className="hidden h-28 w-36 rounded-lg object-cover sm:block"
+                        itemProp="image"
+                      />
+                    ) : (
+                      <span className="hidden h-28 w-36 rounded-lg bg-gradient-to-br from-[#0A2342] to-[#123A63] sm:block" />
+                    )}
+                    <span className="min-w-0">
+                      <span className="mb-2 flex flex-wrap gap-2 text-[11px] font-bold uppercase tracking-wide">
                         {article.categoryName ? (
-                          <Link
-                            href={`/${safeLocale}/category/${article.categorySlug ?? article.categoryName.toLowerCase().replace(/\s+/g, "-")}`}
-                            className="rounded bg-[var(--surface-strong)] px-2 py-0.5 text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)]"
-                          >
+                          <span className="rounded bg-[var(--surface-strong)] px-2 py-0.5 text-[var(--text-muted)]">
                             {article.categoryName}
-                          </Link>
+                          </span>
                         ) : null}
                         {isSponsored ? (
                           <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-700">
                             {safeLocale === "ar" ? "محتوى برعاية" : "Sponsored"}
                           </span>
                         ) : null}
-                      </div>
-                      <h2 className="break-words text-lg font-black leading-6 text-[var(--foreground)]">
-                        <Link href={href}>{article.title}</Link>
-                      </h2>
-                      <p className="mt-2 break-words text-sm leading-6 text-[var(--text-muted)]">
+                      </span>
+                      <span className="block break-words text-lg font-black leading-6 text-[var(--foreground)]" itemProp="headline">
+                        {article.title}
+                      </span>
+                      <span className="mt-2 block break-words text-sm leading-6 text-[var(--text-muted)]" itemProp="description">
                         {article.summary}
-                      </p>
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--text-subtle)]">
-                        <span>{article.publishedAt ? formatDate(article.publishedAt, safeLocale) : "-"}</span>
+                      </span>
+                      <span className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--text-subtle)]">
+                        <time dateTime={article.publishedAt ? new Date(article.publishedAt).toISOString() : undefined} itemProp="datePublished">
+                          {article.publishedAt ? formatDate(article.publishedAt, safeLocale) : "-"}
+                        </time>
                         <span aria-hidden="true">•</span>
                         <span>
                           {safeLocale === "ar"
                             ? `${article.readingTimeMinutes} دقائق قراءة`
                             : `${article.readingTimeMinutes} min read`}
                         </span>
-                      </div>
-                    </div>
-                  </div>
+                      </span>
+                    </span>
+                  </Link>
+                  <meta itemProp="url" content={href} />
                 </article>
 
                 {AD_AFTER_INDEXES.has(index + 1) ? (
-                  <AdSenseUnit
-                    className="rounded-xl border-x"
-                    label={safeLocale === "ar" ? "إعلان" : "Advertisement"}
-                  />
+                  <div className="feed-ad">
+                    <AdSenseUnit
+                      className="rounded-xl border-x"
+                      label={safeLocale === "ar" ? "إعلان" : "Advertisement"}
+                    />
+                  </div>
                 ) : null}
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ol>
       )}
 
       {totalPages > 1 ? (
