@@ -436,6 +436,7 @@ export function SiteHeader({ locale, socialLinks }: { locale: Locale; socialLink
   const websiteItems: NavItem[] = [
     ["home", ""],
     ["latest", "news"],
+    ["feeds", "feeds"],
     ["about", "about"],
     ["contact", "contact"],
   ];

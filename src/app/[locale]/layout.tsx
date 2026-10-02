@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { AdSenseUnit } from "@/components/ads/adsense-unit";
 import { NewsletterBottomSheet } from "@/components/ui/newsletter-bottom-sheet";
 import { isLocale, localeDirection, type Locale } from "@/lib/i18n/config";
 import { getSocialLinks } from "@/services/settings-service";
@@ -27,6 +28,10 @@ export default async function LocaleLayout({
       <div className="site-shell mx-auto flex min-h-screen w-full max-w-[1080px] flex-col overflow-hidden border-x shadow-[0_22px_80px_rgba(15,23,42,0.10)]">
         <SiteHeader locale={typedLocale} socialLinks={socialLinks} />
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-6">{children}</main>
+        <AdSenseUnit
+          className="mb-6"
+          label={typedLocale === "ar" ? "إعلان" : "Advertisement"}
+        />
         <SiteFooter locale={typedLocale} socialLinks={socialLinks} />
       </div>
       <NewsletterBottomSheet locale={typedLocale} />

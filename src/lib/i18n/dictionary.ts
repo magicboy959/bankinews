@@ -25,6 +25,7 @@ export const dictionary: Record<Locale, Dictionary> = {
     nav: {
       home: "الرئيسية",
       latest: "آخر الأخبار",
+      feeds: "الخلاصة",
       banks: "البنوك",
       centralBank: "البنك المركزي",
       digitalBanking: "الخدمات الرقمية",
@@ -62,6 +63,7 @@ export const dictionary: Record<Locale, Dictionary> = {
     nav: {
       home: "Home",
       latest: "Latest News",
+      feeds: "Feeds",
       banks: "Banks",
       centralBank: "Central Bank",
       digitalBanking: "Digital Banking",
