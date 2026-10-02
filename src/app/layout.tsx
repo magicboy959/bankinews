@@ -23,6 +23,9 @@ export const metadata: Metadata = {
     shortcut: "/icon.svg",
     apple: "/icon.svg",
   },
+  other: {
+    "google-adsense-account": "ca-pub-9103161376908785",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
