@@ -14,6 +14,17 @@ import { buildArticleMetadata } from "@/lib/seo/metadata";
 import { formatDate } from "@/lib/utils";
 import { getSocialLinks } from "@/services/settings-service";
 
+function countContentWords(html: string | null | undefined): number {
+  return (html ?? "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z0-9#]+;/gi, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -101,6 +112,8 @@ export default async function ArticlePage({
   const isSponsored = article.isSponsored === true || article.isSponsored === 1;
   const isOpinion = article.isOpinion === true || article.isOpinion === 1;
   const isPressRelease = article.isPressRelease === true || article.isPressRelease === 1;
+  const hasSubstantialBody = countContentWords(article.contentHtml) >= 450;
+  const canShowArticleAds = hasSubstantialBody && !isSponsored && !isPressRelease;
 
   function historyLabel(action: string): string {
     if (safeLocale === "ar") {
@@ -206,14 +219,16 @@ export default async function ArticlePage({
           </ArticleReaderExperience>
         </div>
 
-        <AdSenseUnit
-          adFormat="fluid"
-          adLayout="in-article"
-          className="mt-8 rounded-xl border-x"
-          label={safeLocale === "ar" ? "إعلان" : "Advertisement"}
-          slot="4598694240"
-          textAlign="center"
-        />
+        {canShowArticleAds ? (
+          <AdSenseUnit
+            adFormat="fluid"
+            adLayout="in-article"
+            className="mt-8 rounded-xl border-x"
+            label={safeLocale === "ar" ? "إعلان" : "Advertisement"}
+            slot="4598694240"
+            textAlign="center"
+          />
+        ) : null}
 
         {socialLinks.length ? (
           <section className="mt-8 overflow-hidden rounded-xl border border-[#005F73]/25 bg-gradient-to-br from-[#005F73]/10 to-cyan-500/5 p-5 text-center">
@@ -368,12 +383,14 @@ export default async function ArticlePage({
             <ArticleCardView key={card.id} locale={safeLocale} article={card} compact />
           ))}
         </div>
-        <AdSenseUnit
-          adFormat="autorelaxed"
-          className="mt-6 rounded-xl border-x lg:sticky lg:top-28"
-          label={safeLocale === "ar" ? "إعلان" : "Advertisement"}
-          slot="8154795870"
-        />
+        {canShowArticleAds && related.length >= 3 ? (
+          <AdSenseUnit
+            adFormat="autorelaxed"
+            className="mt-6 rounded-xl border-x lg:sticky lg:top-28"
+            label={safeLocale === "ar" ? "إعلان" : "Advertisement"}
+            slot="8154795870"
+          />
+        ) : null}
       </aside>
     </div>
   );
